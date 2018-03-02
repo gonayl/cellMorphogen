@@ -1,1 +1,4 @@
 TestHello.hpp
+TestMorphogenMonolayer.hpp
+TestCellCycle.hpp
+TestCenterBasedModel.hpp
