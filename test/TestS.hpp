@@ -87,9 +87,6 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "VertexMeshReader.hpp"
 #include "VertexMeshWriter.hpp"
 
-#include "PerimeterTrackingModifier.hpp"
-#include "PerimeterDependentCellCycleModel.hpp"
-
 class TestCellCycle: public AbstractCellBasedTestSuite
 {
 private:
@@ -111,7 +108,7 @@ private:
 
 public:
 
-    void TestMeshWriter() throw (Exception)
+    void TestCaseI() throw (Exception)
     {
         // Create a simple 2D MutableVertexMesh
         HoneycombVertexMeshGenerator generator(5, 5);
@@ -128,8 +125,7 @@ public:
 
    for (unsigned i=0; i<p_mesh->GetNumElements(); i++)
    {
-       // PerimeterDependentCellCycleModel* p_model = new PerimeterDependentCellCycleModel();
-       FixedG1GenerationalCellCycleModel* p_model = new FixedG1GenerationalCellCycleModel();
+       PerimeterDependentCellCycleModel* p_model = new PerimeterDependentCellCycleModel();
        CellPtr p_cell(new Cell(p_state, p_model));
        p_cell->SetCellProliferativeType(p_transit_type);
        p_cell->SetBirthTime(-20);
@@ -144,9 +140,9 @@ public:
         OffLatticeSimulation<2> simulator(population);
 
         simulator.SetOutputDirectory("TestCellCycle/PerimeterDependent");
-        simulator.SetEndTime(20.0);
+        simulator.SetEndTime(50.0);
      	  simulator.SetDt(0.01);
-        simulator.SetSamplingTimestepMultiple(100);
+        simulator.SetSamplingTimestepMultiple(1);
 
         MAKE_PTR(NagaiHondaForce<2>, p_force);
         p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
@@ -161,73 +157,98 @@ public:
         MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
         simulator.AddSimulationModifier(p_stretch_modifier);
 
-	      std::cout << "Growing monolayer " << endl ;
+	    std::cout << "Growing monolayer " << endl ;
         simulator.Solve();
 
         // Record mesh
-        VertexMeshWriter<2,2> vertex_mesh_writer("TestMeshWriter", "vertex_mesh");
-        vertex_mesh_writer.WriteFilesUsingMesh(*p_mesh);
-
+        VertexMeshWriter<2,2> vertex_mesh_writer("TestCellCycle/PerimeterDependent", "vertex_mesh");
+        MutableVertexMesh<2,2> vertex_mesh = static_cast<VertexBasedCellPopulation<2>(simulator.rGetCellPopulation()).rGetMesh();
+        vertex_mesh_writer.WriteFilesUsingMesh(vertex_mesh);
     }
 
-    void TestMeshReader() throw (Exception)
+        void TestReadingInMesh() throw (Exception)
+        {
+            // Create mesh
+            VertexMeshReader<2,2> mesh_reader("testoutput/TestCellCycle/PerimeterDependent/vertex_mesh");
+            MutableVertexMesh<2,2> mesh;
+            mesh.ConstructFromMeshReader(mesh_reader);
+            mesh.SetCellRearrangementThreshold(0.1);
+
+            // Set up cells, one for each VertexElement; specify cells as differentiated to prevent cell division
+            std::vector<CellPtr> cells;
+            MAKE_PTR(TransitCellProliferativeType, p_transit_type);
+            MAKE_PTR(StemCellProliferativeType, p_stem_type);
+            MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
+            MAKE_PTR(WildTypeCellMutationState, p_state);
+
+
+       for (unsigned i=0; i<mesh.GetNumElements(); i++)
+       {
+           PerimeterDependentCellCycleModel* p_model = new PerimeterDependentCellCycleModel();
+           CellPtr p_cell(new Cell(p_state, p_model));
+           p_cell->SetCellProliferativeType(p_transit_type);
+           p_cell->SetBirthTime(-20);
+           cells.push_back(p_cell);
+       }
+
+            VertexBasedCellPopulation<2> population(mesh, cells);
+
+            population.AddCellWriter<CellLabelWriter>();
+            population.AddCellWriter<CellVolumesWriter>();
+
+            OffLatticeSimulation<2> simulator(population);
+
+            simulator.SetOutputDirectory("TestCellCycle/ReadingInMesh");
+            simulator.SetEndTime(50.0);
+         	  simulator.SetDt(0.01);
+            simulator.SetSamplingTimestepMultiple(1);
+
+            MAKE_PTR(NagaiHondaForce<2>, p_force);
+            p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
+            p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(0.0);
+            p_force->SetNagaiHondaCellCellAdhesionEnergyParameter(5.0);
+            p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
+            simulator.AddForce(p_force);
+
+            MAKE_PTR(SimpleTargetAreaModifier<2>, p_growth_modifier);
+            simulator.AddSimulationModifier(p_growth_modifier);
+
+            MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
+            simulator.AddSimulationModifier(p_stretch_modifier);
+
+    	    std::cout << "Growing monolayer " << endl ;
+            simulator.Solve();
+        }
+
+    void TestMeshBasedMonolayer()
     {
+      std::cout << "TestingCenterBasedModel" << endl ;
+        HoneycombMeshGenerator generator(2, 2);
+        MutableMesh<2,2>* p_mesh = generator.GetMesh();  //**Changed**//
 
-        // Create mesh
-        VertexMeshReader<2,2> mesh_reader("testoutput/TestMeshWriter/vertex_mesh");
-        MutableVertexMesh<2,2> mesh;
-        mesh.ConstructFromMeshReader(mesh_reader);
-        mesh.SetCellRearrangementThreshold(0.1);
-
-        // Set up cells, one for each VertexElement; specify cells as differentiated to prevent cell division
         std::vector<CellPtr> cells;
         MAKE_PTR(TransitCellProliferativeType, p_transit_type);
-        MAKE_PTR(StemCellProliferativeType, p_stem_type);
-        MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
-        MAKE_PTR(WildTypeCellMutationState, p_state);
+        CellsGenerator<UniformG1GenerationalCellCycleModel, 2> cells_generator;
+        cells_generator.GenerateBasicRandom(cells, p_mesh->GetNumNodes(), p_transit_type);
 
+        MeshBasedCellPopulation<2> cell_population(*p_mesh, cells); //**Changed**//
 
-    for (unsigned i=0; i<mesh.GetNumElements(); i++)
-    {
-       PerimeterDependentCellCycleModel* p_model = new PerimeterDependentCellCycleModel();
-       // FixedG1GenerationalCellCycleModel* p_model = new FixedG1GenerationalCellCycleModel();
-       CellPtr p_cell(new Cell(p_state, p_model));
-       p_cell->SetCellProliferativeType(p_transit_type);
-       p_cell->SetBirthTime(-20);
-       cells.push_back(p_cell);
-    }
+        cell_population.AddPopulationWriter<VoronoiDataWriter>();
 
-        VertexBasedCellPopulation<2> population(mesh, cells);
+        OffLatticeSimulation<2> simulator(cell_population);
+        simulator.SetOutputDirectory("TestCenterBasedSimulation"); //**Changed**//
+        simulator.SetSamplingTimestepMultiple(12);
+        simulator.SetEndTime(20.0);
 
-        population.AddCellWriter<CellLabelWriter>();
-        population.AddCellWriter<CellVolumesWriter>();
-
-        MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
-        OffLatticeSimulation<2> simulator(population);
-
-        simulator.AddSimulationModifier(p_stretch_modifier);
-
-        simulator.SetOutputDirectory("TestCellCycle/PerimeterDependent/MeshReader");
-        simulator.SetEndTime(10.0);
-        simulator.SetDt(0.001);
-        simulator.SetSamplingTimestepMultiple(100);
-
-        MAKE_PTR(NagaiHondaForce<2>, p_force);
-        p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
-        p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(0.0);
-        p_force->SetNagaiHondaCellCellAdhesionEnergyParameter(5.0);
-        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
+        MAKE_PTR(GeneralisedLinearSpringForce<2>, p_force); //**Changed**//
         simulator.AddForce(p_force);
 
-        MAKE_PTR(SimpleTargetAreaModifier<2>, p_growth_modifier);
-        simulator.AddSimulationModifier(p_growth_modifier);
-        p_growth_modifier->SetGrowthDuration(2.0);
-
-        std::cout << "Growing monolayer " << endl ;
         simulator.Solve();
 
-
+        TS_ASSERT_EQUALS(cell_population.GetNumRealCells(), 16u);
+        TS_ASSERT_DELTA(SimulationTime::Instance()->GetTime(), 20.0, 1e-10);
     }
+
 };
 
 #endif /*TESTVERTEXACTIVEMIGRATION_HPP_*/

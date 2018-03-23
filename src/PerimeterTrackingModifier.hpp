@@ -33,8 +33,8 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#ifndef VOLUMETRACKINGMODIFIER_HPP_
-#define VOLUMETRACKINGMODIFIER_HPP_
+#ifndef PERIMETERTRACKINGMODIFIER_HPP_
+#define PERIMETERTRACKINGMODIFIER_HPP_
 
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
@@ -114,4 +114,4 @@ public:
 #include "SerializationExportWrapper.hpp"
 EXPORT_TEMPLATE_CLASS_SAME_DIMS(PerimeterTrackingModifier)
 
-#endif /*VOLUMETRACKINGMODIFIER_HPP_*/
+#endif /*PERIMETERTRACKINGMODIFIER_HPP_*/

@@ -35,6 +35,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "PerimeterTrackingModifier.hpp"
 #include "MeshBasedCellPopulation.hpp"
+#include "VertexBasedCellPopulation.hpp"
 
 template<unsigned DIM>
 PerimeterTrackingModifier<DIM>::PerimeterTrackingModifier()
@@ -68,7 +69,6 @@ void PerimeterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,D
 {
     // Make sure the cell population is updated
     rCellPopulation.Update();
-
     /**
      * This hack is needed because in the case of a MeshBasedCellPopulation in which
      * multiple cell divisions have occurred over one time step, the Voronoi tessellation
@@ -83,16 +83,23 @@ void PerimeterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,D
         static_cast<MeshBasedCellPopulation<DIM>*>(&(rCellPopulation))->CreateVoronoiTessellation();
     }
 
+    if (dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) == NULL)
+    {
+        EXCEPTION("Perimeter Tracking Modifier is to be used with a VertexBasedCellPopulation only");
+    }
+
+    VertexBasedCellPopulation<DIM>* p_cell_population = static_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation);
+
     // Iterate over cell population
     for (typename AbstractCellPopulation<DIM>::Iterator cell_iter = rCellPopulation.Begin();
          cell_iter != rCellPopulation.End();
          ++cell_iter)
     {
         // Get the perimeter of this cell
-        VertexElement<2,2>* p_actual_element = rCellPopulation.GetElementCorrespondingToCell(*cell_iter);
-        unsigned actual_index = p_actual_element->GetIndex();
-        double cell_perimeter = rCellPopulation.rGetMesh().GetElongationShapeFactorOfElement(p_actual_index)
 
+        VertexElement<DIM, DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
+        unsigned p_index = p_element->GetIndex();
+        double cell_perimeter = p_cell_population->rGetMesh().GetElongationShapeFactorOfElement(p_index);
         // Store the cell's perimeter in CellData
         cell_iter->GetCellData()->SetItem("perimeter", cell_perimeter);
     }

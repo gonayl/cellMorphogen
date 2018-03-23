@@ -19,6 +19,7 @@
 #include "MorphogenCellwiseSourceParabolicPde.hpp"
 #include "VolumeTrackingModifier.hpp"
 
+#include "PerimeterDependentCellCycleModel.hpp"
 #include "MorphogenDependentCellCycleModel.hpp"
 #include "FixedG1GenerationalCellCycleModel.hpp"
 #include "UniformCellCycleModel.hpp"
@@ -63,6 +64,9 @@
 
 #include "VertexMeshWriter.hpp"
 
+#include "PerimeterTrackingModifier.hpp"
+#include "PerimeterDependentCellCycleModel.hpp"
+
 static const double M_TIME_FOR_SIMULATION = 40;
 static const double M_NUM_CELLS_ACROSS = 10;
 static const double M_UPTAKE_RATE = 10.0 ;
@@ -85,7 +89,8 @@ private:
         for (unsigned i=0; i<num_cells; i++)
         {
             //UniformCellCycleModel* p_cycle_model = new UniformCellCycleModel();
-            UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
+            FixedG1GenerationalCellCycleModel* p_cycle_model = new FixedG1GenerationalCellCycleModel();
+            // UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
             //MorphogenDependentCellCycleModel* p_cycle_model = new MorphogenDependentCellCycleModel();
             //p_cycle_model->SetDimension(2);
             //p_cycle_model->SetCurrentMass(0.5*(p_gen->ranf()+1.0));
@@ -117,9 +122,16 @@ public:
     void TestVertexBasedMorphogenMonolayerDirichletMotile() throw (Exception)
     {
         // Create Mesh
+        /*
         HoneycombVertexMeshGenerator generator(3.0, 3.0);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
         p_mesh->SetCellRearrangementThreshold(0.1);
+        */
+
+        VertexMeshReader<2,2> mesh_reader("testoutput/TestMorphogenMeshWriter/morphogen_mesh");
+        MutableVertexMesh<2,2> mesh;
+        mesh.ConstructFromMeshReader(mesh_reader);
+        mesh.SetCellRearrangementThreshold(0.1);
 
        // p_mesh->Translate(-M_NUM_CELLS_ACROSS,-sqrt(3.0)*M_NUM_CELLS_ACROSS+ sqrt(3.0)/6.0);
 
@@ -141,10 +153,59 @@ public:
 
         // Create Cells
         std::vector<CellPtr> cells;
-        GenerateCells(p_mesh->GetNumElements(),cells);
+        MAKE_PTR(WildTypeCellMutationState, p_state);
+        MAKE_PTR(TransitCellProliferativeType, p_transit_type);
+        MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
 
-        // Create Population
-        VertexBasedCellPopulation<2> cell_population(*p_mesh, cells);
+        for (unsigned i=0; i<mesh.GetNumElements(); i++)
+        {
+           PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
+           // FixedG1GenerationalCellCycleModel* p_model = new FixedG1GenerationalCellCycleModel();
+           UniformG1GenerationalCellCycleModel* p_uni_model = new UniformG1GenerationalCellCycleModel();
+           unsigned elem_index = mesh.GetElement(i)->GetIndex();
+           // std::cout << elem_index << endl ;
+
+           if (elem_index == 38 or elem_index == 2 or elem_index == 105 or elem_index == 141 or elem_index == 90 or elem_index == 72 or elem_index == 26 or elem_index == 131){
+             CellPtr p_cell(new Cell(p_state, p_elong_model));
+             p_cell->SetCellProliferativeType(p_transit_type);
+             p_cell->SetBirthTime(-20);
+             // Initial Condition for Morphogen PDE
+             p_cell->GetCellData()->SetItem("morphogen",0.0);
+             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
+
+             // Set Target Area so dont need to use a growth model in vertex simulations
+             p_cell->GetCellData()->SetItem("target area", 1.0);
+             cells.push_back(p_cell);
+           } else if (elem_index == 74 or elem_index == 69 or elem_index == 18 or elem_index == 68){
+             CellPtr p_cell(new Cell(p_state, p_elong_model));
+             p_cell->SetCellProliferativeType(p_diff_type);
+             p_cell->SetBirthTime(-20);
+             // Initial Condition for Morphogen PDE
+             p_cell->GetCellData()->SetItem("morphogen",0.0);
+             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
+
+             // Set Target Area so dont need to use a growth model in vertex simulations
+             p_cell->GetCellData()->SetItem("target area", 1.0);
+             cells.push_back(p_cell);
+           } else {
+             CellPtr p_cell(new Cell(p_state, p_uni_model));
+             p_cell->SetCellProliferativeType(p_transit_type);
+             // p_cell->SetBirthTime(-20);
+             // Initial Condition for Morphogen PDE
+             p_cell->GetCellData()->SetItem("morphogen",0.0);
+             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
+
+             // Set Target Area so dont need to use a growth model in vertex simulations
+             p_cell->GetCellData()->SetItem("target area", 1.0);
+             cells.push_back(p_cell);
+           }
+
+        }
+
+        VertexBasedCellPopulation<2> cell_population(mesh, cells);
 
         //Make cell data writer so can pass in variable name
         boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer(new CellDataItemWriter<2,2>("morphogen"));
@@ -153,16 +214,18 @@ public:
 
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellEndo, p_endo);
-        MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
+        MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("MorphogenMonolayer/Dirichlet/TestForce");
-        simulator.SetDt(1.0/5.0);
+        simulator.SetOutputDirectory("MorphogenMonolayer/MeshReader");
+        /* simulator.SetDt(1.0/5.0);
         simulator.SetSamplingTimestepMultiple(5);
-        simulator.SetEndTime(M_TIME_FOR_SIMULATION);
+        simulator.SetEndTime(M_TIME_FOR_SIMULATION); */
 
         simulator.SetOutputDivisionLocations(true);
+
+        simulator.AddSimulationModifier(p_stretch_modifier);
 
         std::cout << "Adding passive force" << endl ;
         // Create Forces and pass to simulation
@@ -177,12 +240,9 @@ public:
         p_force->SetNagaiHondaLabelledCellBoundaryAdhesionEnergyParameter(10.0);
         simulator.AddForce(p_force);
 
-        std::cout << "Growing Monolayer" << endl ;
-        simulator.Solve();
+        // std::cout << "Growing Monolayer" << endl ;
+        // simulator.Solve();
 
-        VertexMeshWriter<2,2> vertex_mesh_writer("TessWritingMesh", "vertex_mesh");
-        MutableVertexMesh<2,2> vertex_mesh = static_cast<VertexBasedCellPopulation<2>*>(simulator.rGetCellPopulation()).rGetMesh();
-        vertex_mesh_writer.WriteFilesUsingMesh(vertex_mesh);
 
         std::cout << "VeGF diffusion" << endl ;
 
@@ -217,12 +277,13 @@ public:
              cell_iter != cell_population.End();
              ++cell_iter)
         {
-            if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 74 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 69 )
+            if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 74 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 69 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 68 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 18)
             {
                 cell_iter->AddCellProperty(p_label);
                 cell_iter->AddCellProperty(p_endo);
             }
-            else if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 38 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 2 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 105 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 141)
+            else if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 38 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 2 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 105 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 141 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 90 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 72 \
+            or cell_population.GetLocationIndexUsingCell(*cell_iter) == 26 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 131)
             {
                 cell_iter->AddCellProperty(p_label);
             }
@@ -230,7 +291,7 @@ public:
         }
 
         std::cout << "Adding active force" << endl ;
-        MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (20,0.55));
+        MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (32,0.55));
         simulator.AddForce(p_motile_force);
 
         simulator.SetEndTime(50.0);

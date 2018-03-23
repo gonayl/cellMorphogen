@@ -39,7 +39,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
     : AbstractCellCycleModel(),
-      mMaxStretch(0.1),
+      mMaxStretch(2.2),
       mMinimumDivisionAge(1.0)
 {
 }
@@ -65,11 +65,11 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
     {
         if (GetAge() > mMinimumDivisionAge)
         {
-            double dt = SimulationTime::Instance()->GetTimeStep();
+            // double dt = SimulationTime::Instance()->GetTimeStep();
             if (!(mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>()))
             {
                 double cell_elongation = mpCell->GetCellData()->GetItem("perimeter");
-                if (cell_elongation > mMaxStretch*dt)
+                if (cell_elongation > mMaxStretch)
                 {
                     mReadyToDivide = true;
                 }
