@@ -38,6 +38,7 @@
 #include <numeric>
 #include <iostream>
 #include <cmath>
+#include <stdlib.h>
 
 #include "CellLabel.hpp"
 #include "CellEndo.hpp"
@@ -48,6 +49,8 @@
 
 #include "PerimeterTrackingModifier.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
+
+#include "DifferentiatedCellProliferativeType.hpp"
 
 static const double M_TIME_FOR_SIMULATION = 40;
 static const double M_NUM_CELLS_ACROSS = 10;
@@ -115,7 +118,7 @@ public:
                 cell_iter != rCellPopulation.End();
                 ++cell_iter)
            {
-               if (cell_iter->HasCellProperty<CellLabel>())
+               if (cell_iter->HasCellProperty<CellEndo>())
                {
 
                    double x = cell_iter->GetCellData()->GetItem("morphogen_grad_x");
@@ -154,10 +157,8 @@ class TestCenterBasedModel : public AbstractCellBasedTestSuite
 
 private:
 
-  void GenerateCells(unsigned num_cells, std::vector<CellPtr>& rCells)
+  void GenerateCells(unsigned num_cells, std::vector<CellPtr>& cells)
   {
-      MAKE_PTR(WildTypeCellMutationState, p_state);
-      MAKE_PTR(TransitCellProliferativeType, p_transit_type);
 
       // RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
 
@@ -166,28 +167,49 @@ private:
           //UniformlyDistributedCellCycleModel* p_cycle_model = new UniformlyDistributedCellCycleModel();
           //MorphogenDependentCellCycleModel* p_cycle_model = new MorphogenDependentCellCycleModel();
           UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
+          MAKE_PTR(WildTypeCellMutationState, p_state);
+          MAKE_PTR(TransitCellProliferativeType, p_transit_type);
+          MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
+          int age = rand() % 20 + 1;
+          unsigned node_index = i;
+          //std::cout << node_index << endl ;
 
-          // p_cycle_model->SetDimension(2);
-          // p_cycle_model->SetCurrentMass(0.5*(p_gen->ranf()+1.0));
-          // p_cycle_model->SetMorphogenInfluence(10.0);
+          if (node_index == 25 or node_index == 88){
+            CellPtr p_cell(new Cell(p_state, p_cycle_model));
+            p_cell->SetCellProliferativeType(p_transit_type);
+            // p_cell->SetBirthTime(-20);
+            // Initial Condition for Morphogen PDE
+            p_cell->GetCellData()->SetItem("morphogen",0.0);
+            p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+            p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
-          CellPtr p_cell(new Cell(p_state, p_cycle_model));
-          p_cell->SetCellProliferativeType(p_transit_type);
+            // Set Target Area so dont need to use a growth model in vertex simulations
+            p_cell->GetCellData()->SetItem("target area", 1.0);
+            cells.push_back(p_cell);
+          } else if (node_index == 113){
+            CellPtr p_cell(new Cell(p_state, p_cycle_model));
+            p_cell->SetCellProliferativeType(p_diff_type);
+            // Initial Condition for Morphogen PDE
+            p_cell->GetCellData()->SetItem("morphogen",0.0);
+            p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+            p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
-          // Note the first few recorded ages will be too short as cells start with some mass.
-          //p_cell->SetBirthTime(0.0);
-          p_cell->SetBirthTime(-20);
+            // Set Target Area so dont need to use a growth model in vertex simulations
+            p_cell->GetCellData()->SetItem("target area", 1.0);
+            cells.push_back(p_cell);
+          } else {
+            CellPtr p_cell(new Cell(p_state, p_cycle_model));
+            p_cell->SetCellProliferativeType(p_transit_type);
+            p_cell->SetBirthTime(-age);
+            // Initial Condition for Morphogen PDE
+            p_cell->GetCellData()->SetItem("morphogen",0.0);
+            p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+            p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
-          p_cell->InitialiseCellCycleModel();
-
-          // Initial Condition for Morphogen PDE
-          p_cell->GetCellData()->SetItem("morphogen",0.0);
-          p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
-          p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
-
-          // Set Target Area so dont need to use a growth model in vertex simulations
-          p_cell->GetCellData()->SetItem("target area", 1.0);
-          rCells.push_back(p_cell);
+            // Set Target Area so dont need to use a growth model in vertex simulations
+            p_cell->GetCellData()->SetItem("target area", 1.0);
+            cells.push_back(p_cell);
+          }
       }
    }
 
@@ -195,15 +217,18 @@ public:
   void TestNodeBasedMonolayer()
   {
         // Create a simple mesh
-        HoneycombMeshGenerator generator(3, 3, 0);
-        TetrahedralMesh<2,2>* p_generating_mesh = generator.GetMesh();
 
-                //Extended to allow sorting for longer distances
+        //HoneycombMeshGenerator generator(3, 3, 0);
+        TrianglesMeshReader<2,2> mesh_reader("testoutput/TestNodeMeshWriter/triangles_mesh");
+        TetrahedralMesh<2,2> p_generating_mesh ;
+        p_generating_mesh.ConstructFromMeshReader(mesh_reader);
+
+        //Extended to allow sorting for longer distances
         double cut_off_length = 2.5;
 
         // Convert this to a NodesOnlyMesh
         NodesOnlyMesh<2> p_mesh;
-        p_mesh.ConstructNodesWithoutMesh(*p_generating_mesh, cut_off_length);
+        p_mesh.ConstructNodesWithoutMesh(p_generating_mesh, cut_off_length);
 
         std::vector<CellPtr> cells;
         GenerateCells(p_mesh.GetNumNodes(),cells);
@@ -217,18 +242,15 @@ public:
 
         // Set up cell-based simulation and output directory
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("TestCenterBasedModelMorphogen3");
-
-        simulator.SetDt(1.0/200.0);
-        simulator.SetSamplingTimestepMultiple(200.0);
-        simulator.SetEndTime(60.0);
+        simulator.SetOutputDirectory("TestCenterBasedModel/Adhesion");
 
         // Create a force law and pass it to the simulation
         MAKE_PTR(DifferentialAdhesionGeneralisedLinearSpringForce<2>, p_differential_adhesion_force);
-        p_differential_adhesion_force->SetMeinekeSpringStiffness(50.0);
-        p_differential_adhesion_force->SetHomotypicLabelledSpringConstantMultiplier(1.0);
-        p_differential_adhesion_force->SetHeterotypicSpringConstantMultiplier(0.1);
+        p_differential_adhesion_force->SetMeinekeSpringStiffness(15.0);
+        p_differential_adhesion_force->SetHomotypicLabelledSpringConstantMultiplier(0.5);
+        p_differential_adhesion_force->SetHeterotypicSpringConstantMultiplier(1.0);
         p_differential_adhesion_force->SetCutOffLength(cut_off_length);
+        p_differential_adhesion_force->SetHomotypicLabelledSpringConstantMultiplier(5.0);
         simulator.AddForce(p_differential_adhesion_force);
 
         std::cout << "VeGF diffusion" << endl ;
@@ -254,39 +276,45 @@ public:
 
         simulator.AddSimulationModifier(p_pde_modifier);
 
-        std::cout << "Growing Monolayer" << endl ;
-        simulator.Solve();
+        std::cout << "Cell Labelling" << endl ;
+
+        // Record mesh
+        //TrianglesMeshWriter<2,2> triangles_mesh_writer("TestNodeMeshwriter", "triangles_mesh");
+        //TetrahedralMesh<2,2> triangles_mesh = static_cast<NodeBasedCellPopulation<2>(simulator.rGetCellPopulation()).rGetMesh();
+        //triangles_mesh_writer.WriteFilesUsingMesh(p_mesh);
 
 
         cell_population.AddCellWriter<CellLabelWriter>();
         MAKE_PTR(CellLabel, p_label);
+        MAKE_PTR(CellEndo, p_endo);
 
         for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
              cell_iter != cell_population.End();
              ++cell_iter)
            {
-             unsigned node_index = cell_population.GetLocationIndexUsingCell(*cell_iter);
-               if (node_index == 1)
+             unsigned node_index = cell_population.GetNodeCorrespondingToCell(*cell_iter)->GetIndex();
+               if (node_index == 113 )
+               {
+                 cell_iter->AddCellProperty(p_label);
+                 cell_iter->AddCellProperty(p_endo);
+               }
+               if (node_index == 25 or node_index == 88)
                {
                  cell_iter->AddCellProperty(p_label);
                }
            }
 
-        MAKE_PTR_ARGS(MyForce, p_force, (22.0));
+        MAKE_PTR_ARGS(MyForce, p_force, (10.0));
         simulator.AddForce(p_force);
+        std::cout << "Active force" << endl ;
 
-        simulator.SetEndTime(100.0);
+        simulator.SetEndTime(20.0);
         simulator.SetDt(1.0/100.0);
         simulator.SetSamplingTimestepMultiple(1);
-        std::cout << "Active force" << endl ;
+        std::cout << "Growing Monolayer" << endl ;
         simulator.Solve();
 
 
-
-        // Record mesh
-        // TrianglesMeshWriter<2,2> triangles_mesh_writer("TestCenterBasedModel2", "triangles_mesh");
-        // TetrahedralMesh<2,2> triangles_mesh = static_cast<NodeBasedCellPopulation<2>(simulator.rGetCellPopulation()).rGetMesh();
-        // triangles_mesh_writer.WriteFilesUsingMesh(triangles_mesh);
 
     }
 };
