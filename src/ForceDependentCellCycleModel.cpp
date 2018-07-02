@@ -36,11 +36,12 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "ForceDependentCellCycleModel.hpp"
 #include "RandomNumberGenerator.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
+#include <math.h>
 
 ForceDependentCellCycleModel::ForceDependentCellCycleModel()
     : AbstractCellCycleModel(),
-      mMaxStretch(2.2),
-      mMinimumDivisionAge(1.0)
+      mMaxStretch(0.5),
+      mMinimumDivisionAge(0.5)
 {
 }
 
@@ -68,8 +69,11 @@ bool ForceDependentCellCycleModel::ReadyToDivide()
             // double dt = SimulationTime::Instance()->GetTimeStep();
             if (!(mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>()))
             {
-                double cell_elongation = mpCell->GetCellData()->GetItem("force");
-                if (cell_elongation > mMaxStretch)
+                double forcex = mpCell->GetCellData()->GetItem("forcex");
+                double forcey = mpCell->GetCellData()->GetItem("forcey");
+                double force = sqrt((forcex * forcex) + (forcey * forcey));
+
+                if (GetAge() > mMaxStretch)
                 {
                     mReadyToDivide = true;
                 }

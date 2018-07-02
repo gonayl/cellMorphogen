@@ -27,12 +27,14 @@
 #include "VoronoiDataWriter.hpp"
 #include "DifferentialAdhesionGeneralisedLinearSpringForce.hpp"
 #include "TrianglesMeshWriter.hpp"
+#include "CellAgesWriter.hpp"
 #include "FakePetscSetup.hpp"
 
 #include "CellDataItemWriter.hpp"
 
 #include "ParabolicGrowingDomainPdeModifier.hpp"
 #include "MorphogenCellwiseSourceParabolicPde.hpp"
+#include "PolarityTrackingModifier.hpp"
 
 #include "AbstractForce.hpp"
 #include <numeric>
@@ -46,11 +48,17 @@
 
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
-
+#include "MorphogenTrackingModifier.hpp"
+#include "PolarityTrackingModifier.hpp"
 #include "PerimeterTrackingModifier.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
-
+#include "ForceTrackingModifier.hpp"
+#include "ForceDependentCellCycleModel.hpp"
+#include "Debug.hpp"
+// #include "EndothelialAdhesionGeneralisedLinearSpringForce.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
+#include <complex>      // std::complex, std::polar
+
 
 static const double M_TIME_FOR_SIMULATION = 40;
 static const double M_NUM_CELLS_ACROSS = 10;
@@ -167,11 +175,18 @@ private:
           //UniformlyDistributedCellCycleModel* p_cycle_model = new UniformlyDistributedCellCycleModel();
           //MorphogenDependentCellCycleModel* p_cycle_model = new MorphogenDependentCellCycleModel();
           UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
+        //  ForceDependentCellCycleModel* p_force_model = new ForceDependentCellCycleModel();
           MAKE_PTR(WildTypeCellMutationState, p_state);
           MAKE_PTR(TransitCellProliferativeType, p_transit_type);
           MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
           int age = rand() % 20 + 1;
           unsigned node_index = i;
+
+          double magnitude = 1.0 ;
+          double phase = 0.5 ;
+
+          std::complex<double> polar (magnitude,phase);
+          int polabs = std::abs(polar) ;
           //std::cout << node_index << endl ;
 
           if (node_index == 25 or node_index == 88){
@@ -182,6 +197,10 @@ private:
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
+
+            p_cell->GetCellData()->SetItem("magnitude", magnitude);
+            p_cell->GetCellData()->SetItem("phase", phase);
+            p_cell->GetCellData()->SetItem("polarity", polabs);
 
             // Set Target Area so dont need to use a growth model in vertex simulations
             p_cell->GetCellData()->SetItem("target area", 1.0);
@@ -194,6 +213,10 @@ private:
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
+            p_cell->GetCellData()->SetItem("magnitude", magnitude);
+            p_cell->GetCellData()->SetItem("phase", phase);
+            p_cell->GetCellData()->SetItem("polarity", polabs);
+
             // Set Target Area so dont need to use a growth model in vertex simulations
             p_cell->GetCellData()->SetItem("target area", 1.0);
             cells.push_back(p_cell);
@@ -205,6 +228,10 @@ private:
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
+
+            p_cell->GetCellData()->SetItem("magnitude", 0.0);
+            p_cell->GetCellData()->SetItem("phase", 0.0);
+            p_cell->GetCellData()->SetItem("polarity", 0.0);
 
             // Set Target Area so dont need to use a growth model in vertex simulations
             p_cell->GetCellData()->SetItem("target area", 1.0);
@@ -223,12 +250,14 @@ public:
         TetrahedralMesh<2,2> p_generating_mesh ;
         p_generating_mesh.ConstructFromMeshReader(mesh_reader);
 
+
         //Extended to allow sorting for longer distances
         double cut_off_length = 2.5;
 
         // Convert this to a NodesOnlyMesh
         NodesOnlyMesh<2> p_mesh;
         p_mesh.ConstructNodesWithoutMesh(p_generating_mesh, cut_off_length);
+
 
         std::vector<CellPtr> cells;
         GenerateCells(p_mesh.GetNumNodes(),cells);
@@ -239,10 +268,15 @@ public:
         //Make cell data writer so can pass in variable name
         boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer(new CellDataItemWriter<2,2>("morphogen"));
         cell_population.AddCellWriter(p_cell_data_item_writer);
+        cell_population.AddCellWriter<CellAgesWriter>();
+        MAKE_PTR(CellLabel, p_label);
+        MAKE_PTR(CellEndo, p_endo);
+        MAKE_PTR(ForceTrackingModifier<2>, force_modifier);
+
 
         // Set up cell-based simulation and output directory
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("TestCenterBasedModel/Adhesion");
+        simulator.SetOutputDirectory("TestCenterBasedModel/CellCycle/Polarity");
 
         // Create a force law and pass it to the simulation
         MAKE_PTR(DifferentialAdhesionGeneralisedLinearSpringForce<2>, p_differential_adhesion_force);
@@ -275,6 +309,7 @@ public:
         p_pde_modifier->GetOutputGradient();
 
         simulator.AddSimulationModifier(p_pde_modifier);
+        simulator.AddSimulationModifier(force_modifier);
 
         std::cout << "Cell Labelling" << endl ;
 
@@ -285,13 +320,12 @@ public:
 
 
         cell_population.AddCellWriter<CellLabelWriter>();
-        MAKE_PTR(CellLabel, p_label);
-        MAKE_PTR(CellEndo, p_endo);
 
         for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
              cell_iter != cell_population.End();
              ++cell_iter)
            {
+
              unsigned node_index = cell_population.GetNodeCorrespondingToCell(*cell_iter)->GetIndex();
                if (node_index == 113 )
                {
@@ -304,9 +338,17 @@ public:
                }
            }
 
-        MAKE_PTR_ARGS(MyForce, p_force, (10.0));
+
+        MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+        simulator.AddSimulationModifier(morphogen_modifier);
+        MAKE_PTR(PolarityTrackingModifier<2>, polarity_modifier);
+        simulator.AddSimulationModifier(polarity_modifier);
+        MAKE_PTR_ARGS(MyForce, p_force, (32.0));
         simulator.AddForce(p_force);
         std::cout << "Active force" << endl ;
+
+        // MAKE_PTR(EndothelialAdhesionGeneralisedLinearSpringForce<2>, p_endothelial_adhesion_force);
+        // simulator.AddForce(p_endothelial_adhesion_force);
 
         simulator.SetEndTime(20.0);
         simulator.SetDt(1.0/100.0);

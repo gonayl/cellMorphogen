@@ -63,7 +63,7 @@
 #include "CellLabelWriter.hpp"
 
 #include "VertexMeshWriter.hpp"
-
+#include "MorphogenTrackingModifier.hpp"
 #include "PerimeterTrackingModifier.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
 
@@ -220,7 +220,7 @@ public:
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("MorphogenMonolayer/MeshReader");
+        simulator.SetOutputDirectory("MorphogenMonolayer/Gradient");
         /* simulator.SetDt(1.0/5.0);
         simulator.SetSamplingTimestepMultiple(5);
         simulator.SetEndTime(M_TIME_FOR_SIMULATION); */
@@ -255,7 +255,7 @@ public:
         MAKE_PTR_ARGS(ConstBoundaryCondition<2>, p_bc, (0.0));
 
         // Create a ParabolicGrowingDomainPdeModifier, which is a simulation modifier, using the PDE and BC objects, and use 'true' to specify that you want a Dirichlet (rather than Neumann) BC
-        MAKE_PTR_ARGS(ParabolicGrowingDomainPdeModifier<2>, p_pde_modifier, (p_pde, p_bc, false)); // Change this last argument to 'false' for no-flux BCs (Dirichlet??)
+        MAKE_PTR_ARGS(ParabolicGrowingDomainPdeModifier<2>, p_pde_modifier, (p_pde, p_bc, true)); // Change this last argument to 'false' for no-flux BCs (Dirichlet??)
 
         // Optionally, name the PDE state variable (for visualization purposes)
         p_pde_modifier->SetDependentVariableName("morphogen");
@@ -292,6 +292,8 @@ public:
 
         }
 
+        MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+        simulator.AddSimulationModifier(morphogen_modifier);
         std::cout << "Adding active force" << endl ;
         MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (32,0.55));
         simulator.AddForce(p_motile_force);
