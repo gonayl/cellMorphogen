@@ -29,12 +29,12 @@
 #include "TrianglesMeshWriter.hpp"
 #include "CellAgesWriter.hpp"
 #include "FakePetscSetup.hpp"
+#include "CounterSingleton.hpp"
 
 #include "CellDataItemWriter.hpp"
 
 #include "ParabolicGrowingDomainPdeModifier.hpp"
 #include "MorphogenCellwiseSourceParabolicPde.hpp"
-#include "PolarityTrackingModifier.hpp"
 
 #include "AbstractForce.hpp"
 #include <numeric>
@@ -48,16 +48,23 @@
 
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
+
 #include "MorphogenTrackingModifier.hpp"
-#include "PolarityTrackingModifier.hpp"
+// #include "PolarityTrackingModifier.hpp"
 #include "PerimeterTrackingModifier.hpp"
-#include "PerimeterDependentCellCycleModel.hpp"
 #include "ForceTrackingModifier.hpp"
+#include "PositionTrackingModifier.hpp"
+#include "RadiusTrackingModifier.hpp"
+#include "CellAppliedForceWriter.hpp"
+
+#include "PerimeterDependentCellCycleModel.hpp"
 #include "ForceDependentCellCycleModel.hpp"
+#include "PositionDependentCellCycleModel.hpp"
 #include "Debug.hpp"
 // #include "EndothelialAdhesionGeneralisedLinearSpringForce.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
 #include <complex>      // std::complex, std::polar
+#include "CounterSingleton.hpp"
 
 
 static const double M_TIME_FOR_SIMULATION = 40;
@@ -94,6 +101,7 @@ public:
     void AddForceContribution(AbstractCellPopulation<2>& rCellPopulation)
     {
 
+
         c_vector<double, 2> force = zero_vector<double>(2);
         force(1) = 0.0 ;
         force(0) = 0.0 ;
@@ -120,7 +128,8 @@ public:
         // double ymoy = std::accumulate(moy_y_morphogen_grad.begin(), moy_y_morphogen_grad.end(), 0)/moy_y_morphogen_grad.size();
         double xmoy = 0.0;
         double ymoy = 0.0;
-
+        double count = CounterSingleton::Instance()->GetCount() ;
+        double mult = 3.0 + sqrt(count) ;
 
         for (AbstractCellPopulation<2>::Iterator cell_iter = rCellPopulation.Begin();
                 cell_iter != rCellPopulation.End();
@@ -128,11 +137,10 @@ public:
            {
                if (cell_iter->HasCellProperty<CellEndo>())
                {
-
                    double x = cell_iter->GetCellData()->GetItem("morphogen_grad_x");
                    double y = cell_iter->GetCellData()->GetItem("morphogen_grad_y");
-                   force(1) =    mStrength * (y - ymoy) / (0.55 + std::abs(y - ymoy)) ;
-                   force(0) =    mStrength * (x - xmoy) / (0.55 + std::abs(x - xmoy)) ;
+                   force(1) =    mStrength  * mult * (y - ymoy) / (0.55 + std::abs(y - ymoy)) ;
+                   force(0) =    mStrength  * mult * (x - xmoy) / (0.55 + std::abs(x - xmoy)) ;
 
                    unsigned node_index = rCellPopulation.GetLocationIndexUsingCell(*cell_iter);
                    rCellPopulation.GetNode(node_index)->AddAppliedForceContribution(force);
@@ -175,22 +183,25 @@ private:
           //UniformlyDistributedCellCycleModel* p_cycle_model = new UniformlyDistributedCellCycleModel();
           //MorphogenDependentCellCycleModel* p_cycle_model = new MorphogenDependentCellCycleModel();
           UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
-        //  ForceDependentCellCycleModel* p_force_model = new ForceDependentCellCycleModel();
+          PositionDependentCellCycleModel* p_position_model = new PositionDependentCellCycleModel();
           MAKE_PTR(WildTypeCellMutationState, p_state);
           MAKE_PTR(TransitCellProliferativeType, p_transit_type);
           MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
           int age = rand() % 20 + 1;
           unsigned node_index = i;
 
-          double magnitude = 1.0 ;
+        /*  double magnitude = 1.0 ;
           double phase = 0.5 ;
 
+          double xdiff = 0.0 ;
+          double ydiff = 0.0 ;
+
           std::complex<double> polar (magnitude,phase);
-          int polabs = std::abs(polar) ;
+          int polabs = std::abs(polar) ; */
           //std::cout << node_index << endl ;
 
-          if (node_index == 25 or node_index == 88){
-            CellPtr p_cell(new Cell(p_state, p_cycle_model));
+          if (node_index == 25){
+            CellPtr p_cell(new Cell(p_state, p_position_model));
             p_cell->SetCellProliferativeType(p_transit_type);
             // p_cell->SetBirthTime(-20);
             // Initial Condition for Morphogen PDE
@@ -198,9 +209,12 @@ private:
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
-            p_cell->GetCellData()->SetItem("magnitude", magnitude);
+          /*  p_cell->GetCellData()->SetItem("magnitude", magnitude);
             p_cell->GetCellData()->SetItem("phase", phase);
             p_cell->GetCellData()->SetItem("polarity", polabs);
+            p_cell->GetCellData()->SetItem("xdiff", xdiff);
+            p_cell->GetCellData()->SetItem("ydiff", ydiff); */
+
 
             // Set Target Area so dont need to use a growth model in vertex simulations
             p_cell->GetCellData()->SetItem("target area", 1.0);
@@ -213,9 +227,11 @@ private:
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
-            p_cell->GetCellData()->SetItem("magnitude", magnitude);
+            /* p_cell->GetCellData()->SetItem("magnitude", magnitude);
             p_cell->GetCellData()->SetItem("phase", phase);
             p_cell->GetCellData()->SetItem("polarity", polabs);
+            p_cell->GetCellData()->SetItem("xdiff", xdiff);
+            p_cell->GetCellData()->SetItem("ydiff", ydiff);*/
 
             // Set Target Area so dont need to use a growth model in vertex simulations
             p_cell->GetCellData()->SetItem("target area", 1.0);
@@ -229,9 +245,12 @@ private:
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
-            p_cell->GetCellData()->SetItem("magnitude", 0.0);
+          /*  p_cell->GetCellData()->SetItem("magnitude", 0.0);
             p_cell->GetCellData()->SetItem("phase", 0.0);
             p_cell->GetCellData()->SetItem("polarity", 0.0);
+            p_cell->GetCellData()->SetItem("xdiff", xdiff);
+            p_cell->GetCellData()->SetItem("ydiff", ydiff); */
+            p_cell->GetCellData()->SetItem("dist", 0.0);
 
             // Set Target Area so dont need to use a growth model in vertex simulations
             p_cell->GetCellData()->SetItem("target area", 1.0);
@@ -241,8 +260,9 @@ private:
    }
 
 public:
-  void TestNodeBasedMonolayer()
-  {
+
+  void TestCase1()
+    {
         // Create a simple mesh
 
         //HoneycombMeshGenerator generator(3, 3, 0);
@@ -276,15 +296,14 @@ public:
 
         // Set up cell-based simulation and output directory
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("TestCenterBasedModel/CellCycle/Polarity");
+        simulator.SetOutputDirectory("TestCenterBasedModel/Sensitivity/Case1");
 
         // Create a force law and pass it to the simulation
         MAKE_PTR(DifferentialAdhesionGeneralisedLinearSpringForce<2>, p_differential_adhesion_force);
         p_differential_adhesion_force->SetMeinekeSpringStiffness(15.0);
-        p_differential_adhesion_force->SetHomotypicLabelledSpringConstantMultiplier(0.5);
-        p_differential_adhesion_force->SetHeterotypicSpringConstantMultiplier(1.0);
-        p_differential_adhesion_force->SetCutOffLength(cut_off_length);
         p_differential_adhesion_force->SetHomotypicLabelledSpringConstantMultiplier(5.0);
+        p_differential_adhesion_force->SetHeterotypicSpringConstantMultiplier(0.5);
+        p_differential_adhesion_force->SetCutOffLength(cut_off_length);
         simulator.AddForce(p_differential_adhesion_force);
 
         std::cout << "VeGF diffusion" << endl ;
@@ -320,6 +339,7 @@ public:
 
 
         cell_population.AddCellWriter<CellLabelWriter>();
+        cell_population.AddCellWriter<CellAppliedForceWriter>();
 
         for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
              cell_iter != cell_population.End();
@@ -327,22 +347,33 @@ public:
            {
 
              unsigned node_index = cell_population.GetNodeCorrespondingToCell(*cell_iter)->GetIndex();
+             c_vector<double, 2> location = cell_population.GetLocationOfCellCentre(*cell_iter);
+
+             //cell_iter->GetCellData()->SetItem("xpos", location[0]);
+             //cell_iter->GetCellData()->SetItem("ypos", location[1]);
+             cell_iter->GetCellData()->SetItem("xposini", location[0]);
+             cell_iter->GetCellData()->SetItem("yposini", location[1]);
+
                if (node_index == 113 )
                {
                  cell_iter->AddCellProperty(p_label);
                  cell_iter->AddCellProperty(p_endo);
                }
-               if (node_index == 25 or node_index == 88)
+               if (node_index == 25 )
                {
                  cell_iter->AddCellProperty(p_label);
                }
            }
 
 
-        MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
-        simulator.AddSimulationModifier(morphogen_modifier);
-        MAKE_PTR(PolarityTrackingModifier<2>, polarity_modifier);
-        simulator.AddSimulationModifier(polarity_modifier);
+        //MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+        //simulator.AddSimulationModifier(morphogen_modifier);
+        MAKE_PTR(RadiusTrackingModifier<2>, radius_modifier);
+        simulator.AddSimulationModifier(radius_modifier);
+        MAKE_PTR(PositionTrackingModifier<2>, position_modifier);
+        simulator.AddSimulationModifier(position_modifier);
+      /*  MAKE_PTR(PolarityTrackingModifier<2>, polarity_modifier);
+        simulator.AddSimulationModifier(polarity_modifier); */
         MAKE_PTR_ARGS(MyForce, p_force, (32.0));
         simulator.AddForce(p_force);
         std::cout << "Active force" << endl ;
@@ -350,13 +381,395 @@ public:
         // MAKE_PTR(EndothelialAdhesionGeneralisedLinearSpringForce<2>, p_endothelial_adhesion_force);
         // simulator.AddForce(p_endothelial_adhesion_force);
 
-        simulator.SetEndTime(20.0);
+        simulator.SetEndTime(5.0);
         simulator.SetDt(1.0/100.0);
-        simulator.SetSamplingTimestepMultiple(1);
+        simulator.SetSamplingTimestepMultiple(1.0);
         std::cout << "Growing Monolayer" << endl ;
         simulator.Solve();
 
-
-
     }
+
+  void TestCase2()
+    {
+          // Create a simple mesh
+
+          //HoneycombMeshGenerator generator(3, 3, 0);
+          TrianglesMeshReader<2,2> mesh_reader("testoutput/TestNodeMeshWriter/triangles_mesh");
+          TetrahedralMesh<2,2> p_generating_mesh ;
+          p_generating_mesh.ConstructFromMeshReader(mesh_reader);
+
+
+          //Extended to allow sorting for longer distances
+          double cut_off_length = 2.5;
+
+          // Convert this to a NodesOnlyMesh
+          NodesOnlyMesh<2> p_mesh;
+          p_mesh.ConstructNodesWithoutMesh(p_generating_mesh, cut_off_length);
+
+
+          std::vector<CellPtr> cells;
+          GenerateCells(p_mesh.GetNumNodes(),cells);
+
+          // Create cell population
+          NodeBasedCellPopulation<2> cell_population(p_mesh, cells);
+
+          //Make cell data writer so can pass in variable name
+          boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer(new CellDataItemWriter<2,2>("morphogen"));
+          cell_population.AddCellWriter(p_cell_data_item_writer);
+          cell_population.AddCellWriter<CellAgesWriter>();
+          MAKE_PTR(CellLabel, p_label);
+          MAKE_PTR(CellEndo, p_endo);
+          MAKE_PTR(ForceTrackingModifier<2>, force_modifier);
+
+
+          // Set up cell-based simulation and output directory
+          OffLatticeSimulation<2> simulator(cell_population);
+          simulator.SetOutputDirectory("TestCenterBasedModel/Sensitivity/Case2");
+
+          // Create a force law and pass it to the simulation
+          MAKE_PTR(DifferentialAdhesionGeneralisedLinearSpringForce<2>, p_differential_adhesion_force);
+          p_differential_adhesion_force->SetMeinekeSpringStiffness(15.0);
+          p_differential_adhesion_force->SetHomotypicLabelledSpringConstantMultiplier(6.0);
+          p_differential_adhesion_force->SetHeterotypicSpringConstantMultiplier(0.5);
+          p_differential_adhesion_force->SetCutOffLength(cut_off_length);
+          simulator.AddForce(p_differential_adhesion_force);
+
+          std::cout << "VeGF diffusion" << endl ;
+
+          // Create a parabolic PDE object - see the header file for what the constructor arguments mean
+          MAKE_PTR_ARGS(CellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_UPTAKE_RATE,M_DECAY_COEFFICIENT,M_RADIUS));
+
+          // Create a constant boundary conditions object, taking the value zero
+          MAKE_PTR_ARGS(ConstBoundaryCondition<2>, p_bc, (0.0));
+
+          // Create a ParabolicGrowingDomainPdeModifier, which is a simulation modifier, using the PDE and BC objects, and use 'true' to specify that you want a Dirichlet (rather than Neumann) BC
+          MAKE_PTR_ARGS(ParabolicGrowingDomainPdeModifier<2>, p_pde_modifier, (p_pde, p_bc, false)); // Change this last argument to 'false' for no-flux BCs (Dirichlet??)
+
+          // Optionally, name the PDE state variable (for visualization purposes)
+          p_pde_modifier->SetDependentVariableName("morphogen");
+
+          // Add the modifier to the simulation and run it
+
+          std::cout << "Adding Modifier" << endl ;
+
+          p_pde_modifier->SetOutputGradient(true);
+          p_pde_modifier->GetOutputGradient();
+
+          simulator.AddSimulationModifier(p_pde_modifier);
+          simulator.AddSimulationModifier(force_modifier);
+
+          std::cout << "Cell Labelling" << endl ;
+
+          // Record mesh
+          //TrianglesMeshWriter<2,2> triangles_mesh_writer("TestNodeMeshwriter", "triangles_mesh");
+          //TetrahedralMesh<2,2> triangles_mesh = static_cast<NodeBasedCellPopulation<2>(simulator.rGetCellPopulation()).rGetMesh();
+          //triangles_mesh_writer.WriteFilesUsingMesh(p_mesh);
+
+
+          cell_population.AddCellWriter<CellLabelWriter>();
+          cell_population.AddCellWriter<CellAppliedForceWriter>();
+
+          for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
+               cell_iter != cell_population.End();
+               ++cell_iter)
+             {
+
+               unsigned node_index = cell_population.GetNodeCorrespondingToCell(*cell_iter)->GetIndex();
+               c_vector<double, 2> location = cell_population.GetLocationOfCellCentre(*cell_iter);
+
+               //cell_iter->GetCellData()->SetItem("xpos", location[0]);
+               //cell_iter->GetCellData()->SetItem("ypos", location[1]);
+               cell_iter->GetCellData()->SetItem("xposini", location[0]);
+               cell_iter->GetCellData()->SetItem("yposini", location[1]);
+
+                 if (node_index == 113 )
+                 {
+                   cell_iter->AddCellProperty(p_label);
+                   cell_iter->AddCellProperty(p_endo);
+                 }
+                 if (node_index == 25 )
+                 {
+                   cell_iter->AddCellProperty(p_label);
+                 }
+             }
+
+
+          //MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+          //simulator.AddSimulationModifier(morphogen_modifier);
+          MAKE_PTR(RadiusTrackingModifier<2>, radius_modifier);
+          simulator.AddSimulationModifier(radius_modifier);
+          MAKE_PTR(PositionTrackingModifier<2>, position_modifier);
+          simulator.AddSimulationModifier(position_modifier);
+        /*  MAKE_PTR(PolarityTrackingModifier<2>, polarity_modifier);
+          simulator.AddSimulationModifier(polarity_modifier); */
+          MAKE_PTR_ARGS(MyForce, p_force, (32.0));
+          simulator.AddForce(p_force);
+          std::cout << "Active force" << endl ;
+
+          // MAKE_PTR(EndothelialAdhesionGeneralisedLinearSpringForce<2>, p_endothelial_adhesion_force);
+          // simulator.AddForce(p_endothelial_adhesion_force);
+
+          simulator.SetEndTime(5.0);
+          simulator.SetDt(1.0/100.0);
+          simulator.SetSamplingTimestepMultiple(1.0);
+          std::cout << "Growing Monolayer" << endl ;
+          simulator.Solve();
+
+      }
+
+  void TestCase3()
+      {
+            // Create a simple mesh
+
+            //HoneycombMeshGenerator generator(3, 3, 0);
+            TrianglesMeshReader<2,2> mesh_reader("testoutput/TestNodeMeshWriter/triangles_mesh");
+            TetrahedralMesh<2,2> p_generating_mesh ;
+            p_generating_mesh.ConstructFromMeshReader(mesh_reader);
+
+
+            //Extended to allow sorting for longer distances
+            double cut_off_length = 2.5;
+
+            // Convert this to a NodesOnlyMesh
+            NodesOnlyMesh<2> p_mesh;
+            p_mesh.ConstructNodesWithoutMesh(p_generating_mesh, cut_off_length);
+
+
+            std::vector<CellPtr> cells;
+            GenerateCells(p_mesh.GetNumNodes(),cells);
+
+            // Create cell population
+            NodeBasedCellPopulation<2> cell_population(p_mesh, cells);
+
+            //Make cell data writer so can pass in variable name
+            boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer(new CellDataItemWriter<2,2>("morphogen"));
+            cell_population.AddCellWriter(p_cell_data_item_writer);
+            cell_population.AddCellWriter<CellAgesWriter>();
+            MAKE_PTR(CellLabel, p_label);
+            MAKE_PTR(CellEndo, p_endo);
+            MAKE_PTR(ForceTrackingModifier<2>, force_modifier);
+
+
+            // Set up cell-based simulation and output directory
+            OffLatticeSimulation<2> simulator(cell_population);
+            simulator.SetOutputDirectory("TestCenterBasedModel/Sensitivity/Case3");
+
+            // Create a force law and pass it to the simulation
+            MAKE_PTR(DifferentialAdhesionGeneralisedLinearSpringForce<2>, p_differential_adhesion_force);
+            p_differential_adhesion_force->SetMeinekeSpringStiffness(15.0);
+            p_differential_adhesion_force->SetHomotypicLabelledSpringConstantMultiplier(7.0);
+            p_differential_adhesion_force->SetHeterotypicSpringConstantMultiplier(0.5);
+            p_differential_adhesion_force->SetCutOffLength(cut_off_length);
+            simulator.AddForce(p_differential_adhesion_force);
+
+            std::cout << "VeGF diffusion" << endl ;
+
+            // Create a parabolic PDE object - see the header file for what the constructor arguments mean
+            MAKE_PTR_ARGS(CellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_UPTAKE_RATE,M_DECAY_COEFFICIENT,M_RADIUS));
+
+            // Create a constant boundary conditions object, taking the value zero
+            MAKE_PTR_ARGS(ConstBoundaryCondition<2>, p_bc, (0.0));
+
+            // Create a ParabolicGrowingDomainPdeModifier, which is a simulation modifier, using the PDE and BC objects, and use 'true' to specify that you want a Dirichlet (rather than Neumann) BC
+            MAKE_PTR_ARGS(ParabolicGrowingDomainPdeModifier<2>, p_pde_modifier, (p_pde, p_bc, false)); // Change this last argument to 'false' for no-flux BCs (Dirichlet??)
+
+            // Optionally, name the PDE state variable (for visualization purposes)
+            p_pde_modifier->SetDependentVariableName("morphogen");
+
+            // Add the modifier to the simulation and run it
+
+            std::cout << "Adding Modifier" << endl ;
+
+            p_pde_modifier->SetOutputGradient(true);
+            p_pde_modifier->GetOutputGradient();
+
+            simulator.AddSimulationModifier(p_pde_modifier);
+            simulator.AddSimulationModifier(force_modifier);
+
+            std::cout << "Cell Labelling" << endl ;
+
+            // Record mesh
+            //TrianglesMeshWriter<2,2> triangles_mesh_writer("TestNodeMeshwriter", "triangles_mesh");
+            //TetrahedralMesh<2,2> triangles_mesh = static_cast<NodeBasedCellPopulation<2>(simulator.rGetCellPopulation()).rGetMesh();
+            //triangles_mesh_writer.WriteFilesUsingMesh(p_mesh);
+
+
+            cell_population.AddCellWriter<CellLabelWriter>();
+            cell_population.AddCellWriter<CellAppliedForceWriter>();
+
+            for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
+                 cell_iter != cell_population.End();
+                 ++cell_iter)
+               {
+
+                 unsigned node_index = cell_population.GetNodeCorrespondingToCell(*cell_iter)->GetIndex();
+                 c_vector<double, 2> location = cell_population.GetLocationOfCellCentre(*cell_iter);
+
+                 //cell_iter->GetCellData()->SetItem("xpos", location[0]);
+                 //cell_iter->GetCellData()->SetItem("ypos", location[1]);
+                 cell_iter->GetCellData()->SetItem("xposini", location[0]);
+                 cell_iter->GetCellData()->SetItem("yposini", location[1]);
+
+                   if (node_index == 113 )
+                   {
+                     cell_iter->AddCellProperty(p_label);
+                     cell_iter->AddCellProperty(p_endo);
+                   }
+                   if (node_index == 25 )
+                   {
+                     cell_iter->AddCellProperty(p_label);
+                   }
+               }
+
+
+            //MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+            //simulator.AddSimulationModifier(morphogen_modifier);
+            MAKE_PTR(RadiusTrackingModifier<2>, radius_modifier);
+            simulator.AddSimulationModifier(radius_modifier);
+            MAKE_PTR(PositionTrackingModifier<2>, position_modifier);
+            simulator.AddSimulationModifier(position_modifier);
+          /*  MAKE_PTR(PolarityTrackingModifier<2>, polarity_modifier);
+            simulator.AddSimulationModifier(polarity_modifier); */
+            MAKE_PTR_ARGS(MyForce, p_force, (32.0));
+            simulator.AddForce(p_force);
+            std::cout << "Active force" << endl ;
+
+            // MAKE_PTR(EndothelialAdhesionGeneralisedLinearSpringForce<2>, p_endothelial_adhesion_force);
+            // simulator.AddForce(p_endothelial_adhesion_force);
+
+            simulator.SetEndTime(5.0);
+            simulator.SetDt(1.0/100.0);
+            simulator.SetSamplingTimestepMultiple(1.0);
+            std::cout << "Growing Monolayer" << endl ;
+            simulator.Solve();
+
+        }
+
+  void TestCase4()
+            {
+                  // Create a simple mesh
+
+                  //HoneycombMeshGenerator generator(3, 3, 0);
+                  TrianglesMeshReader<2,2> mesh_reader("testoutput/TestNodeMeshWriter/triangles_mesh");
+                  TetrahedralMesh<2,2> p_generating_mesh ;
+                  p_generating_mesh.ConstructFromMeshReader(mesh_reader);
+
+
+                  //Extended to allow sorting for longer distances
+                  double cut_off_length = 2.5;
+
+                  // Convert this to a NodesOnlyMesh
+                  NodesOnlyMesh<2> p_mesh;
+                  p_mesh.ConstructNodesWithoutMesh(p_generating_mesh, cut_off_length);
+
+
+                  std::vector<CellPtr> cells;
+                  GenerateCells(p_mesh.GetNumNodes(),cells);
+
+                  // Create cell population
+                  NodeBasedCellPopulation<2> cell_population(p_mesh, cells);
+
+                  //Make cell data writer so can pass in variable name
+                  boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer(new CellDataItemWriter<2,2>("morphogen"));
+                  cell_population.AddCellWriter(p_cell_data_item_writer);
+                  cell_population.AddCellWriter<CellAgesWriter>();
+                  MAKE_PTR(CellLabel, p_label);
+                  MAKE_PTR(CellEndo, p_endo);
+                  MAKE_PTR(ForceTrackingModifier<2>, force_modifier);
+
+
+                  // Set up cell-based simulation and output directory
+                  OffLatticeSimulation<2> simulator(cell_population);
+                  simulator.SetOutputDirectory("TestCenterBasedModel/Sensitivity/Case4");
+
+                  // Create a force law and pass it to the simulation
+                  MAKE_PTR(DifferentialAdhesionGeneralisedLinearSpringForce<2>, p_differential_adhesion_force);
+                  p_differential_adhesion_force->SetMeinekeSpringStiffness(15.0);
+                  p_differential_adhesion_force->SetHomotypicLabelledSpringConstantMultiplier(10.0);
+                  p_differential_adhesion_force->SetHeterotypicSpringConstantMultiplier(0.5);
+                  p_differential_adhesion_force->SetCutOffLength(cut_off_length);
+                  simulator.AddForce(p_differential_adhesion_force);
+
+                  std::cout << "VeGF diffusion" << endl ;
+
+                  // Create a parabolic PDE object - see the header file for what the constructor arguments mean
+                  MAKE_PTR_ARGS(CellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_UPTAKE_RATE,M_DECAY_COEFFICIENT,M_RADIUS));
+
+                  // Create a constant boundary conditions object, taking the value zero
+                  MAKE_PTR_ARGS(ConstBoundaryCondition<2>, p_bc, (0.0));
+
+                  // Create a ParabolicGrowingDomainPdeModifier, which is a simulation modifier, using the PDE and BC objects, and use 'true' to specify that you want a Dirichlet (rather than Neumann) BC
+                  MAKE_PTR_ARGS(ParabolicGrowingDomainPdeModifier<2>, p_pde_modifier, (p_pde, p_bc, false)); // Change this last argument to 'false' for no-flux BCs (Dirichlet??)
+
+                  // Optionally, name the PDE state variable (for visualization purposes)
+                  p_pde_modifier->SetDependentVariableName("morphogen");
+
+                  // Add the modifier to the simulation and run it
+
+                  std::cout << "Adding Modifier" << endl ;
+
+                  p_pde_modifier->SetOutputGradient(true);
+                  p_pde_modifier->GetOutputGradient();
+
+                  simulator.AddSimulationModifier(p_pde_modifier);
+                  simulator.AddSimulationModifier(force_modifier);
+
+                  std::cout << "Cell Labelling" << endl ;
+
+                  // Record mesh
+                  //TrianglesMeshWriter<2,2> triangles_mesh_writer("TestNodeMeshwriter", "triangles_mesh");
+                  //TetrahedralMesh<2,2> triangles_mesh = static_cast<NodeBasedCellPopulation<2>(simulator.rGetCellPopulation()).rGetMesh();
+                  //triangles_mesh_writer.WriteFilesUsingMesh(p_mesh);
+
+
+                  cell_population.AddCellWriter<CellLabelWriter>();
+                  cell_population.AddCellWriter<CellAppliedForceWriter>();
+
+                  for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
+                       cell_iter != cell_population.End();
+                       ++cell_iter)
+                     {
+
+                       unsigned node_index = cell_population.GetNodeCorrespondingToCell(*cell_iter)->GetIndex();
+                       c_vector<double, 2> location = cell_population.GetLocationOfCellCentre(*cell_iter);
+
+                       //cell_iter->GetCellData()->SetItem("xpos", location[0]);
+                       //cell_iter->GetCellData()->SetItem("ypos", location[1]);
+                       cell_iter->GetCellData()->SetItem("xposini", location[0]);
+                       cell_iter->GetCellData()->SetItem("yposini", location[1]);
+
+                         if (node_index == 113 )
+                         {
+                           cell_iter->AddCellProperty(p_label);
+                           cell_iter->AddCellProperty(p_endo);
+                         }
+                         if (node_index == 25 )
+                         {
+                           cell_iter->AddCellProperty(p_label);
+                         }
+                     }
+
+
+                  //MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+                  //simulator.AddSimulationModifier(morphogen_modifier);
+                  MAKE_PTR(RadiusTrackingModifier<2>, radius_modifier);
+                  simulator.AddSimulationModifier(radius_modifier);
+                  MAKE_PTR(PositionTrackingModifier<2>, position_modifier);
+                  simulator.AddSimulationModifier(position_modifier);
+                /*  MAKE_PTR(PolarityTrackingModifier<2>, polarity_modifier);
+                  simulator.AddSimulationModifier(polarity_modifier); */
+                  MAKE_PTR_ARGS(MyForce, p_force, (32.0));
+                  simulator.AddForce(p_force);
+                  std::cout << "Active force" << endl ;
+
+                  // MAKE_PTR(EndothelialAdhesionGeneralisedLinearSpringForce<2>, p_endothelial_adhesion_force);
+                  // simulator.AddForce(p_endothelial_adhesion_force);
+
+                  simulator.SetEndTime(5.0);
+                  simulator.SetDt(1.0/100.0);
+                  simulator.SetSamplingTimestepMultiple(1.0);
+                  std::cout << "Growing Monolayer" << endl ;
+                  simulator.Solve();
+
+              }
 };
