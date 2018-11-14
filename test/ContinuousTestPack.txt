@@ -4,3 +4,4 @@ TestCellCycle.hpp
 TestCenterBasedModel.hpp
 TestMorphogenMeshWriter.hpp
 TestCenterBasedForTesting.hpp
+TestVertexBasedForTesting.hpp

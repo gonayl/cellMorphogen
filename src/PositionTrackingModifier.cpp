@@ -70,7 +70,7 @@ void PositionTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
          cell_iter != rCellPopulation.End();
          ++cell_iter)
     {
-      if (cell_iter->template HasCellProperty<CellLabel>())
+      if (cell_iter->template HasCellProperty<CellEndo>())
         {
 
         c_vector<double, DIM> cell_location = rCellPopulation.GetLocationOfCellCentre(*cell_iter) ;

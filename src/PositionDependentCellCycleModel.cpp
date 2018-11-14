@@ -45,7 +45,7 @@ bool PositionDependentCellCycleModel::ReadyToDivide()
                     mReadyToDivide = true;
                     mpCell->GetCellData()->SetItem("xposini", xpos) ;
                     mpCell->GetCellData()->SetItem("yposini", ypos) ;
-                    CounterSingleton::Instance()->IncrementCounter(); 
+                    CounterSingleton::Instance()->IncrementCounter();
                 }
             }
         }

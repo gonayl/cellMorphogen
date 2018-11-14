@@ -37,6 +37,7 @@
 #include "ParabolicGrowingDomainPdeModifier.hpp"
 #include "MorphogenCellwiseSourceParabolicPde.hpp"
 #include "PolarityTrackingModifier.hpp"
+#include "CellAddingModifier.hpp"
 
 #include "AbstractForce.hpp"
 #include <numeric>
@@ -66,6 +67,7 @@
 // #include "EndothelialAdhesionGeneralisedLinearSpringForce.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
 #include "CounterSingleton.hpp"
+#include "DifferentialAdhesionForce.hpp"
 
 class MyForce : public AbstractForce<2>
 {
@@ -155,23 +157,23 @@ private:
           MAKE_PTR(WildTypeCellMutationState, p_state);
           MAKE_PTR(TransitCellProliferativeType, p_transit_type);
           MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
-          double phase = rand() % 20 + 1;
+          // double phase = rand() % 20 + 1;
           // unsigned node_index = i;
-          double magnitude = 1.0 ;
+          // double magnitude = 1.0 ;
 
-          std::complex<double> coord = std::polar (magnitude,phase);
+          /* std::complex<double> coord = std::polar (magnitude,phase);
           //std::cout << node_index << endl ;
           double polarityx = std::abs(coord)*cos(std::arg(coord));
           double polarityy = std::abs(coord)*sin(std::arg(coord));
 
-          std::cout << coord << "corresponds to (" << polarityx << "," << polarityy << ")" ;
+          std::cout << coord << "corresponds to (" << polarityx << "," << polarityy << ")" ; */
 
           CellPtr p_cell(new Cell(p_state, p_cycle_model));
           p_cell->SetCellProliferativeType(p_transit_type);
-          p_cell->GetCellData()->SetItem("magnitude", magnitude);
+          /* p_cell->GetCellData()->SetItem("magnitude", magnitude);
           p_cell->GetCellData()->SetItem("phase", phase);
           p_cell->GetCellData()->SetItem("polarityx", polarityx);
-          p_cell->GetCellData()->SetItem("polarityy", polarityy);
+          p_cell->GetCellData()->SetItem("polarityy", polarityy); */
           p_cell->GetCellData()->SetItem("target area", 1.0);
           cells.push_back(p_cell);
 
@@ -183,7 +185,7 @@ public:
   {
         // Create a simple mesh
 
-        HoneycombMeshGenerator generator(1, 2);
+        HoneycombMeshGenerator generator(1, 4);
         MutableMesh<2,2>* p_generating_mesh = generator.GetMesh();
         NodesOnlyMesh<2> p_mesh;
         p_mesh.ConstructNodesWithoutMesh(*p_generating_mesh, 1.5);
@@ -196,8 +198,8 @@ public:
 
         //Make cell data writer so can pass in variable name
         cell_population.AddCellWriter<CellAgesWriter>();
-        cell_population.AddCellWriter<CellAppliedForceWriter>();
-        MAKE_PTR(ForceTrackingModifier<2>, force_modifier);
+        // cell_population.AddCellWriter<CellAppliedForceWriter>();
+        // MAKE_PTR(ForceTrackingModifier<2>, force_modifier);
 
 
         // Set up cell-based simulation and output directory
@@ -216,23 +218,28 @@ public:
         for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
              cell_iter != cell_population.End();
              ++cell_iter)
-           {
 
-             unsigned node_index = cell_population.GetNodeCorrespondingToCell(*cell_iter)->GetIndex();
+             {
+              if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 1)
+              {
+                  cell_iter->AddCellProperty(p_label);
+              }
+             }
 
-               if (node_index == 1)
-               {
-                 cell_iter->AddCellProperty(p_label);
-               }
-           }
+        /* simulator.AddSimulationModifier(force_modifier);
 
-        simulator.AddSimulationModifier(force_modifier);
         MAKE_PTR(PolarityTrackingModifier<2>, polarity_modifier);
         simulator.AddSimulationModifier(polarity_modifier);
 
         MAKE_PTR_ARGS(MyForce, p_force, (3.0));
         simulator.AddForce(p_force);
-        std::cout << "Active force" << endl ;
+        std::cout << "Active force" << endl ; */
+
+        MAKE_PTR(CellAddingModifier<2>, cell_adding_modifier);
+        simulator.AddSimulationModifier(cell_adding_modifier);
+
+        // FileFinder file_finder("blah", RelativeTo::ChasteTestOutput);
+        // std::cout << file_finder.GetAbsolutePath();
 
         simulator.SetEndTime(10.0);
         simulator.SetDt(1.0/100.0);

@@ -33,19 +33,19 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 */
 
-#include "ForceDependentCellCycleModel.hpp"
+#include "NeighbourDependentCellCycleModel.hpp"
 #include "RandomNumberGenerator.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
 #include <math.h>
 
-ForceDependentCellCycleModel::ForceDependentCellCycleModel()
+NeighbourDependentCellCycleModel::NeighbourDependentCellCycleModel()
     : AbstractCellCycleModel(),
       mMaxStretch(0.5),
       mMinimumDivisionAge(0.5)
 {
 }
 
-ForceDependentCellCycleModel::ForceDependentCellCycleModel(const ForceDependentCellCycleModel& rModel)
+NeighbourDependentCellCycleModel::NeighbourDependentCellCycleModel(const NeighbourDependentCellCycleModel& rModel)
    : AbstractCellCycleModel(rModel),
      mMaxStretch(rModel.mMaxStretch),
      mMinimumDivisionAge(rModel.mMinimumDivisionAge)
@@ -58,7 +58,7 @@ ForceDependentCellCycleModel::ForceDependentCellCycleModel(const ForceDependentC
      */
 }
 
-bool ForceDependentCellCycleModel::ReadyToDivide()
+bool NeighbourDependentCellCycleModel::ReadyToDivide()
 {
     assert(mpCell != nullptr);
 
@@ -69,9 +69,6 @@ bool ForceDependentCellCycleModel::ReadyToDivide()
             // double dt = SimulationTime::Instance()->GetTimeStep();
             if (!(mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>()))
             {
-                /*double forcex = mpCell->GetCellData()->GetItem("forcex");
-                double forcey = mpCell->GetCellData()->GetItem("forcey");
-                double force = sqrt((forcex * forcex) + (forcey * forcey));*/
 
                 if (GetAge() > mMaxStretch)
                 {
@@ -83,42 +80,42 @@ bool ForceDependentCellCycleModel::ReadyToDivide()
     return mReadyToDivide;
 }
 
-AbstractCellCycleModel* ForceDependentCellCycleModel::CreateCellCycleModel()
+AbstractCellCycleModel* NeighbourDependentCellCycleModel::CreateCellCycleModel()
 {
-    return new ForceDependentCellCycleModel(*this);
+    return new NeighbourDependentCellCycleModel(*this);
 }
 
-void ForceDependentCellCycleModel::SetMaxStretch(double divisionProbability)
+void NeighbourDependentCellCycleModel::SetMaxStretch(double divisionProbability)
 {
     mMaxStretch = divisionProbability;
 }
 
-double ForceDependentCellCycleModel::GetMaxStretch()
+double NeighbourDependentCellCycleModel::GetMaxStretch()
 {
     return mMaxStretch;
 }
 
-void ForceDependentCellCycleModel::SetMinimumDivisionAge(double minimumDivisionAge)
+void NeighbourDependentCellCycleModel::SetMinimumDivisionAge(double minimumDivisionAge)
 {
     mMinimumDivisionAge = minimumDivisionAge;
 }
 
-double ForceDependentCellCycleModel::GetMinimumDivisionAge()
+double NeighbourDependentCellCycleModel::GetMinimumDivisionAge()
 {
     return mMinimumDivisionAge;
 }
 
-double ForceDependentCellCycleModel::GetAverageTransitCellCycleTime()
+double NeighbourDependentCellCycleModel::GetAverageTransitCellCycleTime()
 {
     return 1.0/mMaxStretch;
 }
 
-double ForceDependentCellCycleModel::GetAverageStemCellCycleTime()
+double NeighbourDependentCellCycleModel::GetAverageStemCellCycleTime()
 {
     return 1.0/mMaxStretch;
 }
 
-void ForceDependentCellCycleModel::OutputCellCycleModelParameters(out_stream& rParamsFile)
+void NeighbourDependentCellCycleModel::OutputCellCycleModelParameters(out_stream& rParamsFile)
 {
     *rParamsFile << "\t\t\t<MaxStretch>" << mMaxStretch << "</MaxStretch>\n";
     *rParamsFile << "\t\t\t<MinimumDivisionAge>" << mMinimumDivisionAge << "</MinimumDivisionAge>\n";
@@ -129,4 +126,4 @@ void ForceDependentCellCycleModel::OutputCellCycleModelParameters(out_stream& rP
 
 // Serialization for Boost >= 1.36
 #include "SerializationExportWrapperForCpp.hpp"
-CHASTE_CLASS_EXPORT(ForceDependentCellCycleModel)
+CHASTE_CLASS_EXPORT(NeighbourDependentCellCycleModel)

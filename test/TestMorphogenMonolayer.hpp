@@ -135,24 +135,6 @@ public:
         mesh.ConstructFromMeshReader(mesh_reader);
         mesh.SetCellRearrangementThreshold(0.1);
 
-       // p_mesh->Translate(-M_NUM_CELLS_ACROSS,-sqrt(3.0)*M_NUM_CELLS_ACROSS+ sqrt(3.0)/6.0);
-
-        /* Remove all elements outside the specified initial radius
-        for (VertexMesh<2,2>::VertexElementIterator elem_iter = p_mesh->GetElementIteratorBegin();
-                 elem_iter != p_mesh->GetElementIteratorEnd();
-                 ++elem_iter)
-        {
-            unsigned elem_index = elem_iter->GetIndex();
-            c_vector<double,2> element_centre = p_mesh->GetCentroidOfElement(elem_index);
-
-            if (norm_2(element_centre)>0.5*M_NUM_CELLS_ACROSS + 1e-5)
-            {
-                p_mesh->DeleteElementPriorToReMesh(elem_index);
-            }
-        }
-        p_mesh->ReMesh(); */
-
-
         // Create Cells
         std::vector<CellPtr> cells;
         MAKE_PTR(WildTypeCellMutationState, p_state);
