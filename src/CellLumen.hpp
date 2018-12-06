@@ -25,7 +25,7 @@ private:
 
 public:
 
-    CellLumen(unsigned colour=5);
+    CellLumen(unsigned colour=4);
 
     virtual ~CellLumen();
 

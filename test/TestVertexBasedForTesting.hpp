@@ -60,12 +60,15 @@
 #include "CellLabel.hpp"
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
+#include "CellEpi.hpp"
 #include "CellLabelWriter.hpp"
+#include "CellTypeWriter.hpp"
 
 #include "VertexMeshWriter.hpp"
 #include "MorphogenTrackingModifier.hpp"
 #include "PerimeterTrackingModifier.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
+#include "StochasticLumenCellCycleModel.hpp"
 
 #include <stdlib.h>
 
@@ -82,13 +85,9 @@ private:
 
         for (unsigned i=0; i<num_cells; i++)
         {
-            //UniformCellCycleModel* p_cycle_model = new UniformCellCycleModel();
-            FixedG1GenerationalCellCycleModel* p_cycle_model = new FixedG1GenerationalCellCycleModel();
-            // UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
-            //MorphogenDependentCellCycleModel* p_cycle_model = new MorphogenDependentCellCycleModel();
-            //p_cycle_model->SetDimension(2);
-            //p_cycle_model->SetCurrentMass(0.5*(p_gen->ranf()+1.0));
-            //p_cycle_model->SetMorphogenInfluence(1.0);
+
+            // StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
+            UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel() ;
 
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
@@ -110,13 +109,20 @@ private:
 
 public:
 
-    void TestVertexBasedMorphogenMonolayerDirichletMotile() throw (Exception)
+    void TestVertexBasedMorphogenMonolayerDirichletMotile()
     {
         // Create Mesh
 
-        HoneycombVertexMeshGenerator generator(10, 10);
+        /* HoneycombVertexMeshGenerator generator(10, 10);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
-        p_mesh->SetCellRearrangementThreshold(0.1);
+        p_mesh->SetCellRearrangementThreshold(0.1); */
+
+	std::cout << "Creating mesh" << endl ;
+
+	 VertexMeshReader<2,2> mesh_reader("testoutput/VertexModel/morphogen_mesh");
+        MutableVertexMesh<2,2> p_mesh;
+        p_mesh.ConstructFromMeshReader(mesh_reader);
+        p_mesh.SetCellRearrangementThreshold(0.1);
 
         // Create Cells
         std::vector<CellPtr> cells;
@@ -124,19 +130,20 @@ public:
         MAKE_PTR(TransitCellProliferativeType, p_transit_type);
         MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
         CellsGenerator<FixedG1GenerationalCellCycleModel, 2> cells_generator;
-        cells_generator.GenerateBasic(cells, p_mesh->GetNumElements(), std::vector<unsigned>(), p_transit_type);
+        cells_generator.GenerateBasic(cells, p_mesh.GetNumElements(), std::vector<unsigned>(), p_transit_type);
 
-        VertexBasedCellPopulation<2> cell_population(*p_mesh, cells);
+        VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
 
         //Make cell data writer so can pass in variable name
-        cell_population.AddCellWriter<CellLabelWriter>();
+        cell_population.AddCellWriter<CellTypeWriter>();
 
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLumen, p_lumen);
+	      MAKE_PTR(CellEpi, p_epi);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("VertexModel/3types/3");
+        simulator.SetOutputDirectory("VertexModel/FromHalo/TestWriter");
         /* simulator.SetDt(1.0/5.0);
         simulator.SetSamplingTimestepMultiple(5);
         simulator.SetEndTime(M_TIME_FOR_SIMULATION); */
@@ -150,10 +157,10 @@ public:
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
         p_force->SetEndoEndoAdhesionEnergyParameter(5.0);
-        p_force->SetLumenLumenAdhesionEnergyParameter(1.0);
+        p_force->SetLumenLumenAdhesionEnergyParameter(10.0);
         p_force->SetEndoEpiAdhesionEnergyParameter(5.0);
-        p_force->SetLumenEpiAdhesionEnergyParameter(10.0);
-        p_force->SetLumenEndoAdhesionEnergyParameter(10.0);
+        p_force->SetLumenEpiAdhesionEnergyParameter(1.0);
+        p_force->SetLumenEndoAdhesionEnergyParameter(1.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
@@ -176,6 +183,10 @@ public:
               {
                   cell_iter->AddCellProperty(p_lumen);
               }
+	            else
+	            {
+		              cell_iter->AddCellProperty(p_epi);
+	            }
              }
 
         MAKE_PTR(SimpleTargetAreaModifier<2>, p_growth_modifier);
@@ -183,11 +194,13 @@ public:
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(50.0);
+        simulator.SetEndTime(30.0);
         simulator.SetDt(1.0/100.0);
         simulator.SetSamplingTimestepMultiple(1);
 
         simulator.Solve();
+
+
 
 
     }

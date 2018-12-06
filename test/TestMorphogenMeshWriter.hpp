@@ -53,7 +53,6 @@
 
 #include "PetscSetupAndFinalize.hpp"
 
-#include "MotileCellForce.hpp"
 #include "CellLabel.hpp"
 #include "CellEndo.hpp"
 #include "CellLabelWriter.hpp"
@@ -102,7 +101,7 @@ private:
 
 public:
 
-    void TestMorphogenMeshWriter() throw (Exception)
+    void TestMorphogenMeshWriter() 
     {
         // Create Mesh
         HoneycombVertexMeshGenerator generator(3.0, 3.0);

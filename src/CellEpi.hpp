@@ -1,12 +1,12 @@
-#ifndef CELLENDO_HPP_
-#define CELLENDO_HPP_
+#ifndef CELLEPI_HPP_
+#define CELLEPI_HPP_
 
 #include <boost/shared_ptr.hpp>
 #include "AbstractCellProperty.hpp"
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
 
-class CellEndo : public AbstractCellProperty
+class CellEpi : public AbstractCellProperty
 {
 protected:
 
@@ -25,15 +25,14 @@ private:
 
 public:
 
-    CellEndo(unsigned colour=5);
+    CellEpi(unsigned colour=1);
 
-    virtual ~CellEndo();
-
+    virtual ~CellEpi();
 
     unsigned GetColour() const;
 };
 
 #include "SerializationExportWrapper.hpp"
-CHASTE_CLASS_EXPORT(CellEndo)
+CHASTE_CLASS_EXPORT(CellEpi)
 
-#endif /* CELLENDO_HPP_ */
+#endif /* CELLEPI_HPP_ */
