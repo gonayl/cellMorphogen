@@ -27,6 +27,7 @@ private:
     {
         archive & boost::serialization::base_object<AbstractSimpleGenerationalCellCycleModel>(*this);
         archive & mMinimumDivisionAge;
+        archive & mMaxTransitGeneration;
     }
 
 protected:
@@ -36,6 +37,10 @@ protected:
      * Defaults to 1 hour.
      */
     double mMinimumDivisionAge;
+
+    double mMaxTransitGeneration ;
+
+    void SetMaxTransitGeneration() ;
 
     /**
      * Set the duration of G1 phase. This method is called on each cell at the
@@ -92,7 +97,7 @@ public:
      * @return whether the cell is ready to divide.
      */
     virtual bool ReadyToDivide();
-    
+
 
     /**
      * Overridden builder method to create new instances of

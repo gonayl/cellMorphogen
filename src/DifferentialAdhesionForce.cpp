@@ -1,17 +1,20 @@
 #include "DifferentialAdhesionForce.hpp"
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
+#include "CellEpi.hpp"
 
 template<unsigned DIM>
 DifferentialAdhesionForce<DIM>::DifferentialAdhesionForce()
     : NagaiHondaForce<DIM>(),
       mEndoEndoAdhesionEnergyParameter(1.0),
       mLumenLumenAdhesionEnergyParameter(1.0),
+      mEpiEpiAdhesionEnergyParameter(1.0),
       mEndoEpiAdhesionEnergyParameter(1.0),
-      mLumenEpiAdhesionEnergyParameter(1.0),
-      mLumenEndoAdhesionEnergyParameter(1.0),
+      mEpiLumenAdhesionEnergyParameter(1.0),
+      mEndoLumenAdhesionEnergyParameter(1.0),
       mEndoBoundaryAdhesionEnergyParameter(1.0),
-      mLumenBoundaryAdhesionEnergyParameter(1.0)
+      mLumenBoundaryAdhesionEnergyParameter(1.0),
+      mEpiBoundaryAdhesionEnergyParameter(1.0)
 {
 }
 
@@ -58,10 +61,15 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             // This cell is labelled "lumen"
             return this->GetLumenBoundaryAdhesionEnergyParameter();
         }
+        else if (p_cell->template HasCellProperty<CellEpi>())
+        {
+            // This cell is labelled "lumen"
+            return this->GetEpiBoundaryAdhesionEnergyParameter();
+        }
         else
         {
             // This cell is not labelled
-            return this->GetNagaiHondaCellBoundaryAdhesionEnergyParameter();
+            EXCEPTION("All cells must be labelled to use DifferentialAdhesionForce ! ");
         }
     }
     else
@@ -69,6 +77,7 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
         // Work out the number of labelled cells: 0,1 or 2
         unsigned num_endo_cells = 0;
         unsigned num_lumen_cells = 0;
+        unsigned num_epi_cells = 0;
         for (std::set<unsigned>::iterator iter = shared_elements.begin();
              iter != shared_elements.end();
              ++iter)
@@ -86,6 +95,10 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             {
                 num_lumen_cells++;
             }
+            else if (p_cell->template HasCellProperty<CellEpi>())
+            {
+                num_epi_cells++;
+            }
         }
 
         if (num_endo_cells == 2)
@@ -98,26 +111,30 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             // Both cells are labelled "lumen"
             return this->GetLumenLumenAdhesionEnergyParameter();
         }
+        else if (num_epi_cells == 2)
+        {
+            // Both cells are labelled "lumen"
+            return this->GetEpiEpiAdhesionEnergyParameter();
+        }
         else if (num_endo_cells == 1 && num_lumen_cells == 1)
         {
             // One cell is labelled "endo" and the other "lumen"
-            return this->GetLumenEndoAdhesionEnergyParameter();
+            return this->GetEndoLumenAdhesionEnergyParameter();
         }
-        else if (num_endo_cells == 1 && num_lumen_cells == 0)
+        else if (num_endo_cells == 1 && num_epi_cells == 1)
         {
-            // One cell is labelled "endo" and the other is not labelled
+            // One cell is labelled "endo" and the other "epi""
             return this->GetEndoEpiAdhesionEnergyParameter();
         }
-        else if (num_lumen_cells == 1 && num_endo_cells == 0)
+        else if (num_lumen_cells == 1 && num_epi_cells == 1)
         {
-            // One cell is labelled "lumen"
-            return this->GetLumenEpiAdhesionEnergyParameter();
+            // One cell is labelled "endo" and the other "epi""
+            return this->GetEpiLumenAdhesionEnergyParameter();
         }
         else
         {
-            // Neither cell is labelled
-            assert(num_endo_cells == 0);
-            return this->GetNagaiHondaCellCellAdhesionEnergyParameter();
+          // At least one cell is not labelled
+          EXCEPTION("All cells must be labelled to use DifferentialAdhesionForce ! ");
         }
     }
 }
@@ -135,21 +152,27 @@ double DifferentialAdhesionForce<DIM>::GetLumenLumenAdhesionEnergyParameter()
 }
 
 template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetEpiEpiAdhesionEnergyParameter()
+{
+    return mEpiEpiAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
 double DifferentialAdhesionForce<DIM>::GetEndoEpiAdhesionEnergyParameter()
 {
     return mEndoEpiAdhesionEnergyParameter;
 }
 
 template<unsigned DIM>
-double DifferentialAdhesionForce<DIM>::GetLumenEpiAdhesionEnergyParameter()
+double DifferentialAdhesionForce<DIM>::GetEpiLumenAdhesionEnergyParameter()
 {
-    return mLumenEpiAdhesionEnergyParameter;
+    return mEpiLumenAdhesionEnergyParameter;
 }
 
 template<unsigned DIM>
-double DifferentialAdhesionForce<DIM>::GetLumenEndoAdhesionEnergyParameter()
+double DifferentialAdhesionForce<DIM>::GetEndoLumenAdhesionEnergyParameter()
 {
-    return mLumenEndoAdhesionEnergyParameter;
+    return mEndoLumenAdhesionEnergyParameter;
 }
 
 template<unsigned DIM>
@@ -162,6 +185,12 @@ template<unsigned DIM>
 double DifferentialAdhesionForce<DIM>::GetLumenBoundaryAdhesionEnergyParameter()
 {
     return mLumenBoundaryAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetEpiBoundaryAdhesionEnergyParameter()
+{
+    return mEpiBoundaryAdhesionEnergyParameter;
 }
 
 
@@ -181,21 +210,27 @@ void DifferentialAdhesionForce<DIM>::SetLumenLumenAdhesionEnergyParameter(double
 }
 
 template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetEpiEpiAdhesionEnergyParameter(double epiEpiAdhesionEnergyParameter)
+{
+    mEpiEpiAdhesionEnergyParameter = epiEpiAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
 void DifferentialAdhesionForce<DIM>::SetEndoEpiAdhesionEnergyParameter(double endoEpiAdhesionEnergyParameter)
 {
     mEndoEpiAdhesionEnergyParameter = endoEpiAdhesionEnergyParameter;
 }
 
 template<unsigned DIM>
-void DifferentialAdhesionForce<DIM>::SetLumenEpiAdhesionEnergyParameter(double lumenEpiAdhesionEnergyParameter)
+void DifferentialAdhesionForce<DIM>::SetEpiLumenAdhesionEnergyParameter(double epiLumenAdhesionEnergyParameter)
 {
-    mLumenEpiAdhesionEnergyParameter = lumenEpiAdhesionEnergyParameter;
+    mEpiLumenAdhesionEnergyParameter = epiLumenAdhesionEnergyParameter;
 }
 
 template<unsigned DIM>
-void DifferentialAdhesionForce<DIM>::SetLumenEndoAdhesionEnergyParameter(double lumenEndoAdhesionEnergyParameter)
+void DifferentialAdhesionForce<DIM>::SetEndoLumenAdhesionEnergyParameter(double endoLumenAdhesionEnergyParameter)
 {
-    mLumenEndoAdhesionEnergyParameter = lumenEndoAdhesionEnergyParameter;
+    mEndoLumenAdhesionEnergyParameter = endoLumenAdhesionEnergyParameter;
 }
 
 template<unsigned DIM>
@@ -211,6 +246,12 @@ void DifferentialAdhesionForce<DIM>::SetLumenBoundaryAdhesionEnergyParameter(dou
 }
 
 template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetEpiBoundaryAdhesionEnergyParameter(double epiBoundaryAdhesionEnergyParameter)
+{
+    mEpiBoundaryAdhesionEnergyParameter = epiBoundaryAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
 void DifferentialAdhesionForce<DIM>::OutputForceParameters(out_stream& rParamsFile)
 {
     // Output member variables
@@ -218,15 +259,19 @@ void DifferentialAdhesionForce<DIM>::OutputForceParameters(out_stream& rParamsFi
 
     *rParamsFile << "\t\t\t<LumenLumenAdhesionEnergyParameter>" << mLumenLumenAdhesionEnergyParameter << "</LumenLumenAdhesionEnergyParameter> \n";
 
+    *rParamsFile << "\t\t\t<EpiEpiAdhesionEnergyParameter>" << mEpiEpiAdhesionEnergyParameter << "</EpiEpiAdhesionEnergyParameter> \n";
+
     *rParamsFile << "\t\t\t<EndoEpiAdhesionEnergyParameter>" << mEndoEpiAdhesionEnergyParameter << "</EndoEpiAdhesionEnergyParameter> \n";
 
-    *rParamsFile << "\t\t\t<LumenEpiAdhesionEnergyParameter>" << mLumenEpiAdhesionEnergyParameter << "</LumenEpiAdhesionEnergyParameter> \n";
+    *rParamsFile << "\t\t\t<EpiLumenAdhesionEnergyParameter>" << mEpiLumenAdhesionEnergyParameter << "</EpiLumenAdhesionEnergyParameter> \n";
 
-    *rParamsFile << "\t\t\t<LumenEndoAdhesionEnergyParameter>" << mLumenEndoAdhesionEnergyParameter << "</LumenEndoAdhesionEnergyParameter> \n";
+    *rParamsFile << "\t\t\t<EndoLumenAdhesionEnergyParameter>" << mEndoLumenAdhesionEnergyParameter << "</EndoLumenAdhesionEnergyParameter> \n";
 
     *rParamsFile << "\t\t\t<EndoBoundaryAdhesionEnergyParameter>" << mEndoBoundaryAdhesionEnergyParameter << "</EndoBoundaryAdhesionEnergyParameter> \n";
 
     *rParamsFile << "\t\t\t<LumenBoundaryAdhesionEnergyParameter>" << mLumenBoundaryAdhesionEnergyParameter << "</LumenBoundaryAdhesionEnergyParameter> \n";
+
+    *rParamsFile << "\t\t\t<EpiBoundaryAdhesionEnergyParameter>" << mEpiBoundaryAdhesionEnergyParameter << "</EpiBoundaryAdhesionEnergyParameter> \n";
 
     // Call method on direct parent class
     NagaiHondaForce<DIM>::OutputForceParameters(rParamsFile);

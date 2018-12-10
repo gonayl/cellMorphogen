@@ -199,6 +199,7 @@ public:
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
+        simulator.AddSimulationModifier(p_stretch_modifier);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
@@ -208,8 +209,6 @@ public:
         simulator.SetEndTime(M_TIME_FOR_SIMULATION); */
 
         simulator.SetOutputDivisionLocations(true);
-
-        simulator.AddSimulationModifier(p_stretch_modifier);
 
         std::cout << "Adding passive force" << endl ;
         // Create Forces and pass to simulation

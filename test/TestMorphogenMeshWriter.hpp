@@ -101,10 +101,10 @@ private:
 
 public:
 
-    void TestMorphogenMeshWriter() 
+    void TestMorphogenMeshWriter()
     {
         // Create Mesh
-        HoneycombVertexMeshGenerator generator(3.0, 3.0);
+        HoneycombVertexMeshGenerator generator(6.0, 6.0);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
         p_mesh->SetCellRearrangementThreshold(0.1);
 

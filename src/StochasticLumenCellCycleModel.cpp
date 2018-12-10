@@ -9,13 +9,15 @@
 
 StochasticLumenCellCycleModel::StochasticLumenCellCycleModel()
     : AbstractSimpleGenerationalCellCycleModel(),
-      mMinimumDivisionAge(1.0)
+      mMinimumDivisionAge(1.0),
+      mMaxTransitGeneration(1.0)
 {
 }
 
 StochasticLumenCellCycleModel::StochasticLumenCellCycleModel(const StochasticLumenCellCycleModel& rModel)
    : AbstractSimpleGenerationalCellCycleModel(rModel),
-     mMinimumDivisionAge(rModel.mMinimumDivisionAge)
+     mMinimumDivisionAge(rModel.mMinimumDivisionAge),
+     mMaxTransitGeneration(rModel.mMaxTransitGeneration)
 {
     /*
      * Initialize only those member variables defined in this class.
@@ -33,7 +35,7 @@ bool StochasticLumenCellCycleModel::ReadyToDivide()
     {
       if (mpCell->HasCellProperty<CellLumen>())
       {
-        mMinimumDivisionAge = 1.0 ;
+        mMinimumDivisionAge = 0.1 ;
       }
       else if (mpCell->HasCellProperty<CellEpi>())
       {
@@ -73,9 +75,13 @@ void StochasticLumenCellCycleModel::SetG1Duration()
     {
       if (mpCell->HasCellProperty<CellLumen>())
       {
-        mG1Duration = 0.1 * GetTransitCellG1Duration() + 1*p_gen->ranf();
+        mG1Duration = 0.5 * GetTransitCellG1Duration() + 1*p_gen->ranf();
       }
       else if (mpCell->HasCellProperty<CellEpi>())
+      {
+        mG1Duration = GetTransitCellG1Duration() + 4*p_gen->ranf();
+      }
+      else if (mpCell->HasCellProperty<CellEndo>())
       {
         mG1Duration = GetTransitCellG1Duration() + 8*p_gen->ranf();
       }
@@ -88,6 +94,24 @@ void StochasticLumenCellCycleModel::SetG1Duration()
     {
         NEVER_REACHED;
     }
+}
+
+void StochasticLumenCellCycleModel::SetMaxTransitGeneration()
+{
+    assert(mpCell != nullptr);
+
+    if (mpCell->HasCellProperty<CellLumen>())
+      {
+        mMaxTransitGeneration = 20.0;
+      }
+    else if (mpCell->HasCellProperty<CellEpi>())
+      {
+        mMaxTransitGeneration = 2.0;
+      }
+    else if (mpCell->HasCellProperty<CellEndo>())
+      {
+        mMaxTransitGeneration = 3.0;
+      }
 }
 
 void StochasticLumenCellCycleModel::SetMinimumDivisionAge(double minimumDivisionAge)

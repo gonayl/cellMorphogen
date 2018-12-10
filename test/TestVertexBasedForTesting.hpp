@@ -63,6 +63,8 @@
 #include "CellEpi.hpp"
 #include "CellLabelWriter.hpp"
 #include "CellTypeWriter.hpp"
+#include "CellVolumesWriter.hpp"
+
 
 #include "VertexMeshWriter.hpp"
 #include "MorphogenTrackingModifier.hpp"
@@ -85,25 +87,29 @@ private:
 
         for (unsigned i=0; i<num_cells; i++)
         {
+            StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
+            UniformG1GenerationalCellCycleModel* p_unif_model = new UniformG1GenerationalCellCycleModel();
 
-            // StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
-            UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel() ;
-
+            if (i == 4)
+            {
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
 
             //p_cell->SetBirthTime(0.0);
             p_cell->SetBirthTime(-20);
             p_cell->InitialiseCellCycleModel();
-
-            // Initial Condition for Morphogen PDE
-            p_cell->GetCellData()->SetItem("morphogen",0.0);
-            p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
-            p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
-
-            // Set Target Area so dont need to use a growth model in vertex simulations
-            p_cell->GetCellData()->SetItem("target area", 1.0);
             rCells.push_back(p_cell);
+            }
+            else
+            {
+            CellPtr p_cell(new Cell(p_state, p_unif_model));
+            p_cell->SetCellProliferativeType(p_transit_type);
+
+            //p_cell->SetBirthTime(0.0);
+            p_cell->SetBirthTime(-20);
+            p_cell->InitialiseCellCycleModel();
+            rCells.push_back(p_cell);
+            }
         }
      }
 
@@ -113,29 +119,30 @@ public:
     {
         // Create Mesh
 
-        /* HoneycombVertexMeshGenerator generator(10, 10);
+        HoneycombVertexMeshGenerator generator(20, 20);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
-        p_mesh->SetCellRearrangementThreshold(0.1); */
+        p_mesh->SetCellRearrangementThreshold(0.1);
 
-	std::cout << "Creating mesh" << endl ;
+	      std::cout << "Creating mesh" << endl ;
 
-	 VertexMeshReader<2,2> mesh_reader("testoutput/VertexModel/morphogen_mesh");
+	      /* VertexMeshReader<2,2> mesh_reader("testoutput/VertexModel/morphogen_mesh");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
-        p_mesh.SetCellRearrangementThreshold(0.1);
+        p_mesh.SetCellRearrangementThreshold(0.1); */
 
         // Create Cells
         std::vector<CellPtr> cells;
         MAKE_PTR(WildTypeCellMutationState, p_state);
         MAKE_PTR(TransitCellProliferativeType, p_transit_type);
         MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
-        CellsGenerator<FixedG1GenerationalCellCycleModel, 2> cells_generator;
-        cells_generator.GenerateBasic(cells, p_mesh.GetNumElements(), std::vector<unsigned>(), p_transit_type);
+        CellsGenerator<StochasticLumenCellCycleModel, 2> cells_generator;
+        cells_generator.GenerateBasic(cells, p_mesh->GetNumElements(), std::vector<unsigned>(), p_transit_type);
 
-        VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
+        VertexBasedCellPopulation<2> cell_population(*p_mesh, cells);
 
         //Make cell data writer so can pass in variable name
         cell_population.AddCellWriter<CellTypeWriter>();
+        cell_population.AddCellWriter<CellLabelWriter>();
 
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLumen, p_lumen);
@@ -143,7 +150,7 @@ public:
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("VertexModel/FromHalo/TestWriter");
+        simulator.SetOutputDirectory("VertexModel/TestNewCycle/5");
         /* simulator.SetDt(1.0/5.0);
         simulator.SetSamplingTimestepMultiple(5);
         simulator.SetEndTime(M_TIME_FOR_SIMULATION); */
@@ -157,16 +164,20 @@ public:
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
         p_force->SetEndoEndoAdhesionEnergyParameter(5.0);
-        p_force->SetLumenLumenAdhesionEnergyParameter(10.0);
+        p_force->SetLumenLumenAdhesionEnergyParameter(4.0);
+        p_force->SetEpiEpiAdhesionEnergyParameter(4.0);
         p_force->SetEndoEpiAdhesionEnergyParameter(5.0);
-        p_force->SetLumenEpiAdhesionEnergyParameter(1.0);
-        p_force->SetLumenEndoAdhesionEnergyParameter(1.0);
+        p_force->SetEpiLumenAdhesionEnergyParameter(7.0);
+        p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
 
         simulator.AddForce(p_force);
+
+        MAKE_PTR(SimpleTargetAreaModifier<2>, p_growth_modifier);
+        simulator.AddSimulationModifier(p_growth_modifier);
 
         std::cout << "Labelling Random Cell " << endl ;
 
@@ -175,22 +186,17 @@ public:
              ++cell_iter)
 
              {
-              if (RandomNumberGenerator::Instance()->ranf() < 0.33)
-              {
-                  cell_iter->AddCellProperty(p_endo);
-              }
-              else if (RandomNumberGenerator::Instance()->ranf() >= 0.33 && RandomNumberGenerator::Instance()->ranf() < 0.66)
+              if (RandomNumberGenerator::Instance()->ranf() < 0.2)
               {
                   cell_iter->AddCellProperty(p_lumen);
+                  p_growth_modifier->SetReferenceTargetArea(0.5);
               }
 	            else
 	            {
 		              cell_iter->AddCellProperty(p_epi);
+                  p_growth_modifier->SetReferenceTargetArea(2.0);
 	            }
              }
-
-        MAKE_PTR(SimpleTargetAreaModifier<2>, p_growth_modifier);
-        simulator.AddSimulationModifier(p_growth_modifier);
 
         std::cout << "Growing Monolayer" << endl ;
 

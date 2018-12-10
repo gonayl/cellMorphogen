@@ -75,6 +75,13 @@ private:
     double mLumenLumenAdhesionEnergyParameter;
 
     /**
+     * Cell-cell adhesion energy parameter for two epi cells.
+     * Has units of kg (cell size at equilibrium rest length)^2 s^-2.
+     * Takes the default value 1.0.
+     */
+    double mEpiEpiAdhesionEnergyParameter;
+
+    /**
      * Cell-cell adhesion energy parameter for endothelial and epithelial cells.
      * Has has units of kg (cell size at equilibrium rest length)^2 s^-2.
      * Takes the default value 1.0.
@@ -86,28 +93,35 @@ private:
      * Has has units of kg (cell size at equilibrium rest length)^2 s^-2.
      * Takes the default value 1.0.
      */
-    double mLumenEpiAdhesionEnergyParameter;
+    double mEpiLumenAdhesionEnergyParameter;
 
     /**
      * Cell-cell adhesion energy parameter for lumen and endothelial cells.
      * Has has units of kg (cell size at equilibrium rest length)^2 s^-2.
      * Takes the default value 1.0.
      */
-    double mLumenEndoAdhesionEnergyParameter;
+    double mEndoLumenAdhesionEnergyParameter;
 
     /**
-     * Cell-boundary adhesion energy parameter for labelled cells.
+     * Cell-boundary adhesion energy parameter for endothelial cells.
      * Has units of kg (cell size at equilibrium rest length)^2 s^-2.
      * Takes the default value 1.0.
      */
     double mEndoBoundaryAdhesionEnergyParameter;
 
     /**
-     * Cell-boundary adhesion energy parameter for labelled cells.
+     * Cell-boundary adhesion energy parameter for lumen cells.
      * Has units of kg (cell size at equilibrium rest length)^2 s^-2.
      * Takes the default value 1.0.
      */
     double mLumenBoundaryAdhesionEnergyParameter;
+
+    /**
+     * Cell-boundary adhesion energy parameter for epithelial cells.
+     * Has units of kg (cell size at equilibrium rest length)^2 s^-2.
+     * Takes the default value 1.0.
+     */
+    double mEpiBoundaryAdhesionEnergyParameter;
 
     friend class boost::serialization::access;
     /**
@@ -123,11 +137,13 @@ private:
         archive & boost::serialization::base_object<NagaiHondaForce<DIM> >(*this);
         archive & mEndoEndoAdhesionEnergyParameter;
         archive & mLumenLumenAdhesionEnergyParameter;
+        archive & mEpiEpiAdhesionEnergyParameter;
         archive & mEndoEpiAdhesionEnergyParameter;
-        archive & mLumenEpiAdhesionEnergyParameter;
-        archive & mLumenEndoAdhesionEnergyParameter;
+        archive & mEpiLumenAdhesionEnergyParameter;
+        archive & mEndoLumenAdhesionEnergyParameter;
         archive & mEndoBoundaryAdhesionEnergyParameter;
         archive & mLumenBoundaryAdhesionEnergyParameter;
+        archive & mEpiBoundaryAdhesionEnergyParameter;
     }
 
 public:
@@ -161,30 +177,38 @@ public:
 
     double GetLumenLumenAdhesionEnergyParameter();
 
+    double GetEpiEpiAdhesionEnergyParameter();
+
     double GetEndoEpiAdhesionEnergyParameter();
 
-    double GetLumenEpiAdhesionEnergyParameter();
+    double GetEpiLumenAdhesionEnergyParameter();
 
-    double GetLumenEndoAdhesionEnergyParameter();
+    double GetEndoLumenAdhesionEnergyParameter();
 
     double GetEndoBoundaryAdhesionEnergyParameter();
 
     double GetLumenBoundaryAdhesionEnergyParameter();
+
+    double GetEpiBoundaryAdhesionEnergyParameter();
 
 
     void SetEndoEndoAdhesionEnergyParameter(double endoEndoAdhesionEnergyParameter);
 
     void SetLumenLumenAdhesionEnergyParameter(double lumenLumenAdhesionEnergyParameter);
 
+    void SetEpiEpiAdhesionEnergyParameter(double epiEpiAdhesionEnergyParameter);
+
     void SetEndoEpiAdhesionEnergyParameter(double endoEpiAdhesionEnergyParameter);
 
-    void SetLumenEpiAdhesionEnergyParameter(double lumenEpiAdhesionEnergyParameter);
+    void SetEpiLumenAdhesionEnergyParameter(double epiLumenAdhesionEnergyParameter);
 
-    void SetLumenEndoAdhesionEnergyParameter(double lumenEndoAdhesionEnergyParameter);
+    void SetEndoLumenAdhesionEnergyParameter(double endoLumenAdhesionEnergyParameter);
 
     void SetEndoBoundaryAdhesionEnergyParameter(double endoBoundaryAdhesionEnergyParameter);
 
     void SetLumenBoundaryAdhesionEnergyParameter(double lumenBoundaryAdhesionEnergyParameter);
+
+    void SetEpiBoundaryAdhesionEnergyParameter(double epiBoundaryAdhesionEnergyParameter);
 
 
     /**
