@@ -2,7 +2,8 @@
 #include "AbstractCellPopulation.hpp"
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
-#include "CellEpi.hpp"
+#include "CellPolar.hpp"
+#include "CellPolar.hpp"
 
 template<unsigned ELEMENT_DIM, unsigned SPACE_DIM>
 CellTypeWriter<ELEMENT_DIM, SPACE_DIM>::CellTypeWriter()
@@ -27,12 +28,13 @@ double CellTypeWriter<ELEMENT_DIM, SPACE_DIM>::GetCellDataForVtkOutput(CellPtr p
         boost::shared_ptr<CellLumen> p_celltype = boost::static_pointer_cast<CellLumen>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
-    else if (pCell->HasCellProperty<CellEpi>())
+    else if (pCell->HasCellProperty<CellPolar>())
     {
-        CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellEpi>();
-        boost::shared_ptr<CellEpi> p_celltype = boost::static_pointer_cast<CellEpi>(collection.GetProperty());
+        CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellPolar>();
+        boost::shared_ptr<CellPolar> p_celltype = boost::static_pointer_cast<CellPolar>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
+
     return cell_type;
 }
 
@@ -52,10 +54,10 @@ void CellTypeWriter<ELEMENT_DIM, SPACE_DIM>::VisitCell(CellPtr pCell, AbstractCe
         boost::shared_ptr<CellLumen> p_celltype = boost::static_pointer_cast<CellLumen>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
-    else if (pCell->HasCellProperty<CellEpi>())
+    else if (pCell->HasCellProperty<CellPolar>())
     {
-        CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellEpi>();
-        boost::shared_ptr<CellEpi> p_celltype = boost::static_pointer_cast<CellEpi>(collection.GetProperty());
+        CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellPolar>();
+        boost::shared_ptr<CellPolar> p_celltype = boost::static_pointer_cast<CellPolar>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
 

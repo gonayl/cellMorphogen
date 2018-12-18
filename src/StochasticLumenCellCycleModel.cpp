@@ -35,11 +35,11 @@ bool StochasticLumenCellCycleModel::ReadyToDivide()
     {
       if (mpCell->HasCellProperty<CellLumen>())
       {
-        mMinimumDivisionAge = 0.1 ;
+        mMinimumDivisionAge = 1.0 ;
       }
       else if (mpCell->HasCellProperty<CellEpi>())
       {
-        mMinimumDivisionAge = 10.0 ;
+        mMinimumDivisionAge = 3.0 ;
       }
       else if (mpCell->HasCellProperty<CellEndo>())
       {
@@ -79,7 +79,7 @@ void StochasticLumenCellCycleModel::SetG1Duration()
       }
       else if (mpCell->HasCellProperty<CellEpi>())
       {
-        mG1Duration = GetTransitCellG1Duration() + 4*p_gen->ranf();
+        mG1Duration = GetTransitCellG1Duration() + 2*p_gen->ranf();
       }
       else if (mpCell->HasCellProperty<CellEndo>())
       {
@@ -102,11 +102,11 @@ void StochasticLumenCellCycleModel::SetMaxTransitGeneration()
 
     if (mpCell->HasCellProperty<CellLumen>())
       {
-        mMaxTransitGeneration = 20.0;
+        mMaxTransitGeneration = 5.0;
       }
     else if (mpCell->HasCellProperty<CellEpi>())
       {
-        mMaxTransitGeneration = 2.0;
+        mMaxTransitGeneration = 10.0;
       }
     else if (mpCell->HasCellProperty<CellEndo>())
       {

@@ -14,6 +14,7 @@
 #include "CellAgesWriter.hpp"
 #include "VoronoiDataWriter.hpp"
 #include "CellMutationStatesWriter.hpp"
+#include "NeighbourWriter.hpp"
 
 #include "ParabolicGrowingDomainPdeModifier.hpp"
 #include "MorphogenCellwiseSourceParabolicPde.hpp"
@@ -61,6 +62,7 @@
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
 #include "CellEpi.hpp"
+#include "CellPolar.hpp"
 #include "CellLabelWriter.hpp"
 #include "CellTypeWriter.hpp"
 #include "CellVolumesWriter.hpp"
@@ -69,6 +71,11 @@
 #include "VertexMeshWriter.hpp"
 #include "MorphogenTrackingModifier.hpp"
 #include "PerimeterTrackingModifier.hpp"
+#include "LabelTrackingModifier.hpp"
+#include "NeighbourTrackingModifier.hpp"
+#include "PolarTrackingModifier.hpp"
+
+
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "StochasticLumenCellCycleModel.hpp"
 
@@ -88,38 +95,26 @@ private:
         for (unsigned i=0; i<num_cells; i++)
         {
             StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
-            UniformG1GenerationalCellCycleModel* p_unif_model = new UniformG1GenerationalCellCycleModel();
+            //UniformG1GenerationalCellCycleModel* p_unif_model = new UniformG1GenerationalCellCycleModel();
 
-            if (i == 4)
-            {
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
-
+            //double age = 0.01 + rand() % 3 ;
+            double age = 0.0 ;
             //p_cell->SetBirthTime(0.0);
-            p_cell->SetBirthTime(-20);
+            p_cell->SetBirthTime(age);
             p_cell->InitialiseCellCycleModel();
             rCells.push_back(p_cell);
-            }
-            else
-            {
-            CellPtr p_cell(new Cell(p_state, p_unif_model));
-            p_cell->SetCellProliferativeType(p_transit_type);
-
-            //p_cell->SetBirthTime(0.0);
-            p_cell->SetBirthTime(-20);
-            p_cell->InitialiseCellCycleModel();
-            rCells.push_back(p_cell);
-            }
         }
      }
 
 public:
 
-    void TestVertexBasedMorphogenMonolayerDirichletMotile()
+    void TestVertexBasedThreeCellTypes()
     {
         // Create Mesh
 
-        HoneycombVertexMeshGenerator generator(20, 20);
+        HoneycombVertexMeshGenerator generator(10, 10);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
         p_mesh->SetCellRearrangementThreshold(0.1);
 
@@ -150,7 +145,7 @@ public:
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("VertexModel/TestNewCycle/5");
+        simulator.SetOutputDirectory("VertexModel/TestLumenCells/2");
         /* simulator.SetDt(1.0/5.0);
         simulator.SetSamplingTimestepMultiple(5);
         simulator.SetEndTime(M_TIME_FOR_SIMULATION); */
@@ -164,39 +159,50 @@ public:
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
         p_force->SetEndoEndoAdhesionEnergyParameter(5.0);
-        p_force->SetLumenLumenAdhesionEnergyParameter(4.0);
-        p_force->SetEpiEpiAdhesionEnergyParameter(4.0);
+        p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
+        p_force->SetEpiEpiAdhesionEnergyParameter(5.0);
         p_force->SetEndoEpiAdhesionEnergyParameter(5.0);
-        p_force->SetEpiLumenAdhesionEnergyParameter(7.0);
+        p_force->SetEpiLumenAdhesionEnergyParameter(5.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEpiBoundaryAdhesionEnergyParameter(10.0);
 
         simulator.AddForce(p_force);
 
         MAKE_PTR(SimpleTargetAreaModifier<2>, p_growth_modifier);
         simulator.AddSimulationModifier(p_growth_modifier);
+        p_growth_modifier->SetReferenceTargetArea(1.0) ;
 
-        std::cout << "Labelling Random Cell " << endl ;
+        MAKE_PTR(NeighbourTrackingModifier<2>, p_neighbour_modifier);
+        simulator.AddSimulationModifier(p_neighbour_modifier);
+
+        MAKE_PTR(PolarTrackingModifier<2>, p_polar_modifier);
+        simulator.AddSimulationModifier(p_polar_modifier);
+
+        MAKE_PTR(LabelTrackingModifier<2>, p_label_modifier);
+        simulator.AddSimulationModifier(p_label_modifier);
+
+
+        std::cout << "Labelling Epi cells" << endl ;
 
         for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
              cell_iter != cell_population.End();
              ++cell_iter)
+        {
 
-             {
-              if (RandomNumberGenerator::Instance()->ranf() < 0.2)
-              {
-                  cell_iter->AddCellProperty(p_lumen);
-                  p_growth_modifier->SetReferenceTargetArea(0.5);
-              }
-	            else
-	            {
-		              cell_iter->AddCellProperty(p_epi);
-                  p_growth_modifier->SetReferenceTargetArea(2.0);
-	            }
-             }
+          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 25 or cell_population.GetLocationIndexUsingCell(*cell_iter) == 50  or cell_population.GetLocationIndexUsingCell(*cell_iter) == 75)
+          {
+              cell_iter->AddCellProperty(p_endo);
+          }
+          else
+          {
+              cell_iter->AddCellProperty(p_epi);
+          }
+
+        }
 
         std::cout << "Growing Monolayer" << endl ;
 
