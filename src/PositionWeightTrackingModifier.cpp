@@ -6,6 +6,9 @@
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
 
+#include <stdlib.h>
+using namespace std ;
+
 
 template<unsigned DIM>
 PositionWeightTrackingModifier<DIM>::PositionWeightTrackingModifier()
@@ -60,33 +63,34 @@ void PositionWeightTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<
 
     // Iterate over cell population
 
-    std::vector<double> max_dists;
-
     for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
          cell_iter != rCellPopulation.End();
          ++cell_iter)
     {
-
-      double xmoy = cell_iter->GetCellData()->GetItem("mass_center_x");
-      double ymoy = cell_iter->GetCellData()->GetItem("mass_center_y");
+      std::vector<double> max_dists;
       c_vector<double, DIM> cell_position = rCellPopulation.GetLocationOfCellCentre(*cell_iter) ;
       double xpos = cell_position[0] ;
       double ypos = cell_position[1] ;
-      double dist = sqrt((xpos - xmoy)*(xpos - xmoy) + (ypos - ymoy)*(ypos - ymoy)) ;
-      max_dists.push_back(dist);
+      // iterate again over cell population to calculate distance between each cell and every boudary cell
+      for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter2 = rCellPopulation.Begin();
+           cell_iter2 != rCellPopulation.End();
+           ++cell_iter2)
+      {
 
-      cell_iter->GetCellData()->SetItem("distancetocenter", dist);
+        double n_nodes = cell_iter2->GetCellData()->GetItem("nboundarynodes") ;
 
-    }
+        if (n_nodes > 0)
+        {
+        c_vector<double, DIM> cell_position2 = rCellPopulation.GetLocationOfCellCentre(*cell_iter2) ;
+        double xpos2 = cell_position2[0] ;
+        double ypos2 = cell_position2[1] ;
+        double dist = sqrt((xpos2 - xpos)*(xpos2 - xpos) + (ypos2 - ypos)*(ypos2 - ypos)) ;
+        max_dists.push_back(dist);
+        }
+      }
 
-    double max_dist = *max_element(max_dists.begin(),max_dists.end());
-
-    for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
-         cell_iter != rCellPopulation.End();
-         ++cell_iter)
-    {
-
-      cell_iter->GetCellData()->SetItem("maxdistancetocenter", max_dist);
+      double max = *min_element(max_dists.begin(), max_dists.end());
+      cell_iter->GetCellData()->SetItem("mindistborder",max) ;
 
     }
 

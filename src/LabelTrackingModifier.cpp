@@ -5,6 +5,7 @@
 #include "CellLabel.hpp"
 #include "CellPolar.hpp"
 #include "RandomNumberGenerator.hpp"
+#include "StochasticLumenCellCycleModel.hpp"
 #include <stdlib.h>
 
 template<unsigned DIM>
@@ -54,6 +55,8 @@ void LabelTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
       double n_polar = cell_iter->GetCellData()->GetItem("npolarneighbours");
       bool is_epi = cell_iter-> template HasCellProperty<CellEpi>() ;
       bool is_polar = cell_iter-> template HasCellProperty<CellPolar>() ;
+      unsigned gen = static_cast<StochasticLumenCellCycleModel*>(cell_iter->GetCellCycleModel())->GetGeneration();
+
 
       // std::cout << "epi ? " << " " << is_epi << " " << "n endo? " << " " << n_endo << std::endl;
 
@@ -72,7 +75,7 @@ void LabelTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
       if (age < dt )
       {
         RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
-        if (p_gen->ranf() < proba_lumen)
+        if (p_gen->ranf() < proba_lumen && gen > 0)
         {
           cell_iter->AddCellProperty(rCellPopulation.GetCellPropertyRegistry()->template Get<CellLumen>());
         }

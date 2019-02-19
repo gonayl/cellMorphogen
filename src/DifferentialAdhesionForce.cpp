@@ -47,9 +47,11 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
     if (shared_elements.size() == 1)
     {
         unsigned element_index = *(shared_elements.begin());
+        // double isBoundary = 1.0 ;
 
         // Get cell associated with this element
         CellPtr p_cell = rVertexCellPopulation.GetCellUsingLocationIndex(element_index);
+        // p_cell->GetCellData()->SetItem("isboundary", isBoundary);
 
         if (p_cell->template HasCellProperty<CellEndo>())
         {

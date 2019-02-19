@@ -5,3 +5,4 @@ TestCenterBasedModel.hpp
 TestMorphogenMeshWriter.hpp
 TestCenterBasedForTesting.hpp
 TestVertexBasedForTesting.hpp
+TestPancreasSmall.hpp

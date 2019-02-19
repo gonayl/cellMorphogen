@@ -106,7 +106,7 @@ void StochasticLumenCellCycleModel::SetMaxTransitGeneration()
       }
     else if (mpCell->HasCellProperty<CellEpi>())
       {
-        mMaxTransitGeneration = 10.0;
+        mMaxTransitGeneration = 3.0;
       }
     else if (mpCell->HasCellProperty<CellEndo>())
       {
