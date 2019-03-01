@@ -1,6 +1,10 @@
 #include "TargetAreaModifier.hpp"
 #include "AbstractPhaseBasedCellCycleModel.hpp"
 #include "ApoptoticCellProperty.hpp"
+#include "CellLumen.hpp"
+#include "CellEpi.hpp"
+#include "CellEndo.hpp"
+
 
 template<unsigned DIM>
 TargetAreaModifier<DIM>::TargetAreaModifier()
@@ -56,6 +60,81 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
             cell_target_area = 0;
         }
     }
+    else if (pCell->HasCellProperty<CellLumen>())
+    {
+      double cell_age = pCell->GetAge();
+
+      // The target area of a proliferating cell increases linearly from A/2 to A over the course of the prescribed duration
+      if (cell_age < growth_duration)
+      {
+          //cell_target_area *= 0.5*(1 + cell_age/growth_duration);
+          cell_target_area = 0.4*this->mReferenceTargetArea;
+      }
+      else
+      {
+          /**
+           * At division, daughter cells inherit the cell data array from the mother cell.
+           * Here, we assign the target area that we want daughter cells to have to cells
+           * that we know to divide in this time step.
+           *
+           * \todo This is a little hack that we might want to clean up in the future.
+           */
+          if (pCell->ReadyToDivide())
+          {
+              cell_target_area = 0.3*this->mReferenceTargetArea;
+          }
+      }
+    }
+    else if (pCell->HasCellProperty<CellEpi>())
+    {
+      double cell_age = pCell->GetAge();
+
+      // The target area of a proliferating cell increases linearly from A/2 to A over the course of the prescribed duration
+      if (cell_age < growth_duration)
+      {
+          cell_target_area *= 0.5*(1 + cell_age/growth_duration);
+          //cell_target_area = 0.5*this->mReferenceTargetArea;
+      }
+      else
+      {
+          /**
+           * At division, daughter cells inherit the cell data array from the mother cell.
+           * Here, we assign the target area that we want daughter cells to have to cells
+           * that we know to divide in this time step.
+           *
+           * \todo This is a little hack that we might want to clean up in the future.
+           */
+          if (pCell->ReadyToDivide())
+          {
+              cell_target_area = 0.5*this->mReferenceTargetArea;
+          }
+      }
+    }
+    else if (pCell->HasCellProperty<CellEndo>())
+    {
+      double cell_age = pCell->GetAge();
+
+      // The target area of a proliferating cell increases linearly from A/2 to A over the course of the prescribed duration
+      if (cell_age < growth_duration)
+      {
+          cell_target_area *= 0.5*(0.5 + cell_age/growth_duration);
+          //cell_target_area = 0.5*this->mReferenceTargetArea;
+      }
+      else
+      {
+          /**
+           * At division, daughter cells inherit the cell data array from the mother cell.
+           * Here, we assign the target area that we want daughter cells to have to cells
+           * that we know to divide in this time step.
+           *
+           * \todo This is a little hack that we might want to clean up in the future.
+           */
+          if (pCell->ReadyToDivide())
+          {
+              cell_target_area = 0.5*this->mReferenceTargetArea;
+          }
+      }
+    }
     else
     {
         double cell_age = pCell->GetAge();
@@ -63,9 +142,8 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
         // The target area of a proliferating cell increases linearly from A/2 to A over the course of the prescribed duration
         if (cell_age < growth_duration)
         {
-            // std::cout << cell_age << "and" << growth_duration << std::endl ;
-            cell_target_area *= 0.5*this->mReferenceTargetArea ;
-            //cell_target_area = 1.0*this->mReferenceTargetArea;
+            //cell_target_area *= 0.5*(1 + cell_age/growth_duration);
+            cell_target_area = 0.8*this->mReferenceTargetArea;
         }
         else
         {
@@ -78,7 +156,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
              */
             if (pCell->ReadyToDivide())
             {
-                cell_target_area = 0.5*this->mReferenceTargetArea;
+                cell_target_area = 0.4*this->mReferenceTargetArea;
             }
         }
     }

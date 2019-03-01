@@ -86,7 +86,7 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
 
       if (n_boundary_nodes > 0)
       {
-          std::cout << "There is " << n_boundary_nodes <<" boundary nodes in cell " << num_cells << std::endl;
+        //  std::cout << "There is " << n_boundary_nodes <<" boundary nodes in cell " << num_cells << std::endl;
       }
 
       cell_iter->GetCellData()->SetItem("nboundarynodes", n_boundary_nodes);

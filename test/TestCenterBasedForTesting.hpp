@@ -189,12 +189,24 @@ public:
         MutableMesh<2,2>* p_generating_mesh = generator.GetMesh();
         NodesOnlyMesh<2> p_mesh;
         p_mesh.ConstructNodesWithoutMesh(*p_generating_mesh, 1.5);
-
         std::vector<CellPtr> cells;
         GenerateCells(p_mesh.GetNumNodes(),cells);
-
         // Create cell population
         NodeBasedCellPopulation<2> cell_population(p_mesh, cells);
+        /*
+        TrianglesMeshReader<2,2> mesh_reader("testoutput/TestNodeBasedMeshWriter/node_based_mesh");
+        TetrahedralMesh<2,2> p_generating_mesh ;
+        p_generating_mesh.ConstructFromMeshReader(mesh_reader);
+        //Extended to allow sorting for longer distances
+        double cut_off_length = 2.5;
+        // Convert this to a NodesOnlyMesh
+        NodesOnlyMesh<2> p_mesh;
+        p_mesh.ConstructNodesWithoutMesh(p_generating_mesh, cut_off_length);
+        std::vector<CellPtr> cells;
+        GenerateCells(p_mesh.GetNumNodes(),cells);
+        // Create cell population
+        NodeBasedCellPopulation<2> cell_population(p_mesh, cells);
+        */
 
         //Make cell data writer so can pass in variable name
         cell_population.AddCellWriter<CellAgesWriter>();
@@ -204,7 +216,7 @@ public:
 
         // Set up cell-based simulation and output directory
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("TestCenterBasedModel/ForTesting/2cells/1");
+        simulator.SetOutputDirectory("TestCenterBasedModel/ForTesting/Remesh");
 
         // Create a force law and pass it to the simulation
         MAKE_PTR(DifferentialAdhesionGeneralisedLinearSpringForce<2>, p_differential_adhesion_force);
@@ -241,11 +253,17 @@ public:
         // FileFinder file_finder("blah", RelativeTo::ChasteTestOutput);
         // std::cout << file_finder.GetAbsolutePath();
 
-        simulator.SetEndTime(10.0);
+        simulator.SetEndTime(1.0);
         simulator.SetDt(1.0/100.0);
         simulator.SetSamplingTimestepMultiple(1);
         std::cout << "Growing Monolayer" << endl ;
         simulator.Solve();
+
+
+        // Record mesh
+        TrianglesMeshWriter<2,2> triangles_mesh_writer("TestNodeBasedMeshWriter", "node_based_mesh");
+        triangles_mesh_writer.WriteFilesUsingMesh(p_mesh);
+        
 
 
 

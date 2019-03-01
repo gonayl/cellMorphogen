@@ -24,6 +24,7 @@
 #include "MorphogenDependentCellCycleModel.hpp"
 #include "FixedG1GenerationalCellCycleModel.hpp"
 #include "UniformCellCycleModel.hpp"
+#include "UniformCellCycleModel2.hpp"
 #include "UniformG1GenerationalCellCycleModel.hpp"
 #include "CellDataItemWriter.hpp"
 #include "OffLatticeSimulation.hpp"
@@ -67,6 +68,7 @@
 #include "CellLabelWriter.hpp"
 #include "CellTypeWriter.hpp"
 #include "CellVolumesWriter.hpp"
+#include "CellAncestorWriter.hpp"
 
 
 #include "VertexMeshWriter.hpp"
@@ -84,6 +86,7 @@
 
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "StochasticLumenCellCycleModel.hpp"
+#include "SimplePositionBasedCellCycleModel.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
@@ -101,13 +104,14 @@ private:
 
         for (unsigned i=0; i<num_cells; i++)
         {
-            StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
-            //UniformG1GenerationalCellCycleModel* p_unif_model = new UniformG1GenerationalCellCycleModel();
+            //StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
+            //UniformCellCycleModel2* p_cycle_model = new UniformCellCycleModel2();
+            UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
             // double birth_time = - RandomNumberGenerator::Instance()->ranf() * p_cycle_model->GetAverageTransitCellCycleTime();
-            double birth_time = rand() % 2 + 1 ;
-            p_cell->SetBirthTime(birth_time);
+            double birth_time = rand() % 10 + 1 ;
+            p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
             rCells.push_back(p_cell);
         }
@@ -152,6 +156,7 @@ public:
         //Make cell data writer so can pass in variable name
         cell_population.AddCellWriter<CellTypeWriter>();
         cell_population.AddCellWriter<CellAgesWriter>();
+        cell_population.AddCellWriter<CellAncestorWriter>();
 
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLumen, p_lumen);
@@ -159,7 +164,7 @@ public:
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("VertexModel/TestMeshReader/TestBoundaryModifier/5");
+        simulator.SetOutputDirectory("VertexModel/TestMeshReader/TestWeightedCellCycle/2");
 
 
         simulator.SetOutputDivisionLocations(true);
@@ -188,7 +193,6 @@ public:
 
         MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         simulator.AddSimulationModifier(p_growth_modifier);
-        p_growth_modifier->SetReferenceTargetArea(1.0) ;
 
         /*
 
@@ -269,7 +273,7 @@ public:
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(500.0);
-        simulator.SetDt(1.0/100.0);
+        simulator.SetDt(1.0/1000.0);
         simulator.SetSamplingTimestepMultiple(1.0);
 
         simulator.Solve();

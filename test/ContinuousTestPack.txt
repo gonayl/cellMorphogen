@@ -1,7 +1,7 @@
 TestHello.hpp
-TestMorphogenMonolayer.hpp
 TestCellCycle.hpp
-TestCenterBasedModel.hpp
+TestMorphogenNode.hpp
+TestMorphogenVertex.hpp
 TestMorphogenMeshWriter.hpp
 TestCenterBasedForTesting.hpp
 TestVertexBasedForTesting.hpp

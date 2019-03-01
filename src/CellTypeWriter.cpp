@@ -3,7 +3,6 @@
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
-#include "CellPolar.hpp"
 
 template<unsigned ELEMENT_DIM, unsigned SPACE_DIM>
 CellTypeWriter<ELEMENT_DIM, SPACE_DIM>::CellTypeWriter()

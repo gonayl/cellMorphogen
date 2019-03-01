@@ -1,5 +1,5 @@
-#ifndef TESTMORPHOGENMONOLAYER_HPP_
-#define TESTMORPHOGENMONOLAYER_HPP_
+#ifndef TESTMORPHOGENVERTEX_HPP_
+#define TESTMORPHOGENVERTEX_HPP_
 
 #include <cxxtest/TestSuite.h>
 
@@ -57,7 +57,6 @@
 #include "PetscSetupAndFinalize.hpp"
 
 #include "MorphogenDrivenCellForce.hpp"
-#include "MotileCellForce.hpp"
 #include "CellLabel.hpp"
 #include "CellEndo.hpp"
 #include "CellLabelWriter.hpp"
@@ -75,53 +74,14 @@ static const double M_UPTAKE_RATE = 10.0 ;
 static const double M_DIFFUSION_CONSTANT = 5e-1;
 static const double M_DUDT_COEFFICIENT = 1.0;
 static const double M_DECAY_COEFFICIENT = 9.0;
-static const double M_RADIUS = 9.0;
+static const double M_RADIUS = 100.0;
 
-class TestMorphogenMonolayer : public AbstractCellBasedWithTimingsTestSuite
+class TestMorphogenVertex : public AbstractCellBasedWithTimingsTestSuite
 {
-private:
-
-    void GenerateCells(unsigned num_cells, std::vector<CellPtr>& rCells)
-    {
-        MAKE_PTR(WildTypeCellMutationState, p_state);
-        MAKE_PTR(TransitCellProliferativeType, p_transit_type);
-
-      //  RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
-
-        for (unsigned i=0; i<num_cells; i++)
-        {
-            //UniformCellCycleModel* p_cycle_model = new UniformCellCycleModel();
-            FixedG1GenerationalCellCycleModel* p_cycle_model = new FixedG1GenerationalCellCycleModel();
-            // UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
-            //MorphogenDependentCellCycleModel* p_cycle_model = new MorphogenDependentCellCycleModel();
-            //p_cycle_model->SetDimension(2);
-            //p_cycle_model->SetCurrentMass(0.5*(p_gen->ranf()+1.0));
-            //p_cycle_model->SetMorphogenInfluence(1.0);
-
-            CellPtr p_cell(new Cell(p_state, p_cycle_model));
-            p_cell->SetCellProliferativeType(p_transit_type);
-
-            //p_cell->SetBirthTime(0.0);
-            p_cell->SetBirthTime(-20);
-
-
-
-            p_cell->InitialiseCellCycleModel();
-
-            // Initial Condition for Morphogen PDE
-            p_cell->GetCellData()->SetItem("morphogen",0.0);
-            p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
-            p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
-
-            // Set Target Area so dont need to use a growth model in vertex simulations
-            p_cell->GetCellData()->SetItem("target area", 1.0);
-            rCells.push_back(p_cell);
-        }
-     }
 
 public:
 
-    void TestVertexBasedMorphogenMonolayerDirichletMotile() throw (Exception)
+    void TestVertexBasedMorphogenMonolayerDirichletMotile()
     {
         // Create Mesh
         /*
@@ -176,7 +136,8 @@ public:
            } else {
              CellPtr p_cell(new Cell(p_state, p_uni_model));
              p_cell->SetCellProliferativeType(p_transit_type);
-             // p_cell->SetBirthTime(-20);
+             double birth_time = rand() % 10 + 1 ;
+             p_cell->SetBirthTime(-birth_time);
              // Initial Condition for Morphogen PDE
              p_cell->GetCellData()->SetItem("morphogen",0.0);
              p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -198,17 +159,19 @@ public:
 
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellEndo, p_endo);
-        MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
-        simulator.AddSimulationModifier(p_stretch_modifier);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("MorphogenMonolayer/Gradient");
+        simulator.SetOutputDirectory("CellMorphogen/TestMotileForce");
         /* simulator.SetDt(1.0/5.0);
         simulator.SetSamplingTimestepMultiple(5);
         simulator.SetEndTime(M_TIME_FOR_SIMULATION); */
 
         simulator.SetOutputDivisionLocations(true);
+
+
+        MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
+        simulator.AddSimulationModifier(p_stretch_modifier);
 
         std::cout << "Adding passive force" << endl ;
         // Create Forces and pass to simulation
@@ -230,7 +193,7 @@ public:
         std::cout << "VeGF diffusion" << endl ;
 
         // Create a parabolic PDE object - see the header file for what the constructor arguments mean
-        MAKE_PTR_ARGS(CellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_UPTAKE_RATE,M_DECAY_COEFFICIENT,M_RADIUS));
+        MAKE_PTR_ARGS(MorphogenCellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_RADIUS));
 
         // Create a constant boundary conditions object, taking the value zero
         MAKE_PTR_ARGS(ConstBoundaryCondition<2>, p_bc, (0.0));
@@ -289,4 +252,4 @@ public:
     }
 };
 
-#endif /* TESTMORPHOGENMONOLAYER_HPP_ */
+#endif /* TESTMORPHOGENVERTEX_HPP_ */

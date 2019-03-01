@@ -199,7 +199,7 @@ void ForceTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
             //std::cout << strength ;
             //std::cout << "force x :" << forcex << "force y:" << forcey ;
             std::cout << force_on_spring.size() << "&" << force_on_spring[0] << "&" << force_on_spring[1];
-          */ 
+          */
     }
 }
 

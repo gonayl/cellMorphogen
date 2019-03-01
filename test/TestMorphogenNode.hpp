@@ -73,7 +73,7 @@ static const double M_UPTAKE_RATE = 10.0 ;
 static const double M_DIFFUSION_CONSTANT = 5e-1;
 static const double M_DUDT_COEFFICIENT = 1.0;
 static const double M_DECAY_COEFFICIENT = 9.0;
-static const double M_RADIUS = 2.0;
+static const double M_RADIUS = 100.0;
 
 
 class MyForce : public AbstractForce<2>
@@ -168,7 +168,7 @@ CHASTE_CLASS_EXPORT(MyForce)
 
 
 
-class TestCenterBasedModel : public AbstractCellBasedTestSuite
+class TestMorphogenNode : public AbstractCellBasedTestSuite
 {
 
 private:
@@ -294,7 +294,7 @@ public:
 
         // Set up cell-based simulation and output directory
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("TestCenterBasedModel/MorphogenDiffusion");
+        simulator.SetOutputDirectory("CEllMorphogen/OSModel/TestMotileForce");
 
         // Create a force law and pass it to the simulation
         MAKE_PTR(DifferentialAdhesionGeneralisedLinearSpringForce<2>, p_differential_adhesion_force);
@@ -307,7 +307,7 @@ public:
         std::cout << "VeGF diffusion" << endl ;
 
         // Create a parabolic PDE object - see the header file for what the constructor arguments mean
-        MAKE_PTR_ARGS(CellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_UPTAKE_RATE,M_DECAY_COEFFICIENT,M_RADIUS));
+        MAKE_PTR_ARGS(MorphogenCellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_RADIUS));
 
         // Create a constant boundary conditions object, taking the value zero
         MAKE_PTR_ARGS(ConstBoundaryCondition<2>, p_bc, (0.0));

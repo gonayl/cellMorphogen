@@ -64,6 +64,7 @@ AbstractSimpleGenerationalCellCycleModel* StochasticLumenCellCycleModel::CreateC
 void StochasticLumenCellCycleModel::SetG1Duration()
 {
     RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
+    double weight = mpCell->GetCellData()->GetItem("mindistborder") ;
 
     assert(mpCell != nullptr);
 
@@ -79,7 +80,7 @@ void StochasticLumenCellCycleModel::SetG1Duration()
       }
       else if (mpCell->HasCellProperty<CellEpi>())
       {
-        mG1Duration = GetTransitCellG1Duration() + 2*p_gen->ranf();
+        mG1Duration = GetTransitCellG1Duration() + 2*p_gen->ranf() + weight ;
       }
       else if (mpCell->HasCellProperty<CellEndo>())
       {
@@ -102,15 +103,15 @@ void StochasticLumenCellCycleModel::SetMaxTransitGeneration()
 
     if (mpCell->HasCellProperty<CellLumen>())
       {
-        mMaxTransitGeneration = 5.0;
+        mMaxTransitGeneration = 2.0;
       }
     else if (mpCell->HasCellProperty<CellEpi>())
       {
-        mMaxTransitGeneration = 3.0;
+        mMaxTransitGeneration = 4.0;
       }
     else if (mpCell->HasCellProperty<CellEndo>())
       {
-        mMaxTransitGeneration = 3.0;
+        mMaxTransitGeneration = 1.0;
       }
 }
 

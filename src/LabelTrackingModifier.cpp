@@ -62,13 +62,13 @@ void LabelTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
 
       if (is_epi ==1 && n_polar != 0 && is_polar == 0)
       {
-        std::cout << "Should divide into a lumen ! " << std::endl;
+        // std::cout << "Should divide into a lumen ! " << std::endl;
         proba_lumen = 0.99 ;
       }
       else
       {
-        std::cout << "Should stay an epithelial cell !" << std::endl;
-        proba_lumen = 0 ;
+        // std::cout << "Should stay an epithelial cell !" << std::endl;
+        proba_lumen = 0.0 ;
       }
 
 
