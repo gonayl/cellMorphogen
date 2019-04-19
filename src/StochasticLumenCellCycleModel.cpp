@@ -64,7 +64,8 @@ AbstractSimpleGenerationalCellCycleModel* StochasticLumenCellCycleModel::CreateC
 void StochasticLumenCellCycleModel::SetG1Duration()
 {
     RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
-    double weight = mpCell->GetCellData()->GetItem("mindistborder") ;
+    // double weight = mpCell->GetCellData()->GetItem("mindistborder") ;
+    double weight = 1.0 ;
 
     assert(mpCell != nullptr);
 

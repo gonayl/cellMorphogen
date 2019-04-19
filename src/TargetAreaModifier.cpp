@@ -117,7 +117,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
       // The target area of a proliferating cell increases linearly from A/2 to A over the course of the prescribed duration
       if (cell_age < growth_duration)
       {
-          cell_target_area *= 0.5*(0.5 + cell_age/growth_duration);
+          cell_target_area *= 0.5*(0.9 + cell_age/growth_duration);
           //cell_target_area = 0.5*this->mReferenceTargetArea;
       }
       else

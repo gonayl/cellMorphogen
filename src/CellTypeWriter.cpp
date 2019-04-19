@@ -3,6 +3,8 @@
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
+#include "CellPeriph.hpp"
+#include "CellCore.hpp"
 
 template<unsigned ELEMENT_DIM, unsigned SPACE_DIM>
 CellTypeWriter<ELEMENT_DIM, SPACE_DIM>::CellTypeWriter()
@@ -59,6 +61,7 @@ void CellTypeWriter<ELEMENT_DIM, SPACE_DIM>::VisitCell(CellPtr pCell, AbstractCe
         boost::shared_ptr<CellPolar> p_celltype = boost::static_pointer_cast<CellPolar>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
+
 
     *this->mpOutStream << " " << cell_type;
 

@@ -6,3 +6,4 @@ TestMorphogenMeshWriter.hpp
 TestCenterBasedForTesting.hpp
 TestVertexBasedForTesting.hpp
 TestPancreasSmall.hpp
+TestFromHalo.hpp

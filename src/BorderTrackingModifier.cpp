@@ -5,7 +5,8 @@
 #include "CellEpi.hpp"
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
-#include "CellBoundary.hpp"
+#include "CellPeriph.hpp"
+#include "CellCore.hpp"
 #include <stdlib.h>
 
 
@@ -57,7 +58,7 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
 
     if (dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) == NULL)
     {
-        EXCEPTION("Mass Center Tracking Modifier is to be used with a VertexBasedCellPopulation only");
+        EXCEPTION("Border Tracking Modifier is to be used with a VertexBasedCellPopulation only");
     }
 
     // MAKE_PTR(CellBoundary, p_border);
@@ -84,12 +85,25 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
           }
       }
 
-      if (n_boundary_nodes > 0)
+      if (n_boundary_nodes == 0)
       {
-        //  std::cout << "There is " << n_boundary_nodes <<" boundary nodes in cell " << num_cells << std::endl;
+        cell_iter->template RemoveCellProperty<CellPeriph>();
+        cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellCore>());
+      }
+      else if (n_boundary_nodes > 0)
+      {
+        cell_iter->template RemoveCellProperty<CellCore>();
+        cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellPeriph>());
+      }
+
+      else
+
+      {
+        EXCEPTION("Problem with boundary nodes") ;
       }
 
       cell_iter->GetCellData()->SetItem("nboundarynodes", n_boundary_nodes);
+
       num_cells++;
     }
 

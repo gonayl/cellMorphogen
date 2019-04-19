@@ -63,6 +63,8 @@
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
 #include "CellEpi.hpp"
+#include "CellStalk.hpp"
+#include "CellTip.hpp"
 #include "CellPolar.hpp"
 #include "CellBoundary.hpp"
 #include "CellLabelWriter.hpp"
@@ -81,8 +83,12 @@
 #include "PositionWeightTrackingModifier.hpp"
 #include "PositionWeightConstantTrackingModifier.hpp"
 #include "BorderTrackingModifier.hpp"
+#include "CellFixingModifier.hpp"
+#include "ForceTrackingModifier.hpp"
 // #include "MergeNodeModifier.hpp"
 
+#include "PlaneBoundaryCondition.hpp"
+#include "FixedBoundaryCondition.hpp"
 
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "StochasticLumenCellCycleModel.hpp"
@@ -110,7 +116,7 @@ private:
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
             // double birth_time = - RandomNumberGenerator::Instance()->ranf() * p_cycle_model->GetAverageTransitCellCycleTime();
-            double birth_time = rand() % 10 + 1 ;
+            double birth_time = rand() % 10 + 5 ; // random double in the range 5 - 9
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
             rCells.push_back(p_cell);
@@ -126,16 +132,16 @@ public:
     {
         // Create Mesh
 
-        /*HoneycombVertexMeshGenerator generator(5, 6);
+        HoneycombVertexMeshGenerator generator(4, 4);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
-        p_mesh->SetCellRearrangementThreshold(0.1);*/
+        p_mesh->SetCellRearrangementThreshold(0.1);
 
 	      std::cout << "Creating mesh" << endl ;
 
-	      VertexMeshReader<2,2> mesh_reader("testoutput/mesh/test_mesh");
+        /*VertexMeshReader<2,2> mesh_reader("testoutput/mesh/vertex_based_mesh");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
-        p_mesh.SetCellRearrangementThreshold(0.1);
+        p_mesh.SetCellRearrangementThreshold(0.1);*/
 
         // Create Cells
         std::vector<CellPtr> cells;
@@ -145,10 +151,12 @@ public:
         //CellsGenerator<StochasticLumenCellCycleModel, 2> cells_generator;
         //cells_generator.GenerateBasic(cells, p_mesh.GetNumElements(), std::vector<unsigned>(), p_transit_type);
         //cells_generator.GenerateBasic(cells, p_mesh->GetNumElements(), std::vector<unsigned>(), p_transit_type);
-        GenerateCells(p_mesh.GetNumElements(),cells);
 
-        VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
-        //VertexBasedCellPopulation<2> cell_population(*p_mesh, cells);
+        //GenerateCells(p_mesh.GetNumElements(),cells);
+        GenerateCells(p_mesh->GetNumElements(),cells);
+
+        //VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
+        VertexBasedCellPopulation<2> cell_population(*p_mesh, cells);
 
         // MAKE_PTR(MergeNodeModifier<2>, p_merge_modifier);
         // simulator.AddSimulationModifier(p_merge_modifier);
@@ -161,10 +169,12 @@ public:
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLumen, p_lumen);
 	      MAKE_PTR(CellEpi, p_epi);
+	      MAKE_PTR(CellLabel, p_label);
+	      MAKE_PTR(CellStalk, p_stalk);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("VertexModel/TestMeshReader/TestWeightedCellCycle/2");
+        simulator.SetOutputDirectory("VertexModel/TestMeshReader/TestBoundaryConditions");
 
 
         simulator.SetOutputDivisionLocations(true);
@@ -189,8 +199,6 @@ public:
 
         simulator.AddForce(p_force);
 
-
-
         MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         simulator.AddSimulationModifier(p_growth_modifier);
 
@@ -208,8 +216,6 @@ public:
         MAKE_PTR(PositionWeightConstantTrackingModifier<2>, p_weight_modifier);
         simulator.AddSimulationModifier(p_weight_modifier);
 
-        */
-
         MAKE_PTR(NeighbourTrackingModifier<2>, p_neighbour_modifier);
         simulator.AddSimulationModifier(p_neighbour_modifier);
 
@@ -218,6 +224,9 @@ public:
 
         MAKE_PTR(LabelTrackingModifier<2>, p_label_modifier);
         simulator.AddSimulationModifier(p_label_modifier);
+*/
+        MAKE_PTR(ForceTrackingModifier<2>, p_force_modifier);
+        simulator.AddSimulationModifier(p_force_modifier);
 
         MAKE_PTR(BorderTrackingModifier<2>, p_boundary_modifier);
         simulator.AddSimulationModifier(p_boundary_modifier);
@@ -227,6 +236,7 @@ public:
 
         MAKE_PTR(VolumeTrackingModifier<2>, p_volume_modifier);
         simulator.AddSimulationModifier(p_volume_modifier);
+
 
         std::cout << "Importing label data from csv" << std::endl ;
 
@@ -248,6 +258,7 @@ public:
         }
         inFile.close() ;
 
+        MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
         std::cout << "Labelling Epi cells" << endl ;
 
         for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
@@ -262,6 +273,8 @@ public:
           else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 2)
           {
               cell_iter->AddCellProperty(p_endo);
+              cell_iter->AddCellProperty(p_label);
+              cell_iter->SetCellProliferativeType(p_diff_type);
            }
           else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 3)
           {
@@ -270,11 +283,20 @@ public:
 
         }
 
+        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_bc, (&cell_population));
+        simulator.AddCellPopulationBoundaryCondition(p_bc);
+
+
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(500.0);
-        simulator.SetDt(1.0/1000.0);
+        simulator.SetDt(1.0/100.0);
         simulator.SetSamplingTimestepMultiple(1.0);
+
+
+        MAKE_PTR(CellFixingModifier<2>, p_fixing_modifier);
+        simulator.AddSimulationModifier(p_fixing_modifier);
+
 
         simulator.Solve();
 

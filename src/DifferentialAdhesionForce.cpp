@@ -2,13 +2,18 @@
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
 #include "CellEpi.hpp"
+#include "CellCore.hpp"
+#include "CellPeriph.hpp"
 
 template<unsigned DIM>
 DifferentialAdhesionForce<DIM>::DifferentialAdhesionForce()
     : NagaiHondaForce<DIM>(),
       mEndoEndoAdhesionEnergyParameter(1.0),
       mLumenLumenAdhesionEnergyParameter(1.0),
-      mEpiEpiAdhesionEnergyParameter(1.0),
+      mEpiEpiAdhesionEnergyParameter(5.0),
+      mCoreCoreAdhesionEnergyParameter(1.0),
+      mCorePeriphAdhesionEnergyParameter(1.0),
+      mPeriphPeriphAdhesionEnergyParameter(1.0),
       mEndoEpiAdhesionEnergyParameter(1.0),
       mEpiLumenAdhesionEnergyParameter(1.0),
       mEndoLumenAdhesionEnergyParameter(1.0),
@@ -80,6 +85,8 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
         unsigned num_endo_cells = 0;
         unsigned num_lumen_cells = 0;
         unsigned num_epi_cells = 0;
+        unsigned num_epi_core_cells = 0;
+        unsigned num_epi_periph_cells = 0;
         for (std::set<unsigned>::iterator iter = shared_elements.begin();
              iter != shared_elements.end();
              ++iter)
@@ -97,9 +104,27 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             {
                 num_lumen_cells++;
             }
-            else if (p_cell->template HasCellProperty<CellEpi>())
+
+            else if (p_cell->template HasCellProperty<CellEpi>() && p_cell->template HasCellProperty<CellCore>())
             {
                 num_epi_cells++;
+                num_epi_core_cells++;
+              //  std::cout << "cell core + 1" << std::endl;
+            }
+            else if (p_cell->template HasCellProperty<CellEpi>() && p_cell->template HasCellProperty<CellPeriph>())
+            {
+                num_epi_cells++;
+                num_epi_periph_cells++;
+              //  std::cout << "cell periph + 1" << std::endl ;
+            }
+            else if (p_cell->template HasCellProperty<CellEpi>() )
+            {
+                num_epi_cells++;
+              //  std::cout << "cell epi + 1" << std::endl ;
+            }
+            else
+            {
+                EXCEPTION("Every epi cells need to be core or periph ! Check if BorderTrackingModifier is used");
             }
         }
 
@@ -115,8 +140,34 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
         }
         else if (num_epi_cells == 2)
         {
-            // Both cells are labelled "lumen"
-            return this->GetEpiEpiAdhesionEnergyParameter();
+            // Both cells are labelled "epi"
+            if (num_epi_core_cells == 2)
+            {
+                // Both cells are labelled "epi + core"
+                return this->GetCoreCoreAdhesionEnergyParameter();
+            }
+            else if (num_epi_periph_cells == 2)
+            {
+                // Both cells are labelled "epi + periph"
+                return this->GetPeriphPeriphAdhesionEnergyParameter();
+            }
+            else if (num_epi_periph_cells == 1 && num_epi_core_cells == 1)
+            {
+                // one cell is labelled "epi + periph" and the other "epi + core"
+                return this->GetCorePeriphAdhesionEnergyParameter();
+            }
+            else if (num_epi_periph_cells == 1 && num_epi_core_cells == 1)
+            {
+                // one cell is labelled "epi + periph" and the other "epi + core"
+                return this->GetCorePeriphAdhesionEnergyParameter();
+            }
+            else
+            {
+              // At least one cell is not labelled
+              //EXCEPTION("Need BorderTrackingModifier to use DifferentialAdhesionForce ! ");
+              return this->GetEpiEpiAdhesionEnergyParameter();
+            }
+
         }
         else if (num_endo_cells == 1 && num_lumen_cells == 1)
         {
@@ -157,6 +208,24 @@ template<unsigned DIM>
 double DifferentialAdhesionForce<DIM>::GetEpiEpiAdhesionEnergyParameter()
 {
     return mEpiEpiAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetCoreCoreAdhesionEnergyParameter()
+{
+    return mCoreCoreAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetCorePeriphAdhesionEnergyParameter()
+{
+    return mCorePeriphAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetPeriphPeriphAdhesionEnergyParameter()
+{
+    return mPeriphPeriphAdhesionEnergyParameter;
 }
 
 template<unsigned DIM>
@@ -218,6 +287,24 @@ void DifferentialAdhesionForce<DIM>::SetEpiEpiAdhesionEnergyParameter(double epi
 }
 
 template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetCoreCoreAdhesionEnergyParameter(double coreCoreAdhesionEnergyParameter)
+{
+    mCoreCoreAdhesionEnergyParameter = coreCoreAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetCorePeriphAdhesionEnergyParameter(double corePeriphAdhesionEnergyParameter)
+{
+    mCorePeriphAdhesionEnergyParameter = corePeriphAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetPeriphPeriphAdhesionEnergyParameter(double periphPeriphAdhesionEnergyParameter)
+{
+    mPeriphPeriphAdhesionEnergyParameter = periphPeriphAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
 void DifferentialAdhesionForce<DIM>::SetEndoEpiAdhesionEnergyParameter(double endoEpiAdhesionEnergyParameter)
 {
     mEndoEpiAdhesionEnergyParameter = endoEpiAdhesionEnergyParameter;
@@ -262,6 +349,12 @@ void DifferentialAdhesionForce<DIM>::OutputForceParameters(out_stream& rParamsFi
     *rParamsFile << "\t\t\t<LumenLumenAdhesionEnergyParameter>" << mLumenLumenAdhesionEnergyParameter << "</LumenLumenAdhesionEnergyParameter> \n";
 
     *rParamsFile << "\t\t\t<EpiEpiAdhesionEnergyParameter>" << mEpiEpiAdhesionEnergyParameter << "</EpiEpiAdhesionEnergyParameter> \n";
+
+    *rParamsFile << "\t\t\t<CoreCoreAdhesionEnergyParameter>" << mCoreCoreAdhesionEnergyParameter << "</CoreCoreAdhesionEnergyParameter> \n";
+
+    *rParamsFile << "\t\t\t<CorePeriphAdhesionEnergyParameter>" << mCorePeriphAdhesionEnergyParameter << "</CorePeriphAdhesionEnergyParameter> \n";
+
+    *rParamsFile << "\t\t\t<PeriphPeriphAdhesionEnergyParameter>" << mPeriphPeriphAdhesionEnergyParameter << "</PeriphPeriphAdhesionEnergyParameter> \n";
 
     *rParamsFile << "\t\t\t<EndoEpiAdhesionEnergyParameter>" << mEndoEpiAdhesionEnergyParameter << "</EndoEpiAdhesionEnergyParameter> \n";
 

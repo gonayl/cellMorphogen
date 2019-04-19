@@ -70,7 +70,7 @@ void MorphogenTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,D
     {
       if (cell_iter->template HasCellProperty<CellLabel>())
       {
-          cell_iter->GetCellData()->SetItem("morphogen",0.0);
+           cell_iter->GetCellData()->SetItem("morphogen",0.0);
       }
 
     }
