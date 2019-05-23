@@ -76,6 +76,8 @@
 #include "CellVolumesWriter.hpp"
 #include "CellAncestorWriter.hpp"
 #include "CellPosWriter.hpp"
+#include "CellLabelWriter.hpp"
+#include "CellPosWriter.hpp"
 
 #include "VertexMeshWriter.hpp"
 #include "MorphogenTrackingModifier.hpp"
@@ -119,12 +121,12 @@ private:
         MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
         MAKE_PTR(WildTypeCellMutationState, p_state);
 
-        // ICI : modifier durée du cycle cellulaire MAIS dans code source !
+        // ICI : modifier durée du cycle cellulaire MAIS dans code source (cfr UniformG1UniformG1GenerationalBoundaryCellCycleModel.cpp)!
 
         for (unsigned i=0; i<num_cells; i++)
         {
             //StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
-            //UniformCellCycleModel* p_cycle_model = new UniformCellCycleModel();
+            //UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
             UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
             //PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
           if (label_input[i] == 0)
@@ -197,6 +199,7 @@ public:
         cell_population.AddCellWriter<CellAgesWriter>();
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
+        cell_population.AddCellWriter<CellVolumesWriter>();
 
         MAKE_PTR(CellEpi, p_epi);
         MAKE_PTR(CellEndo, p_endo);
@@ -205,7 +208,7 @@ public:
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestMeshReader/TEST");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestMeshReader/ThyE135LD");
 
 
         simulator.SetOutputDivisionLocations(true);
@@ -233,15 +236,15 @@ public:
 
         simulator.AddForce(p_force);
 
-        MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
+        /*MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         simulator.AddSimulationModifier(p_growth_modifier);
-        p_growth_modifier->SetReferenceTargetArea(0.9);
+        p_growth_modifier->SetReferenceTargetArea(0.9);*/
         MAKE_PTR(VolumeTrackingModifier<2>, p_volume_modifier);
         simulator.AddSimulationModifier(p_volume_modifier);
-        MAKE_PTR(BorderTrackingModifier<2>, p_border_modifier);
-        simulator.AddSimulationModifier(p_border_modifier);
         MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
         simulator.AddSimulationModifier(p_stretch_modifier);
+        MAKE_PTR(BorderTrackingModifier<2>, p_border_modifier);
+        simulator.AddSimulationModifier(p_border_modifier);
 
 
         // Diffusion de gradient, pas encore utile à ce stade (besoin pour simuler la motilité des cellules endo)
@@ -269,19 +272,6 @@ public:
 
         // boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer2(new CellDataItemWriter<2,2>("morphogen_grad_x"));
         // cell_population.AddCellWriter(p_cell_data_item_writer2);
-
-        // Labeling all cells as  epithelial
-
-        /*std::cout << "Labelling Epi cells" << endl ;
-
-        for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
-             cell_iter != cell_population.End();
-             ++cell_iter)
-        {
-
-          cell_iter->AddCellProperty(p_epi);
-
-        }*/
 
         // Labelling cells from file (Epi/Endo/Lumen)
         // On pourrait utiliser les informations de HALO pour taguer les cellules endo
@@ -320,6 +310,7 @@ public:
         MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
         */
+
 
         std::cout << "Growing Monolayer" << endl ;
 
