@@ -1,7 +1,7 @@
 #include "FixedBoundaryCondition.hpp"
 #include "AbstractCentreBasedCellPopulation.hpp"
 #include "VertexBasedCellPopulation.hpp"
-#include "CellLabel.hpp"
+#include "CellEndo.hpp"
 #include <stdlib.h>
 using namespace std ;
 
@@ -31,6 +31,7 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
         }
         else
         {
+          /*
           // Permet d'importer un fichier pos x et pos y et s'en servir pour fixer les cellules, voir ci-après
           std::cout << "Importing x pos data from txt" << std::endl ;
           ifstream inFilex ;
@@ -63,7 +64,7 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
             pos_nodes_y.push_back(y) ;
           }
           inFiley.close() ;
-
+          */
             assert(SPACE_DIM == ELEMENT_DIM);
             assert(dynamic_cast<VertexBasedCellPopulation<SPACE_DIM>*>(this->mpCellPopulation));
             // Iterate over all nodes and update their positions according to the boundary conditions
@@ -71,21 +72,7 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
             //std::vector<double> pos_y;
 
             unsigned num_nodes = this->mpCellPopulation->GetNumNodes();
-            /*
-            if (SimulationTime::Instance()->GetTime() == 0)
-            {
-              std::vector<double> pos_x_ini ;
-              std::vector<double> pos_y_ini ;
-              for (unsigned node_index=0; node_index<num_nodes; node_index++)
-              {
-                Node<SPACE_DIM>* p_node = this->mpCellPopulation->GetNode(node_index);
-                c_vector<double, SPACE_DIM> node_location = p_node->rGetLocation();
-                pos_x_ini.push_back(node_location[0]) ;
-                pos_y_ini.push_back(node_location[1]) ;
-                }
-            }
-            */
-            double flag = 0 ;
+
             for (unsigned node_index=0; node_index<num_nodes; node_index++)
             {
                 Node<SPACE_DIM>* p_node = this->mpCellPopulation->GetNode(node_index);
@@ -100,14 +87,13 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                      ++element_index)
                 {
                   CellPtr p_cell = this->mpCellPopulation->GetCellUsingLocationIndex(*element_index);
-                  if (p_cell->HasCellProperty<CellLabel>() && flag < 1)
+                  if (p_cell->HasCellProperty<CellEndo>() && node_index == 0)
                   {
                     c_vector<double, SPACE_DIM> new_pos;
-                    new_pos(0) = -1.024 ; // x-pos fixed
-                    new_pos(1) = -4.272 ; // y-pos fixed
+                    new_pos(0) = 0.5 ; // x-pos fixed
+                    new_pos(1) = 0.0 ; // y-pos fixed
                     cout << "node location : " << node_location[0] << " , " << node_location[1] << endl ;
                     std::cout << node_index << " should be fixed at (" << new_pos(0) << "," << new_pos(1) << ")." << std::endl ;
-                    flag++ ;
                     p_node->rGetModifiableLocation() = new_pos;
                   }
 
@@ -152,7 +138,7 @@ bool FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::VerifyBoundaryCondition()
           {
             CellPtr p_cell = this->mpCellPopulation->GetCellUsingLocationIndex(*element_index);
 
-            if (p_cell->HasCellProperty<CellLabel>() && p_node->IsBoundaryNode() && node_location[1] < 0.25)
+            if (p_cell->HasCellProperty<CellEndo>() && p_node->IsBoundaryNode() && node_location[1] < 0.25)
             {
               if (node_location[1] != 0)
               {
