@@ -23,6 +23,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
 {
     // Get target area A of a healthy cell in S, G2 or M phase
     double cell_target_area = this->mReferenceTargetArea;
+    std::cout << cell_target_area << std::endl;
 
     double growth_duration = mGrowthDuration;
     if (growth_duration == DOUBLE_UNSET)
@@ -43,7 +44,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
         }
     }
 
-    if (pCell->HasCellProperty<ApoptoticCellProperty>())
+    /*if (pCell->HasCellProperty<ApoptoticCellProperty>())
     {
         // Age of cell when apoptosis begins
         if (pCell->GetStartOfApoptosisTime() - pCell->GetBirthTime() < growth_duration)
@@ -59,7 +60,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
         {
             cell_target_area = 0;
         }
-    }
+    } */
     else if (pCell->HasCellProperty<CellLumen>())
     {
       double cell_age = pCell->GetAge();
@@ -68,7 +69,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
       if (cell_age < growth_duration)
       {
           //cell_target_area *= 0.5*(1 + cell_age/growth_duration);
-          cell_target_area = 0.4*this->mReferenceTargetArea;
+          cell_target_area = 0.3*this->mReferenceTargetArea ;
       }
       else
       {
@@ -81,7 +82,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
            */
           if (pCell->ReadyToDivide())
           {
-              cell_target_area = 0.3*this->mReferenceTargetArea;
+              cell_target_area = 0.3*this->mReferenceTargetArea ;
           }
       }
     }
@@ -92,8 +93,8 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
       // The target area of a proliferating cell increases linearly from A/2 to A over the course of the prescribed duration
       if (cell_age < growth_duration)
       {
-          cell_target_area *= 0.5*(1 + cell_age/growth_duration);
-          //cell_target_area = 0.5*this->mReferenceTargetArea;
+          //cell_target_area *= 0.5*(1 + cell_age/growth_duration);
+          cell_target_area = 0.5*this->mReferenceTargetArea;
       }
       else
       {
@@ -106,6 +107,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
            */
           if (pCell->ReadyToDivide())
           {
+
               cell_target_area = 0.5*this->mReferenceTargetArea;
           }
       }
@@ -117,8 +119,9 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
       // The target area of a proliferating cell increases linearly from A/2 to A over the course of the prescribed duration
       if (cell_age < growth_duration)
       {
-          cell_target_area *= 0.5*(0.9 + cell_age/growth_duration);
-          //cell_target_area = 0.5*this->mReferenceTargetArea;
+          //cell_target_area *= 0.5*(0.9 + cell_age/growth_duration);
+          //cell_target_area *= 0.5 ;
+          cell_target_area = 0.5*this->mReferenceTargetArea;
       }
       else
       {
@@ -132,6 +135,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
           if (pCell->ReadyToDivide())
           {
               cell_target_area = 0.5*this->mReferenceTargetArea;
+              //cell_target_area *= 0.5 ;
           }
       }
     }
@@ -142,8 +146,8 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
         // The target area of a proliferating cell increases linearly from A/2 to A over the course of the prescribed duration
         if (cell_age < growth_duration)
         {
-            //cell_target_area *= 0.5*(1 + cell_age/growth_duration);
-            cell_target_area = 0.8*this->mReferenceTargetArea;
+            //cell_target_area = 0.5*(1 + cell_age/growth_duration);
+            cell_target_area = 0.5*this->mReferenceTargetArea;
         }
         else
         {
@@ -156,7 +160,7 @@ void TargetAreaModifier<DIM>::UpdateTargetAreaOfCell(CellPtr pCell)
              */
             if (pCell->ReadyToDivide())
             {
-                cell_target_area = 0.4*this->mReferenceTargetArea;
+                cell_target_area = 0.5*this->mReferenceTargetArea;
             }
         }
     }

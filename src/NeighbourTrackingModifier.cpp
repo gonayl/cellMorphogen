@@ -86,7 +86,6 @@ void NeighbourTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,D
     {
 
         double n_neighbour_endo = 0 ;
-        cell_iter->template RemoveCellProperty<CellPolar>();
 
         // Determine whether this cell is labelled
         // bool cell_is_epi = cell_iter->template HasCellProperty<CellEpi>();
@@ -114,9 +113,13 @@ void NeighbourTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,D
 
             cell_iter->GetCellData()->SetItem("nendoneighbours", n_neighbour_endo);
 
-            if(n_neighbour_endo != 0)
+            if (n_neighbour_endo != 0 && cell_iter->template HasCellProperty<CellEpi>() )
             {
               cell_iter->AddCellProperty(rCellPopulation.GetCellPropertyRegistry()->template Get<CellPolar>());
+            }
+            else if (n_neighbour_endo == 0 && cell_iter->template HasCellProperty<CellEpi>())
+            {
+            cell_iter->template RemoveCellProperty<CellPolar>();
             }
         }
     }

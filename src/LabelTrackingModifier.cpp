@@ -5,7 +5,7 @@
 #include "CellLabel.hpp"
 #include "CellPolar.hpp"
 #include "RandomNumberGenerator.hpp"
-#include "StochasticLumenCellCycleModel.hpp"
+#include "AbstractSimpleGenerationalCellCycleModel.hpp"
 #include <stdlib.h>
 
 template<unsigned DIM>
@@ -51,11 +51,12 @@ void LabelTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
       double proba_lumen = 0.2 ;
       double age = cell_iter->GetAge() ;
       double dt = SimulationTime::Instance()->GetTimeStep();
-    //  double n_endo = cell_iter->GetCellData()->GetItem("nendoneighbours");
+      //double n_endo = cell_iter->GetCellData()->GetItem("nendoneighbours");
       double n_polar = cell_iter->GetCellData()->GetItem("npolarneighbours");
+
       bool is_epi = cell_iter-> template HasCellProperty<CellEpi>() ;
       bool is_polar = cell_iter-> template HasCellProperty<CellPolar>() ;
-      unsigned gen = static_cast<StochasticLumenCellCycleModel*>(cell_iter->GetCellCycleModel())->GetGeneration();
+      unsigned gen = static_cast<AbstractSimpleGenerationalCellCycleModel*>(cell_iter->GetCellCycleModel())->GetGeneration();
 
 
       // std::cout << "epi ? " << " " << is_epi << " " << "n endo? " << " " << n_endo << std::endl;
@@ -68,16 +69,17 @@ void LabelTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
       else
       {
         // std::cout << "Should stay an epithelial cell !" << std::endl;
-        proba_lumen = 0.0 ;
+        proba_lumen = 0.01 ;
       }
 
-
-      if (age < dt )
+       if (age < dt )
       {
         RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
         if (p_gen->ranf() < proba_lumen && gen > 0)
         {
+          // std::cout << "Should divide into a lumen ! " << std::endl;
           cell_iter->AddCellProperty(rCellPopulation.GetCellPropertyRegistry()->template Get<CellLumen>());
+          cell_iter->GetCellData()->SetItem("target area", 0.48);
         }
       }
     }

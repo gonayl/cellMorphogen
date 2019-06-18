@@ -4,6 +4,7 @@
 #include "DifferentiatedCellProliferativeType.hpp"
 #include "CellCore.hpp"
 #include "CellPeriph.hpp"
+#include "CellLumen.hpp"
 
 UniformG1GenerationalBoundaryCellCycleModel::UniformG1GenerationalBoundaryCellCycleModel()
 {
@@ -49,11 +50,24 @@ void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()
     {
         if (mpCell->HasCellProperty<CellCore>())
         {
-          mG1Duration = GetTransitCellG1Duration() + 10 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULES DE COEUR, tu peux remplacer GetTransitCellG1Duration() par un nombre 
+          mG1Duration =  10 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULES DE COEUR, tu peux remplacer GetTransitCellG1Duration() par un nombre
+          mSDuration =  10 ;
+          mG2Duration = 3 ;
+          mMDuration =  3 ;
         }
         else if (mpCell->HasCellProperty<CellPeriph>())
         {
-          mG1Duration = GetTransitCellG1Duration()  ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
+          mG1Duration = 5 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
+          mSDuration =  5 ;
+          mG2Duration = 1 ;
+          mMDuration =  1 ;
+        }
+        else if (mpCell->HasCellProperty<CellLumen>())
+        {
+          mG1Duration = 2 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
+          mSDuration =  2 ;
+          mG2Duration = 1 ;
+          mMDuration =  1 ;
         }
         else
         {
