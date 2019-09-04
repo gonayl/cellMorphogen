@@ -71,6 +71,11 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                   motile = 1 ;
                 }
 
+                /* else if (stalk == 0 && tip == 0 )
+                {
+                  std::cout << "No tip or stalk cells" << std::endl ;
+                } */
+
                 for (std::set<unsigned>::iterator element_index = elements_containing_node.begin();
                      element_index != elements_containing_node.end();
                      ++element_index)

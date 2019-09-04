@@ -39,7 +39,7 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
     : AbstractCellCycleModel(),
-      mMaxStretch(4.0),
+      mMaxStretch(3.5),
       mMinimumDivisionAge(1.0)
 {
 }

@@ -9,7 +9,7 @@ executable = '/home/gonayl/Chaste/build/projects/cellMorphogen/apps/FromHaloExec
 if not(os.path.isfile(executable)):
     raise Exception('Could not find executable: ' + executable)
 
-number_of_simulations = 50
+number_of_simulations = 7*5*5*3
 
 def main():
     run_simulations()
@@ -19,9 +19,12 @@ def run_simulations():
 
     # Make a list of calls to a Chaste executable
     command_list = []
-    for epiepi in np.arange(3,6):
-        for motility in np.arange(12,18):
-            command_list.append("nice -n 19 /home/gonayl/Chaste/build/projects/cellMorphogen/apps/FromHaloExecutable --E "+str(epiepi)+" --Mo "+str(motility))
+    for epiepi in np.arange(2,9):
+        for epibnd in np.arange(8,13):
+            for epiendo in np.arange(3,8):
+                for memb in np.arange(1,4):
+                    command_list.append("nice -n 19 /home/gonayl/Chaste/build/projects/cellMorphogen/apps/FromHaloExecutable --E "
+                    + str(epiepi)+" --B " + str(epibnd) + " --D " + str(epiendo) + " --M " + str(memb))
 
     # Use processes equal to the number of cpus available
     count = multiprocessing.cpu_count()

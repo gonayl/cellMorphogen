@@ -4,6 +4,7 @@
 #include "CellEpi.hpp"
 #include "CellLabel.hpp"
 #include "CellPolar.hpp"
+#include "CellPeriph.hpp"
 #include "RandomNumberGenerator.hpp"
 #include "AbstractSimpleGenerationalCellCycleModel.hpp"
 #include <stdlib.h>
@@ -56,6 +57,7 @@ void LabelTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
 
       bool is_epi = cell_iter-> template HasCellProperty<CellEpi>() ;
       bool is_polar = cell_iter-> template HasCellProperty<CellPolar>() ;
+      bool is_bnd = cell_iter-> template HasCellProperty<CellPeriph>() ;
       unsigned gen = static_cast<AbstractSimpleGenerationalCellCycleModel*>(cell_iter->GetCellCycleModel())->GetGeneration();
 
 
@@ -75,7 +77,7 @@ void LabelTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
        if (age < dt )
       {
         RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
-        if (p_gen->ranf() < proba_lumen && gen > 0)
+        if (p_gen->ranf() < proba_lumen && gen > 0 && is_bnd == 0)
         {
           // std::cout << "Should divide into a lumen ! " << std::endl;
           cell_iter->AddCellProperty(rCellPopulation.GetCellPropertyRegistry()->template Get<CellLumen>());

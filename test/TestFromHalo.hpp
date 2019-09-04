@@ -80,6 +80,8 @@
 #include "CellLabelWriter.hpp"
 #include "CellPosWriter.hpp"
 #include "CellAdjacencyMatrixWriter.hpp"
+#include "CalibrationErrorWriter.hpp"
+
 
 #include "VertexMeshWriter.hpp"
 #include "MorphogenTrackingModifier.hpp"
@@ -88,23 +90,25 @@
 #include "NeighbourTrackingModifier.hpp"
 #include "PolarTrackingModifier.hpp"
 #include "MassCenterTrackingModifier.hpp"
-#include "PositionWeightTrackingModifier.hpp"
-#include "PositionWeightConstantTrackingModifier.hpp"
+//#include "PositionWeightTrackingModifier.hpp"
+//#include "PositionWeightConstantTrackingModifier.hpp"
 #include "BorderTrackingModifier.hpp"
 #include "CellFixingModifier.hpp"
+#include "AdhesionCoefModifier.hpp"
 // #include "MergeNodeModifier.hpp"
 
 #include "FixedBoundaryCondition.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "StochasticLumenCellCycleModel.hpp"
-#include "SimplePositionBasedCellCycleModel.hpp"
+//#include "SimplePositionBasedCellCycleModel.hpp"
 #include <iostream>
 #include <iomanip>
 #include <fstream>
 #include <stdlib.h>
 using namespace std ;
 
-static const double M_TIME_FOR_SIMULATION = 40;
+static const double M_TIME_FOR_SIMULATION = 48;
+static const double M_TIME_STEPS = 10;
 static const double M_NUM_CELLS_ACROSS = 10;
 static const double M_UPTAKE_RATE = 5.0 ;
 static const double M_DIFFUSION_CONSTANT = 5e-1;
@@ -131,15 +135,15 @@ private:
             //StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
             //UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
             UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
-            //PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
+            PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
           if (label_input[i] == 0)
           {
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
-            double birth_time = rand() % 10 + 1 ;
+            double birth_time = rand() % 15 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.5);
+            p_cell->GetCellData()->SetItem("target area", 0.8);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -148,12 +152,26 @@ private:
           }
           else if (label_input[i] == 1)
           {
-            CellPtr p_cell(new Cell(p_state, p_cycle_model));
+            CellPtr p_cell(new Cell(p_state, p_elong_model));
+            p_cell->SetCellProliferativeType(p_transit_type);
+            double birth_time = rand() % 10 + 1 ;
+            p_cell->SetBirthTime(-birth_time);
+            p_cell->InitialiseCellCycleModel();
+            p_cell->GetCellData()->SetItem("target area", 0.8);
+            // Initial Condition for Morphogen PDE
+            p_cell->GetCellData()->SetItem("morphogen",0.0);
+            p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+            p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
+            rCells.push_back(p_cell);
+          }
+          else if (label_input[i] == 2)
+          {
+            CellPtr p_cell(new Cell(p_state, p_elong_model));
             p_cell->SetCellProliferativeType(p_diff_type);
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.5);
+            p_cell->GetCellData()->SetItem("target area", 0.8);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -172,7 +190,7 @@ public:
         std::cout << "Importing label data from txt" << std::endl ;
         ifstream inFile ;
         int x ;
-        inFile.open("testoutput/test_label.txt") ;
+        inFile.open("testoutput/test_label_simple.txt") ;
         std::vector<double> label_input;
         if(!inFile)
         {
@@ -193,6 +211,12 @@ public:
         p_mesh.ConstructFromMeshReader(mesh_reader);
         p_mesh.SetCellRearrangementThreshold(0.1);
 
+        /*std::cout << "Creating mesh" << endl ;
+
+        HoneycombVertexMeshGenerator generator(4, 4);
+        MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
+        p_mesh->SetCellRearrangementThreshold(0.1);*/
+
         // Create Cells
         std::vector<CellPtr> cells;
         GenerateCells(p_mesh.GetNumElements(),cells,label_input);
@@ -203,7 +227,8 @@ public:
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
         cell_population.AddCellWriter<CellVolumesWriter>();
-        cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
+        //cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
+        cell_population.AddPopulationWriter<CalibrationErrorWriter>();
 
         MAKE_PTR(CellEpi, p_epi);
         MAKE_PTR(CellTip, p_tip);
@@ -217,6 +242,9 @@ public:
         simulator.SetOutputDivisionLocations(true);
 
         // ICI : MODIFIER PARAMETRE D'ADHESION
+
+        // double adhesion_coef = 200.0 ;
+
         std::cout << "Adding passive force" << endl ;
         // Create Forces and pass to simulation
         MAKE_PTR(DifferentialAdhesionForce<2>, p_force);
@@ -246,15 +274,19 @@ public:
         simulator.AddSimulationModifier(p_stretch_modifier);
         MAKE_PTR(BorderTrackingModifier<2>, p_border_modifier);
         simulator.AddSimulationModifier(p_border_modifier);
-        MAKE_PTR(NeighbourTrackingModifier<2>, p_neighbour_modifier) ;
-        simulator.AddSimulationModifier(p_neighbour_modifier) ;
-        MAKE_PTR(PolarTrackingModifier<2>, p_polar_modifier) ;
-        simulator.AddSimulationModifier(p_polar_modifier) ;
-        MAKE_PTR(LabelTrackingModifier<2>, p_lumen_modifier) ;
-        simulator.AddSimulationModifier(p_lumen_modifier) ;
+        //MAKE_PTR(AdhesionCoefModifier<2>, p_coef_modifier);
+        //simulator.AddSimulationModifier(p_coef_modifier);
 
-        /*
+        //MAKE_PTR(NeighbourTrackingModifier<2>, p_neighbour_modifier) ;
+        //simulator.AddSimulationModifier(p_neighbour_modifier) ;
+        //MAKE_PTR(PolarTrackingModifier<2>, p_polar_modifier) ;
+        //simulator.AddSimulationModifier(p_polar_modifier) ;
+        //MAKE_PTR(LabelTrackingModifier<2>, p_lumen_modifier) ;
+        //simulator.AddSimulationModifier(p_lumen_modifier) ;
+
+
         // Diffusion de gradient, pas encore utile à ce stade (besoin pour simuler la motilité des cellules endo)
+
         std::cout << "VeGF diffusion" << endl ;
 
         // Create a parabolic PDE object - see the header file for what the constructor arguments mean
@@ -279,7 +311,7 @@ public:
 
         // boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer2(new CellDataItemWriter<2,2>("morphogen_grad_x"));
         // cell_population.AddCellWriter(p_cell_data_item_writer2);
-        */
+
 
         // Labelling cells from file (Epi/Endo/Lumen)
         // On pourrait utiliser les informations de HALO pour taguer les cellules endo
@@ -297,19 +329,14 @@ public:
           }
           else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 1)
           {
-            if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 147)
-            {
+              cell_iter->AddCellProperty(p_endo);
+              cell_iter->AddCellProperty(p_stalk);
+          }
+          else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 2)
+          {
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_tip);
-            }
-            else
-            {
-                cell_iter->AddCellProperty(p_endo);
-                cell_iter->AddCellProperty(p_stalk);
-            }
-
           }
-
         }
 
         MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
@@ -318,11 +345,9 @@ public:
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
 
-        std::cout << "Adding active force" << endl ;
-        MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (8,0.55));
-        simulator.AddForce(p_motile_force);
-
-
+        //std::cout << "Adding active force" << endl ;
+        //MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (16,0.55));
+        //simulator.AddForce(p_motile_force);
 
         //MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
@@ -334,10 +359,10 @@ public:
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(10.0);
-        simulator.SetDt(1.0/20.0);
+        simulator.SetEndTime(48.0);
+        simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestMeshReader/Thyr135LD/Calibration/1");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestEndoNetwork");
 
         simulator.Solve();
 

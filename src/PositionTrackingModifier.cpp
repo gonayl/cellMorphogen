@@ -66,6 +66,7 @@ void PositionTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
     //NodeBasedCellPopulation<DIM>* p_cell_population = static_cast<NodeBasedCellPopulation<DIM>*>(&(rCellPopulation));
 
     // Iterate over cell population
+  /*
     for (typename AbstractCellPopulation<DIM>::Iterator cell_iter = rCellPopulation.Begin();
          cell_iter != rCellPopulation.End();
          ++cell_iter)
@@ -78,18 +79,37 @@ void PositionTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
         double yposini = cell_iter->GetCellData()->GetItem("yposini") ;
         double xpos = cell_location[0] ;
         double ypos = cell_location[1] ;
-        /*double xdiff = cell_iter->GetCellData()->GetItem("xdiff") ;
+
+        cell_iter->GetCellData()->SetItem("xpos", xpos);
+        cell_iter->GetCellData()->SetItem("ypos", ypos);
+        }
+    }
+    */
+
+    /*for (typename AbstractCellPopulation<DIM>::Iterator cell_iter = rCellPopulation.Begin();
+         cell_iter != rCellPopulation.End();
+         ++cell_iter)
+    {
+      if (cell_iter->template HasCellProperty<CellEndo>())
+        {
+
+        c_vector<double, DIM> cell_location = rCellPopulation.GetLocationOfCellCentre(*cell_iter) ;
+        double xposini = cell_iter->GetCellData()->GetItem("xposini") ;
+        double yposini = cell_iter->GetCellData()->GetItem("yposini") ;
+        double xpos = cell_location[0] ;
+        double ypos = cell_location[1] ;
+        double xdiff = cell_iter->GetCellData()->GetItem("xdiff") ;
         double ydiff = cell_iter->GetCellData()->GetItem("ydiff") ;
 
         double xdiff2 = std::abs(cell_location[0] - xpos) + xdiff ;
-        double ydiff2 = std::abs(cell_location[1] - ypos) + ydiff ;*/
+        double ydiff2 = std::abs(cell_location[1] - ypos) + ydiff ;
         double dist = sqrt((xpos - xposini)*(xpos - xposini) + (ypos - yposini)*(ypos - yposini)) ;
 
         cell_iter->GetCellData()->SetItem("dist", dist);
         cell_iter->GetCellData()->SetItem("xpos", xpos);
         cell_iter->GetCellData()->SetItem("ypos", ypos);
         }
-    }
+    } */
 }
 
 template<unsigned DIM>

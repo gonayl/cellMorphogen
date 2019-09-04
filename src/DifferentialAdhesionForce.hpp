@@ -162,6 +162,7 @@ public:
 
     virtual double GetAdhesionParameter(Node<DIM>* pNodeA, Node<DIM>* pNodeB, VertexBasedCellPopulation<DIM>& rVertexCellPopulation);
 
+
     double GetEndoEndoAdhesionEnergyParameter();
 
     double GetLumenLumenAdhesionEnergyParameter();

@@ -83,7 +83,6 @@
 #include "PositionWeightConstantTrackingModifier.hpp"
 #include "BorderTrackingModifier.hpp"
 #include "CellFixingModifier.hpp"
-#include "CalibrationErrorWriter.hpp"
 
 #include "FixedBoundaryCondition.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
@@ -112,7 +111,7 @@ static const double M_RADIUS = 100.0;
  */
 
 void SetupSingletons();
-void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility);
+void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mEpiBnd, unsigned mEpiEndo, unsigned mMemb, unsigned mMotility);
 void DestroySingletons();
 
 int main(int argc, char *argv[])
@@ -125,7 +124,10 @@ int main(int argc, char *argv[])
     general_options.add_options()
                     ("help", "produce help message")
                     ("E", boost::program_options::value<unsigned>()->default_value(5),"The energy parameter for the Epi-Epi adhesion")
-                    ("Mo", boost::program_options::value<unsigned>()->default_value(12),"The parameter for the motility force");
+                    ("B", boost::program_options::value<unsigned>()->default_value(10),"The energy parameter for the Epi-Boundary adhesion")
+                    ("D", boost::program_options::value<unsigned>()->default_value(6),"The energy parameter for the Epi-Endo adhesion")
+                    ("Mb", boost::program_options::value<unsigned>()->default_value(1),"The energy parameter for the Membrane Surface")
+                    ("Mo", boost::program_options::value<unsigned>()->default_value(12),"The motile force paramter");
 
     // Define parse command line into variables_map
     boost::program_options::variables_map variables_map;
@@ -141,10 +143,13 @@ int main(int argc, char *argv[])
 
     // Get ID and name from command line
     unsigned epiepi = variables_map["E"].as<unsigned>();
+    unsigned epibnd = variables_map["B"].as<unsigned>();
+    unsigned epiendo = variables_map["D"].as<unsigned>();
+    unsigned memb = variables_map["Mb"].as<unsigned>();
     unsigned motility = variables_map["Mo"].as<unsigned>();
 
     SetupSingletons();
-    SetupAndRunSimulation(epiepi, motility);
+    SetupAndRunSimulation(epiepi, epibnd, epiendo, memb, motility);
     DestroySingletons();
 }
 
@@ -160,7 +165,7 @@ void DestroySingletons()
     CellPropertyRegistry::Instance()->Clear();
 }
 
-void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
+void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mEpiBnd, unsigned mEpiEndo, unsigned mMemb, unsigned mMotility)
 {
 
         // Permet d'importer un fichier test et s'en servir pour taguer les cellules, voir ci-après
@@ -218,21 +223,7 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
             cells.push_back(p_cell);
           }
-          else if (label_input[i] == 1)
-          {
-            CellPtr p_cell(new Cell(p_state, p_elong_model));
-            p_cell->SetCellProliferativeType(p_transit_type);
-            double birth_time = rand() % 10 + 1 ;
-            p_cell->SetBirthTime(-birth_time);
-            p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 1.0);
-            // Initial Condition for Morphogen PDE
-            p_cell->GetCellData()->SetItem("morphogen",0.0);
-            p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
-            p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
-            cells.push_back(p_cell);
-          }
-          else if (label_input[i] == 2)
+          else if (label_input[i] == 1 or label_input[i] == 2)
           {
             CellPtr p_cell(new Cell(p_state, p_elong_model));
             p_cell->SetCellProliferativeType(p_diff_type);
@@ -252,11 +243,11 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
 
         VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
 
-        //cell_population.AddCellWriter<CellAgesWriter>();
-        //cell_population.AddCellWriter<CellPosWriter>();
+        cell_population.AddCellWriter<CellAgesWriter>();
+        cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
-        //cell_population.AddCellWriter<CellVolumesWriter>();
-        cell_population.AddPopulationWriter<CalibrationErrorWriter>();
+        cell_population.AddCellWriter<CellVolumesWriter>();
+        cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
 
         MAKE_PTR(CellEpi, p_epi);
         MAKE_PTR(CellTip, p_tip);
@@ -274,21 +265,21 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
         // Create Forces and pass to simulation
         MAKE_PTR(DifferentialAdhesionForce<2>, p_force);
         p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
-        p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
+        p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(mMemb);
 
         p_force->SetEndoEndoAdhesionEnergyParameter(3.0);
         p_force->SetLumenLumenAdhesionEnergyParameter(3.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(mEpiEpi);
         p_force->SetCorePeriphAdhesionEnergyParameter(mEpiEpi);
         p_force->SetPeriphPeriphAdhesionEnergyParameter(mEpiEpi);
-        p_force->SetEndoEpiAdhesionEnergyParameter(6.0);
+        p_force->SetEndoEpiAdhesionEnergyParameter(mEpiEndo);
         p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(6.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEpiBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEpiBoundaryAdhesionEnergyParameter(mEpiBnd);
 
         simulator.AddForce(p_force);
 
@@ -303,10 +294,10 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
 
         MAKE_PTR(NeighbourTrackingModifier<2>, p_neighbour_modifier) ;
         simulator.AddSimulationModifier(p_neighbour_modifier) ;
-        //MAKE_PTR(PolarTrackingModifier<2>, p_polar_modifier) ;
-        //simulator.AddSimulationModifier(p_polar_modifier) ;
-        //MAKE_PTR(LabelTrackingModifier<2>, p_lumen_modifier) ;
-        //simulator.AddSimulationModifier(p_lumen_modifier) ;
+        MAKE_PTR(PolarTrackingModifier<2>, p_polar_modifier) ;
+        simulator.AddSimulationModifier(p_polar_modifier) ;
+        MAKE_PTR(LabelTrackingModifier<2>, p_lumen_modifier) ;
+        simulator.AddSimulationModifier(p_lumen_modifier) ;
 
 
         std::cout << "Labelling Epi cells" << endl ;
@@ -322,12 +313,12 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
           else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 1)
           {
               cell_iter->AddCellProperty(p_endo);
-              cell_iter->AddCellProperty(p_stalk);
+              cell_iter->AddCellProperty(p_tip);
           }
           else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 2)
           {
               cell_iter->AddCellProperty(p_endo);
-              cell_iter->AddCellProperty(p_tip);
+              cell_iter->AddCellProperty(p_stalk);
           }
         }
 
@@ -355,28 +346,30 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
         p_pde_modifier->SetOutputGradient(true);
         p_pde_modifier->GetOutputGradient();
 
-        simulator.AddSimulationModifier(p_pde_modifier);
+        // simulator.AddSimulationModifier(p_pde_modifier);
 
         std::cout << "Adding active force" << endl ;
         MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (mMotility,0.55));
-        simulator.AddForce(p_motile_force);
+        // simulator.AddForce(p_motile_force);
 
 
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(48.0);
         simulator.SetDt(1.0/10.0);
-        simulator.SetSamplingTimestepMultiple(10.0);
+        simulator.SetSamplingTimestepMultiple(1.0);
 
 
         /* Calibration part */
 
-        cout << "Testing parameters set : (" << mEpiEpi << " / " << mMotility << " ) " << endl;
+        cout << "Testing parameters set : (" << mEpiEpi << " ; " << mEpiBnd << " ; " << mEpiEndo << " ; " << mMemb << " ) " << endl;
 
         // Specify output directory (unique to each simulation)
-        std::string output_directory = std::string("FromHaloCalibrationEpiEpiMotile")
+        std::string output_directory = std::string("FromHaloCalibrationWithout")
         + std::string("_E") + boost::lexical_cast<std::string>(mEpiEpi)
-        + std::string("_Mo") + boost::lexical_cast<std::string>(mMotility);
+        + std::string("_B") + boost::lexical_cast<std::string>(mEpiBnd)
+        + std::string("_D") + boost::lexical_cast<std::string>(mEpiEndo)
+        + std::string("_M") + boost::lexical_cast<std::string>(mMemb);
 
         /* END of Calibration part */
         simulator.SetOutputDirectory(output_directory);
