@@ -69,6 +69,7 @@
 #include "CellTip.hpp"
 #include "CellEpi.hpp"
 #include "CellPolar.hpp"
+#include "CellVessel.hpp"
 #include "CellBoundary.hpp"
 #include "CellCore.hpp"
 #include "CellPeriph.hpp"
@@ -150,7 +151,7 @@ private:
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
             rCells.push_back(p_cell);
           }
-          else if (label_input[i] == 1)
+          else if (label_input[i] == 1 or label_input[i] == 3)
           {
             CellPtr p_cell(new Cell(p_state, p_elong_model));
             p_cell->SetCellProliferativeType(p_transit_type);
@@ -235,6 +236,7 @@ public:
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellStalk, p_stalk);
+        MAKE_PTR(CellVessel, p_vessel);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
@@ -256,7 +258,7 @@ public:
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetPeriphPeriphAdhesionEnergyParameter(M_EPI);
-        p_force->SetEndoEpiAdhesionEnergyParameter(6.0);
+        p_force->SetEndoEpiAdhesionEnergyParameter(3.0);
         p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(6.0);
 
@@ -284,7 +286,7 @@ public:
         //MAKE_PTR(LabelTrackingModifier<2>, p_lumen_modifier) ;
         //simulator.AddSimulationModifier(p_lumen_modifier) ;
 
-
+/*
         // Diffusion de gradient, pas encore utile à ce stade (besoin pour simuler la motilité des cellules endo)
 
         std::cout << "VeGF diffusion" << endl ;
@@ -308,6 +310,8 @@ public:
         p_pde_modifier->GetOutputGradient();
 
         simulator.AddSimulationModifier(p_pde_modifier);
+
+        */
 
         // boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer2(new CellDataItemWriter<2,2>("morphogen_grad_x"));
         // cell_population.AddCellWriter(p_cell_data_item_writer2);
@@ -337,6 +341,11 @@ public:
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_tip);
           }
+          else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 3)
+          {
+              cell_iter->AddCellProperty(p_endo);
+              cell_iter->AddCellProperty(p_vessel);
+          }
         }
 
         MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
@@ -362,7 +371,7 @@ public:
         simulator.SetEndTime(48.0);
         simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestEndoNetwork");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestEndoNetwork/3");
 
         simulator.Solve();
 

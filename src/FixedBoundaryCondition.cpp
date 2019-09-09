@@ -3,6 +3,7 @@
 #include "VertexBasedCellPopulation.hpp"
 #include "CellStalk.hpp"
 #include "CellTip.hpp"
+#include "CellVessel.hpp"
 #include <stdlib.h>
 using namespace std ;
 
@@ -89,6 +90,15 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                     //std::cout << node_index << " should be fixed at (" << old_node_location(0) << "," << old_node_location(1) << ")." << std::endl ;
                     p_node->rGetModifiableLocation() = old_node_location;
                   }
+                  else if (p_cell->HasCellProperty<CellVessel>())
+                  {
+                    c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second;
+
+                    //cout << "node location : " << node_location[0] << " , " << node_location[1] << endl ;
+                    //std::cout << node_index << " should be fixed at (" << old_node_location(0) << "," << old_node_location(1) << ")." << std::endl ;
+                    p_node->rGetModifiableLocation() = old_node_location;
+                  }
+
 
                 }
 
