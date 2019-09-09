@@ -33,8 +33,8 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
                                                                       Node<DIM>* pNodeB,
                                                                       VertexBasedCellPopulation<DIM>& rVertexCellPopulation)
 {
-    double adhesion_coef = 2.0 ;
-    double simulation_time = 48.0 ;
+    //double adhesion_coef = 2.0 ;
+    //double simulation_time = 48.0 ;
     // Find the indices of the elements owned by each node
     std::set<unsigned> elements_containing_nodeA = pNodeA->rGetContainingElementIndices();
     std::set<unsigned> elements_containing_nodeB = pNodeB->rGetContainingElementIndices();
@@ -146,17 +146,17 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             if (num_epi_core_cells == 2)
             {
                 // Both cells are labelled "epi + core"
-                return this->GetCoreCoreAdhesionEnergyParameter() - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
+                return this->GetCoreCoreAdhesionEnergyParameter(); // - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
             }
             else if (num_epi_periph_cells == 2)
             {
                 // Both cells are labelled "epi + periph"
-                return this->GetPeriphPeriphAdhesionEnergyParameter() - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
+                return this->GetPeriphPeriphAdhesionEnergyParameter();// - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
             }
             else if (num_epi_periph_cells == 1 && num_epi_core_cells == 1)
             {
                 // one cell is labelled "epi + periph" and the other "epi + core"
-                return this->GetCorePeriphAdhesionEnergyParameter() - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
+                return this->GetCorePeriphAdhesionEnergyParameter();// - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
             }
             else
             {

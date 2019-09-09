@@ -253,19 +253,19 @@ public:
         p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
-        p_force->SetEndoEndoAdhesionEnergyParameter(3.0);
-        p_force->SetLumenLumenAdhesionEnergyParameter(3.0);
+        p_force->SetEndoEndoAdhesionEnergyParameter(5.0);
+        p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetPeriphPeriphAdhesionEnergyParameter(M_EPI);
-        p_force->SetEndoEpiAdhesionEnergyParameter(3.0);
-        p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
-        p_force->SetEndoLumenAdhesionEnergyParameter(6.0);
+        p_force->SetEndoEpiAdhesionEnergyParameter(5.0);
+        p_force->SetEpiLumenAdhesionEnergyParameter(5.0);
+        p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
 
-        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEpiBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetLumenBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetEpiBoundaryAdhesionEnergyParameter(5.0);
 
         simulator.AddForce(p_force);
 
@@ -361,17 +361,17 @@ public:
         //MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
-        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
-        simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
+        //MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+        //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(48.0);
+        simulator.SetEndTime(40.0);
         simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestEndoNetwork/3");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestSimulationTime");
 
         simulator.Solve();
 
