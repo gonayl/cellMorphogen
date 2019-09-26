@@ -5,13 +5,16 @@
 #include "CellCore.hpp"
 #include "CellPeriph.hpp"
 #include "CellLumen.hpp"
+#include <math.h>
 
 UniformG1GenerationalBoundaryCellCycleModel::UniformG1GenerationalBoundaryCellCycleModel()
+: mCycleDuration(12)
 {
 }
 
 UniformG1GenerationalBoundaryCellCycleModel::UniformG1GenerationalBoundaryCellCycleModel(const UniformG1GenerationalBoundaryCellCycleModel& rModel)
-   : AbstractSimpleGenerationalCellCycleModel(rModel)
+   : AbstractSimpleGenerationalCellCycleModel(rModel),
+     mCycleDuration(rModel.mCycleDuration)
 {
     /*
      * The member variables mGeneration and mMaxTransitGeneration are
@@ -36,6 +39,17 @@ AbstractCellCycleModel* UniformG1GenerationalBoundaryCellCycleModel::CreateCellC
     return new UniformG1GenerationalBoundaryCellCycleModel(*this);
 }
 
+void UniformG1GenerationalBoundaryCellCycleModel::SetCycleDuration(double cycleduration)
+{
+    mCycleDuration = cycleduration;
+}
+
+double UniformG1GenerationalBoundaryCellCycleModel::GetCycleDuration() const
+{
+    return mCycleDuration;
+}
+
+
 void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()
 {
     RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
@@ -50,16 +64,18 @@ void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()
     {
         if (mpCell->HasCellProperty<CellCore>())
         {
-          mG1Duration =  10 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULES DE COEUR, tu peux remplacer GetTransitCellG1Duration() par un nombre
-          mSDuration =  10 ;
-          mG2Duration = 3 ;
-          mMDuration =  3 ;
+          // double CoreCycleDuration = 33;
+          mG1Duration =  13 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULES DE COEUR, tu peux remplacer GetTransitCellG1Duration() par un nombre
+          mSDuration =  13 ;
+          mG2Duration = 5 ;
+          mMDuration =  2 ;
         }
         else if (mpCell->HasCellProperty<CellPeriph>())
         {
-          mG1Duration = 5 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
+          // double BorderCycleDuration = 12 ;
+          mG1Duration = 4; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
           mSDuration =  5 ;
-          mG2Duration = 1 ;
+          mG2Duration = 2 ;
           mMDuration =  1 ;
         }
         else if (mpCell->HasCellProperty<CellLumen>())
@@ -71,7 +87,14 @@ void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()
         }
         else
         {
-          mG1Duration = GetTransitCellG1Duration() + 3*p_gen->ranf();
+          double G1Duration = round(mCycleDuration * 6/15) ;
+          double SDuration = round(mCycleDuration * 6/15) ;
+          double G2Duration = round(mCycleDuration * 2/15) ;
+          double MDuration = round(mCycleDuration * 1/15) ;
+          mG1Duration = G1Duration ;
+          mSDuration =  SDuration ;
+          mG2Duration = G2Duration ;
+          mMDuration =  MDuration ;
         }
     }
     else if (mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>())
@@ -83,6 +106,7 @@ void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()
         NEVER_REACHED;
     }
 }
+
 
 void UniformG1GenerationalBoundaryCellCycleModel::OutputCellCycleModelParameters(out_stream& rParamsFile)
 {

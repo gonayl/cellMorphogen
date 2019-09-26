@@ -33,10 +33,14 @@ private:
         // Make sure the RandomNumberGenerator singleton gets saved too
         SerializableSingleton<RandomNumberGenerator>* p_wrapper = RandomNumberGenerator::Instance()->GetSerializationWrapper();
         archive & p_wrapper;
+        archive & mCycleDuration;
     }
 
 protected:
-
+    /**
+    Duration of total cell cycle from experiment
+    */
+    double mCycleDuration ;
     /**
      * Set the duration of G1 phase. This method is called on each cell at the
      * start of a simulation, and for both daughter cells immediately following
@@ -86,6 +90,10 @@ public:
      * @return new cell-cycle model
      */
     AbstractCellCycleModel* CreateCellCycleModel();
+
+    void SetCycleDuration(double cycleduration) ;
+
+    double GetCycleDuration() const ;
 
     /**
      * Overridden OutputCellCycleModelParameters() method.

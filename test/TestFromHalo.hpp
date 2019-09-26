@@ -123,7 +123,7 @@ class TestFromHalo : public AbstractCellBasedWithTimingsTestSuite
 {
 private:
 
-    void GenerateCells(unsigned num_cells, std::vector<CellPtr>& rCells, std::vector<double> label_input)
+    void GenerateCells(unsigned num_cells, std::vector<CellPtr>& rCells, std::vector<double> label_input, std::vector<double> boundary_input)
     {
         MAKE_PTR(TransitCellProliferativeType, p_transit_type);
         MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
@@ -135,14 +135,23 @@ private:
         {
             //StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
             //UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
-            UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
             PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
+            UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
+
           if (label_input[i] == 0)
           {
+            if (boundary_input[i] == 0)
+            {
+              p_cycle_model->SetCycleDuration(33) ;
+            }
+            else if (boundary_input[i] == 1 )
+            {
+              p_cycle_model->SetCycleDuration(12);
+            }
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
-            double birth_time = rand() % 15 + 1 ;
-            p_cell->SetBirthTime(-birth_time);
+            //double birth_time = rand() % 15 + 1 ;
+            p_cell->SetBirthTime(0);
             p_cell->InitialiseCellCycleModel();
             p_cell->GetCellData()->SetItem("target area", 0.8);
             // Initial Condition for Morphogen PDE
@@ -203,6 +212,21 @@ public:
         }
         inFile.close() ;
 
+        ifstream inFileBnd ;
+        int x_bnd ;
+        inFileBnd.open("testoutput/boundary_input.txt") ;
+        std::vector<double> boundary_input;
+        if(!inFileBnd)
+        {
+          cout << "Unable to open file" << endl ;
+        }
+        while(inFileBnd >> x_bnd)
+        {
+          boundary_input.push_back(x_bnd) ;
+        }
+        inFileBnd.close() ;
+        cout << boundary_input.size() << endl ;
+
         // Create Mesh
 
         std::cout << "Creating mesh" << endl ;
@@ -220,7 +244,7 @@ public:
 
         // Create Cells
         std::vector<CellPtr> cells;
-        GenerateCells(p_mesh.GetNumElements(),cells,label_input);
+        GenerateCells(p_mesh.GetNumElements(),cells,label_input,boundary_input);
 
         VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
 
@@ -236,7 +260,7 @@ public:
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellStalk, p_stalk);
-        MAKE_PTR(CellVessel, p_vessel);
+        //MAKE_PTR(CellVessel, p_vessel);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
@@ -262,10 +286,10 @@ public:
         p_force->SetEpiLumenAdhesionEnergyParameter(5.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
 
-        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(5.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(5.0);
-        p_force->SetLumenBoundaryAdhesionEnergyParameter(5.0);
-        p_force->SetEpiBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEpiBoundaryAdhesionEnergyParameter(10.0);
 
         simulator.AddForce(p_force);
 
@@ -318,6 +342,7 @@ public:
 
 
         // Labelling cells from file (Epi/Endo/Lumen)
+
         // On pourrait utiliser les informations de HALO pour taguer les cellules endo
         // (1 si positif au marqueur, 0 si non)
 
@@ -368,10 +393,10 @@ public:
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(40.0);
+        simulator.SetEndTime(48.0);
         simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestSimulationTime");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestCellCycle");
 
         simulator.Solve();
 
