@@ -1,0 +1,97 @@
+<Chaste>
+
+	<OffLatticeSimulation-2-2>
+		<Dt>0.1</Dt>
+		<EndTime>48</EndTime>
+		<SamplingTimestepMultiple>1</SamplingTimestepMultiple>
+		<OutputDivisionLocations>1</OutputDivisionLocations>
+		<OutputCellVelocities>0</OutputCellVelocities>
+	</OffLatticeSimulation-2-2>
+
+	<VertexBasedCellPopulation-2>
+		<CellRearrangementThreshold>0.1</CellRearrangementThreshold>
+		<T2Threshold>0.001</T2Threshold>
+		<CellRearrangementRatio>1.5</CellRearrangementRatio>
+		<OutputCellRearrangementLocations>1</OutputCellRearrangementLocations>
+		<VertexBasedDivisionRule>
+			<ShortAxisVertexBasedDivisionRule-2>
+			</ShortAxisVertexBasedDivisionRule-2>
+		</VertexBasedDivisionRule>
+		<DampingConstantNormal>1</DampingConstantNormal>
+		<DampingConstantMutant>1</DampingConstantMutant>
+		<OutputResultsForChasteVisualizer>1</OutputResultsForChasteVisualizer>
+	</VertexBasedCellPopulation-2>
+
+	<CellCycleModels>
+		<UniformG1GenerationalBoundaryCellCycleModel>
+			<MaxTransitGenerations>3</MaxTransitGenerations>
+			<StemCellG1Duration>14</StemCellG1Duration>
+			<TransitCellG1Duration>2</TransitCellG1Duration>
+			<SDuration>5</SDuration>
+			<G2Duration>2</G2Duration>
+			<MDuration>1</MDuration>
+		</UniformG1GenerationalBoundaryCellCycleModel>
+		<PerimeterDependentCellCycleModel>
+			<MaxStretch>3.5</MaxStretch>
+			<MinimumDivisionAge>1</MinimumDivisionAge>
+		</PerimeterDependentCellCycleModel>
+	</CellCycleModels>
+
+	<SrnModels>
+		<NullSrnModel>
+		</NullSrnModel>
+	</SrnModels>
+
+	<CellKillers>
+		<T2SwapCellKiller-2>
+		</T2SwapCellKiller-2>
+	</CellKillers>
+
+	<SimulationModifiers>
+		<VolumeTrackingModifier-2>
+		</VolumeTrackingModifier-2>
+		<PerimeterTrackingModifier-2>
+		</PerimeterTrackingModifier-2>
+		<BorderTrackingModifier-2>
+		</BorderTrackingModifier-2>
+		<NeighbourTrackingModifier-2>
+		</NeighbourTrackingModifier-2>
+		<ParabolicGrowingDomainPdeModifier-2>
+		</ParabolicGrowingDomainPdeModifier-2>
+	</SimulationModifiers>
+
+	<Forces>
+		<DifferentialAdhesionForce-2>
+			<EndoEndoAdhesionEnergyParameter>3</EndoEndoAdhesionEnergyParameter> 
+			<LumenLumenAdhesionEnergyParameter>3</LumenLumenAdhesionEnergyParameter> 
+			<EpiEpiAdhesionEnergyParameter>5</EpiEpiAdhesionEnergyParameter> 
+			<CoreCoreAdhesionEnergyParameter>3</CoreCoreAdhesionEnergyParameter> 
+			<CorePeriphAdhesionEnergyParameter>3</CorePeriphAdhesionEnergyParameter> 
+			<PeriphPeriphAdhesionEnergyParameter>3</PeriphPeriphAdhesionEnergyParameter> 
+			<EndoEpiAdhesionEnergyParameter>6</EndoEpiAdhesionEnergyParameter> 
+			<EpiLumenAdhesionEnergyParameter>6</EpiLumenAdhesionEnergyParameter> 
+			<EndoLumenAdhesionEnergyParameter>6</EndoLumenAdhesionEnergyParameter> 
+			<EndoBoundaryAdhesionEnergyParameter>10</EndoBoundaryAdhesionEnergyParameter> 
+			<LumenBoundaryAdhesionEnergyParameter>10</LumenBoundaryAdhesionEnergyParameter> 
+			<EpiBoundaryAdhesionEnergyParameter>10</EpiBoundaryAdhesionEnergyParameter> 
+			<NagaiHondaDeformationEnergyParameter>55</NagaiHondaDeformationEnergyParameter>
+			<NagaiHondaMembraneSurfaceEnergyParameter>1</NagaiHondaMembraneSurfaceEnergyParameter>
+			<NagaiHondaCellCellAdhesionEnergyParameter>0.5</NagaiHondaCellCellAdhesionEnergyParameter>
+			<NagaiHondaCellBoundaryAdhesionEnergyParameter>10</NagaiHondaCellBoundaryAdhesionEnergyParameter>
+		</DifferentialAdhesionForce-2>
+		<MorphogenDrivenCellForce-2>
+		</MorphogenDrivenCellForce-2>
+	</Forces>
+
+	<CellPopulationBoundaryConditions>
+	</CellPopulationBoundaryConditions>
+
+	<NumericalMethod>
+		<ForwardEulerNumericalMethod-2-2>
+			<UseAdaptiveTimestep>0</UseAdaptiveTimestep> 
+			<UseUpdateNodeLocation>0</UseUpdateNodeLocation> 
+			<GhostNodeForcesEnabled>0</GhostNodeForcesEnabled> 
+		</ForwardEulerNumericalMethod-2-2>
+	</NumericalMethod>
+
+</Chaste>

@@ -150,8 +150,8 @@ private:
             }
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
-            //double birth_time = rand() % 15 + 1 ;
-            p_cell->SetBirthTime(0);
+            double birth_time = rand() % 5 + 1 ;
+            p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
             p_cell->GetCellData()->SetItem("target area", 0.8);
             // Initial Condition for Morphogen PDE
@@ -160,7 +160,7 @@ private:
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
             rCells.push_back(p_cell);
           }
-          else if (label_input[i] == 1 or label_input[i] == 3)
+          else if (label_input[i] == 1 )
           {
             CellPtr p_cell(new Cell(p_state, p_elong_model));
             p_cell->SetCellProliferativeType(p_transit_type);
@@ -174,7 +174,7 @@ private:
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
             rCells.push_back(p_cell);
           }
-          else if (label_input[i] == 2)
+          else if (label_input[i] == 2 or label_input[i] == 3)
           {
             CellPtr p_cell(new Cell(p_state, p_elong_model));
             p_cell->SetCellProliferativeType(p_diff_type);
@@ -200,7 +200,7 @@ public:
         std::cout << "Importing label data from txt" << std::endl ;
         ifstream inFile ;
         int x ;
-        inFile.open("testoutput/test_label_simple.txt") ;
+        inFile.open("testoutput/test_label_vessel.txt") ;
         std::vector<double> label_input;
         if(!inFile)
         {
@@ -260,7 +260,7 @@ public:
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellStalk, p_stalk);
-        //MAKE_PTR(CellVessel, p_vessel);
+        MAKE_PTR(CellVessel, p_vessel);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
@@ -282,7 +282,7 @@ public:
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetPeriphPeriphAdhesionEnergyParameter(M_EPI);
-        p_force->SetEndoEpiAdhesionEnergyParameter(5.0);
+        p_force->SetEndoEpiAdhesionEnergyParameter(8.0);
         p_force->SetEpiLumenAdhesionEnergyParameter(5.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
 
@@ -386,8 +386,8 @@ public:
         //MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
-        //MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
-        //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
+        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+        simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
 
@@ -396,7 +396,7 @@ public:
         simulator.SetEndTime(48.0);
         simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestCellCycle");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestVessel/EndoEpi/5");
 
         simulator.Solve();
 
