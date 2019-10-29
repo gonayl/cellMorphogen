@@ -373,8 +373,8 @@ public:
           }
         }
 
-        MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
-        simulator.AddSimulationModifier(morphogen_modifier);
+      //  MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+        //simulator.AddSimulationModifier(morphogen_modifier);
 
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
@@ -386,8 +386,8 @@ public:
         //MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
-        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
-        simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
+        //MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+        //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
 
@@ -396,7 +396,7 @@ public:
         simulator.SetEndTime(48.0);
         simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestVessel/EndoEpi/5");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLudovic");
 
         simulator.Solve();
 
