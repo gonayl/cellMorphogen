@@ -33,8 +33,11 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
                                                                       Node<DIM>* pNodeB,
                                                                       VertexBasedCellPopulation<DIM>& rVertexCellPopulation)
 {
-    //double adhesion_coef = 2.0 ;
-    //double simulation_time = 48.0 ;
+    double a_cdh = -0.3 ;
+    double b_cdh = 1.05 ;
+    double a_itg = -0.4 ;
+    double b_itg = 1.03 ;
+    double simulation_time = 48.0 ;
     // Find the indices of the elements owned by each node
     std::set<unsigned> elements_containing_nodeA = pNodeA->rGetContainingElementIndices();
     std::set<unsigned> elements_containing_nodeB = pNodeB->rGetContainingElementIndices();
@@ -73,7 +76,7 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
         else if (p_cell->template HasCellProperty<CellEpi>())
         {
             // This cell is labelled "epi"
-            return this->GetEpiBoundaryAdhesionEnergyParameter();
+            return this->GetEpiBoundaryAdhesionEnergyParameter()* ((SimulationTime::Instance()->GetTime()/simulation_time)*a_itg + b_itg)  ;
         }
         else
         {
@@ -146,17 +149,17 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             if (num_epi_core_cells == 2)
             {
                 // Both cells are labelled "epi + core"
-                return this->GetCoreCoreAdhesionEnergyParameter(); // - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
+                return this->GetCoreCoreAdhesionEnergyParameter()* ((SimulationTime::Instance()->GetTime()/simulation_time)*a_cdh + b_cdh) ;
             }
             else if (num_epi_periph_cells == 2)
             {
                 // Both cells are labelled "epi + periph"
-                return this->GetPeriphPeriphAdhesionEnergyParameter();// - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
+                return this->GetPeriphPeriphAdhesionEnergyParameter()* ((SimulationTime::Instance()->GetTime()/simulation_time)*a_cdh + b_cdh) ;
             }
             else if (num_epi_periph_cells == 1 && num_epi_core_cells == 1)
             {
                 // one cell is labelled "epi + periph" and the other "epi + core"
-                return this->GetCorePeriphAdhesionEnergyParameter();// - adhesion_coef*(SimulationTime::Instance()->GetTime()/simulation_time);
+                return this->GetCorePeriphAdhesionEnergyParameter()* ((SimulationTime::Instance()->GetTime()/simulation_time)*a_cdh + b_cdh) ;
             }
             else
             {

@@ -5,7 +5,7 @@
 #include "NodeBasedCellPopulation.hpp"
 #include "PottsBasedCellPopulation.hpp"
 #include "VertexBasedCellPopulation.hpp"
-
+#include <iostream>
 #include <stdlib.h>
 #include <cmath>
 using namespace std ;
@@ -52,7 +52,7 @@ void CalibrationErrorWriter<ELEMENT_DIM, SPACE_DIM>::Visit(VertexBasedCellPopula
   vector<double> area_error_input;
   if(!inFileArea)
   {
-    cout << "Unable to open file" << endl ;
+    cout << "Unable to open area_error file in CalibrationErrorWriter" << endl ;
   }
   while(inFileArea >> x_area)
   {
@@ -67,7 +67,7 @@ void CalibrationErrorWriter<ELEMENT_DIM, SPACE_DIM>::Visit(VertexBasedCellPopula
   vector<double> perim_error_input;
   if(!inFilePerif)
   {
-    cout << "Unable to open file" << endl ;
+    cout << "Unable to open area_error file in CalibrationErrorWriter" << endl ;
   }
   while(inFilePerif >> x_perif)
   {
@@ -167,11 +167,11 @@ void CalibrationErrorWriter<ELEMENT_DIM, SPACE_DIM>::Visit(VertexBasedCellPopula
     }
 
     double volume_total = accumulate(volumes.begin(), volumes.end(), 0.0) ;
-    double volume_average = volume_total/volumes.size();
+    //double volume_average = volume_total/volumes.size();
     double distance_variance_x = accumulate(distances_x.begin(), distances_x.end(), 0.0)/distances_x.size();
     double distance_variance_y = accumulate(distances_y.begin(), distances_y.end(), 0.0)/distances_y.size();
 
-    std::cout << volumes.size() << " / " << volume_average << std::endl ;
+    // std::cout << volumes.size() << " / " << volume_average << std::endl ;
     vector<double> occur_area = {bin1 , bin2 , bin3 , bin4 , bin5} ;
     vector<double> occur_perif = {pin1 ,pin2 , pin3 , pin4 , pin5} ;
     vector<double> occur_area2 = area_error_input ;

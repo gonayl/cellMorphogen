@@ -6,6 +6,8 @@
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
 
+double xmoy ;
+double ymoy ;
 
 template<unsigned DIM>
 MassCenterTrackingModifier<DIM>::MassCenterTrackingModifier()
@@ -76,8 +78,8 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
 
     double xsum = std::accumulate(moy_x_pos.begin(), moy_x_pos.end(), 0.0);
     double ysum = std::accumulate(moy_y_pos.begin(), moy_y_pos.end(), 0.0);
-    double xmoy = xsum / moy_x_pos.size() ;
-    double ymoy = ysum / moy_y_pos.size() ;
+    xmoy = xsum / moy_x_pos.size() ;
+    ymoy = ysum / moy_y_pos.size() ;
 
     // std::cout << "x moy = " << xmoy << " " << "y moy = " << ymoy << std::endl;
 
@@ -92,6 +94,12 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
       cell_iter->GetCellData()->SetItem("mass_center_y", ymoy);
     }
 
+}
+
+template<unsigned DIM>
+double MassCenterTrackingModifier<DIM>::GetMassCenter()
+{
+    return xmoy ;
 }
 
 template<unsigned DIM>

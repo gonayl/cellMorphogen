@@ -84,6 +84,7 @@
 #include "BorderTrackingModifier.hpp"
 #include "CellFixingModifier.hpp"
 #include "CalibrationErrorWriter.hpp"
+#include "CalibrationErrorModifier.hpp"
 
 #include "FixedBoundaryCondition.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
@@ -112,7 +113,7 @@ static const double M_RADIUS = 100.0;
  */
 
 void SetupSingletons();
-void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility);
+void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBnd, out_stream overall_results_file);
 void DestroySingletons();
 
 int main(int argc, char *argv[])
@@ -124,8 +125,9 @@ int main(int argc, char *argv[])
     boost::program_options::options_description general_options("This is the adhesion calibration executable.\n");
     general_options.add_options()
                     ("help", "produce help message")
-                    ("E", boost::program_options::value<unsigned>()->default_value(5),"The energy parameter for the Epi-Epi adhesion")
-                    ("Mo", boost::program_options::value<unsigned>()->default_value(12),"The parameter for the motility force");
+                    ("E", boost::program_options::value<unsigned>()->default_value(5),"The energy parameter for the Epi-Epi cohesion")
+                    ("Mo", boost::program_options::value<unsigned>()->default_value(12),"The parameter for the motility force")
+                    ("Eb", boost::program_options::value<unsigned>()->default_value(10),"The energy parameter for the Epi-Bndd adhesion");
 
     // Define parse command line into variables_map
     boost::program_options::variables_map variables_map;
@@ -142,9 +144,19 @@ int main(int argc, char *argv[])
     // Get ID and name from command line
     unsigned epiepi = variables_map["E"].as<unsigned>();
     unsigned motility = variables_map["Mo"].as<unsigned>();
+    unsigned epibnd = variables_map["Eb"].as<unsigned>();
 
     SetupSingletons();
-    SetupAndRunSimulation(epiepi, motility);
+    // Create results file handler
+    OutputFileHandler results_handler("calibration_results", false);
+    // Create overall results file
+    std::string overall_results_filename = "overall_results" + boost::lexical_cast<std::string>(epiepi) + "_" + boost::lexical_cast<std::string>(motility) + "_" + boost::lexical_cast<std::string>(epibnd) + ".dat";
+    out_stream overall_results_file = results_handler.OpenOutputFile(overall_results_filename);
+
+    SetupAndRunSimulation(epiepi, motility, epibnd, overall_results_file);
+
+    *overall_results_file << "SIMULATIONS COMPLETE\n" << std::flush;
+    overall_results_file->close();
     DestroySingletons();
 }
 
@@ -160,7 +172,7 @@ void DestroySingletons()
     CellPropertyRegistry::Instance()->Clear();
 }
 
-void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
+void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBnd, out_stream overall_results_file)
 {
 
         // Permet d'importer un fichier test et s'en servir pour taguer les cellules, voir ci-après
@@ -171,7 +183,7 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
         std::vector<double> label_input;
         if(!inFile)
         {
-          cout << "Unable to open file" << endl ;
+          cout << "Unable to open test_label file" << endl ;
         }
         while(inFile >> x)
         {
@@ -285,7 +297,7 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
         p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(6.0);
 
-        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(mEpiBnd);
         p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetEpiBoundaryAdhesionEnergyParameter(10.0);
@@ -305,8 +317,8 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
         simulator.AddSimulationModifier(p_neighbour_modifier) ;
         //MAKE_PTR(PolarTrackingModifier<2>, p_polar_modifier) ;
         //simulator.AddSimulationModifier(p_polar_modifier) ;
-        //MAKE_PTR(LabelTrackingModifier<2>, p_lumen_modifier) ;
-        //simulator.AddSimulationModifier(p_lumen_modifier) ;
+        //MAKE_PTR(CalibrationErrorModifier<2>, p_calib_modifier) ;
+        //simulator.AddSimulationModifier(p_calib_modifier) ;
 
 
         std::cout << "Labelling Epi cells" << endl ;
@@ -364,23 +376,28 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility)
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(48.0);
-        simulator.SetDt(1.0/10.0);
-        simulator.SetSamplingTimestepMultiple(10.0);
+        simulator.SetEndTime(24.0);
+        simulator.SetDt(0.01);
+        simulator.SetSamplingTimestepMultiple(1.0);
 
 
         /* Calibration part */
 
-        cout << "Testing parameters set : (" << mEpiEpi << " / " << mMotility << " ) " << endl;
+
+        *overall_results_file << "SIMULATION = " << mEpiEpi << " / " << mEpiBnd << " / " << mMotility << " " << std::flush;
+        cout << "Testing parameters set : (" << mEpiEpi << " / " << mEpiBnd << " / " << mMotility << " ) " << endl;
 
         // Specify output directory (unique to each simulation)
-        std::string output_directory = std::string("FromHaloCalibrationEpiEpiMotile")
+        std::string output_directory = std::string("FromHaloCalibrationEpiEpiEpiBndMotile")
         + std::string("_E") + boost::lexical_cast<std::string>(mEpiEpi)
-        + std::string("_Mo") + boost::lexical_cast<std::string>(mMotility);
+        + std::string("_Mo") + boost::lexical_cast<std::string>(mMotility)
+        + std::string("_Eb") + boost::lexical_cast<std::string>(mEpiBnd);
 
         /* END of Calibration part */
         simulator.SetOutputDirectory(output_directory);
 
         simulator.Solve();
+
+
 
 }

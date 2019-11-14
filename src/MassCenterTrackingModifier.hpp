@@ -65,6 +65,9 @@ public:
      *
      * @param rCellPopulation reference to the cell population
      */
+
+    double GetMassCenter();
+
     void UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPopulation);
 
     /**

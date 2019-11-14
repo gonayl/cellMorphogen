@@ -300,6 +300,8 @@ public:
         simulator.AddSimulationModifier(p_stretch_modifier);
         MAKE_PTR(BorderTrackingModifier<2>, p_border_modifier);
         simulator.AddSimulationModifier(p_border_modifier);
+        MAKE_PTR(MassCenterTrackingModifier<2>, p_center_modifier);
+        simulator.AddSimulationModifier(p_center_modifier) ;
         //MAKE_PTR(AdhesionCoefModifier<2>, p_coef_modifier);
         //simulator.AddSimulationModifier(p_coef_modifier);
 
@@ -390,13 +392,15 @@ public:
         //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
-
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(48.0);
         simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
         simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLudovic");
+
+        double masscenter = p_center_modifier->GetMassCenter() ;
+        std::cout << masscenter << std::endl ;
 
         simulator.Solve();
 
