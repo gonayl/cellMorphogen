@@ -117,6 +117,10 @@ static const double M_DUDT_COEFFICIENT = 1.0;
 static const double M_DECAY_COEFFICIENT = 9.0;
 static const double M_RADIUS = 100.0;
 static const double M_EPI = 5.0 ;
+static const double M_EPIBND = 6.0 ;
+static const double M_ENDOBND = 10.0 ;
+static const double M_ENDOEPI = 10.0 ;
+static const double M_MOTILITY = 15.0 ;
 
 
 class TestFromHalo : public AbstractCellBasedWithTimingsTestSuite
@@ -142,11 +146,11 @@ private:
           {
             if (boundary_input[i] == 0)
             {
-              p_cycle_model->SetCycleDuration(33) ;
+              p_cycle_model->SetCycleDuration(32) ;
             }
             else if (boundary_input[i] == 1 )
             {
-              p_cycle_model->SetCycleDuration(12);
+              p_cycle_model->SetCycleDuration(11);
             }
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
@@ -214,7 +218,7 @@ public:
 
         ifstream inFileBnd ;
         int x_bnd ;
-        inFileBnd.open("testoutput/boundary_input.txt") ;
+        inFileBnd.open("testoutput/boundary_input_vessel.txt") ;
         std::vector<double> boundary_input;
         if(!inFileBnd)
         {
@@ -231,7 +235,7 @@ public:
 
         std::cout << "Creating mesh" << endl ;
 
-        VertexMeshReader<2,2> mesh_reader("testoutput/mesh/vertex_based_mesh");
+        VertexMeshReader<2,2> mesh_reader("testoutput/mesh/vertex_based_mesh_vessel");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
         p_mesh.SetCellRearrangementThreshold(0.1);
@@ -277,19 +281,19 @@ public:
         p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
-        p_force->SetEndoEndoAdhesionEnergyParameter(5.0);
+        p_force->SetEndoEndoAdhesionEnergyParameter(4.0);
         p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetPeriphPeriphAdhesionEnergyParameter(M_EPI);
-        p_force->SetEndoEpiAdhesionEnergyParameter(8.0);
+        p_force->SetEndoEpiAdhesionEnergyParameter(M_ENDOEPI);
         p_force->SetEpiLumenAdhesionEnergyParameter(5.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(M_ENDOBND);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEpiBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEpiBoundaryAdhesionEnergyParameter(M_EPIBND);
 
         simulator.AddForce(p_force);
 
@@ -312,7 +316,7 @@ public:
         //MAKE_PTR(LabelTrackingModifier<2>, p_lumen_modifier) ;
         //simulator.AddSimulationModifier(p_lumen_modifier) ;
 
-/*
+
         // Diffusion de gradient, pas encore utile à ce stade (besoin pour simuler la motilité des cellules endo)
 
         std::cout << "VeGF diffusion" << endl ;
@@ -337,7 +341,7 @@ public:
 
         simulator.AddSimulationModifier(p_pde_modifier);
 
-        */
+
 
         // boost::shared_ptr<CellDataItemWriter<2,2> > p_cell_data_item_writer2(new CellDataItemWriter<2,2>("morphogen_grad_x"));
         // cell_population.AddCellWriter(p_cell_data_item_writer2);
@@ -375,21 +379,24 @@ public:
           }
         }
 
-      //  MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
-        //simulator.AddSimulationModifier(morphogen_modifier);
+
+        MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+        simulator.AddSimulationModifier(morphogen_modifier);
+
 
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
 
-        //std::cout << "Adding active force" << endl ;
-        //MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (16,0.55));
-        //simulator.AddForce(p_motile_force);
+        std::cout << "Adding active force" << endl ;
+        MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (16,0.55));
+        simulator.AddForce(p_motile_force);
+
 
         //MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
-        //MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
-        //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
+        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+        simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
         std::cout << "Growing Monolayer" << endl ;
@@ -397,10 +404,7 @@ public:
         simulator.SetEndTime(48.0);
         simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLudovic");
-
-        double masscenter = p_center_modifier->GetMassCenter() ;
-        std::cout << masscenter << std::endl ;
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestMeeting/6");
 
         simulator.Solve();
 

@@ -8,7 +8,7 @@
 #include <math.h>
 
 UniformG1GenerationalBoundaryCellCycleModel::UniformG1GenerationalBoundaryCellCycleModel()
-: mCycleDuration(12)
+: mCycleDuration(11)
 {
 }
 
@@ -53,6 +53,10 @@ double UniformG1GenerationalBoundaryCellCycleModel::GetCycleDuration() const
 void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()
 {
     RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
+    double a_thyr = 1.0035 ;
+    double b_thyr = -0.747 ;
+    double simulation_time = 48.0 ;
+    double x_thyr = SimulationTime::Instance()->GetTime()/simulation_time ;
 
     assert(mpCell != nullptr);
 
@@ -64,37 +68,41 @@ void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()
     {
         if (mpCell->HasCellProperty<CellCore>())
         {
-          // double CoreCycleDuration = 33;
-          mG1Duration =  13 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULES DE COEUR, tu peux remplacer GetTransitCellG1Duration() par un nombre
-          mSDuration =  13 ;
-          mG2Duration = 5 ;
-          mMDuration =  2 ;
+          // double CoreCycleDuration = 32;
+          mG1Duration =  13/(a_thyr*exp(b_thyr*x_thyr)) ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULES DE COEUR, tu peux remplacer GetTransitCellG1Duration() par un nombre
+          mSDuration =  13/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mG2Duration = 4/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mMDuration =  2/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mMaxTransitGenerations  = 6 ;
         }
         else if (mpCell->HasCellProperty<CellPeriph>())
         {
-          // double BorderCycleDuration = 12 ;
-          mG1Duration = 4; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
-          mSDuration =  5 ;
-          mG2Duration = 2 ;
-          mMDuration =  1 ;
+          // double BorderCycleDuration = 11 ;
+          mG1Duration = 4/((a_thyr*exp(b_thyr*x_thyr))) ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
+          mSDuration =  4/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mG2Duration = 2/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mMDuration =  1/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mMaxTransitGenerations  = 6 ;
         }
         else if (mpCell->HasCellProperty<CellLumen>())
         {
-          mG1Duration = 2 ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
-          mSDuration =  2 ;
-          mG2Duration = 1 ;
-          mMDuration =  1 ;
+          mG1Duration = 2/(a_thyr*exp(b_thyr*x_thyr)) ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
+          mSDuration =  2/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mG2Duration = 1/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mMDuration =  1/(a_thyr*exp(b_thyr*x_thyr)) ;
+          mMaxTransitGenerations  = 6 ;
         }
         else
         {
-          double G1Duration = round(mCycleDuration * 6/15) ;
-          double SDuration = round(mCycleDuration * 6/15) ;
-          double G2Duration = round(mCycleDuration * 2/15) ;
-          double MDuration = round(mCycleDuration * 1/15) ;
+          double G1Duration = (mCycleDuration*6/15)/(a_thyr*exp(b_thyr*x_thyr))    ;
+          double SDuration = (mCycleDuration*6/15)/(a_thyr*exp(b_thyr*x_thyr)) ;
+          double G2Duration = (mCycleDuration*2/15)/(a_thyr*exp(b_thyr*x_thyr))  ;
+          double MDuration = (mCycleDuration*1/15)/(a_thyr*exp(b_thyr*x_thyr))  ;
           mG1Duration = G1Duration ;
           mSDuration =  SDuration ;
           mG2Duration = G2Duration ;
           mMDuration =  MDuration ;
+          mMaxTransitGenerations = 6 ;
         }
     }
     else if (mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>())

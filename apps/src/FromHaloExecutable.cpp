@@ -113,7 +113,7 @@ static const double M_RADIUS = 100.0;
  */
 
 void SetupSingletons();
-void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBnd, out_stream overall_results_file);
+void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBnd, unsigned mEndoBnd, out_stream overall_results_file);
 void DestroySingletons();
 
 int main(int argc, char *argv[])
@@ -127,7 +127,8 @@ int main(int argc, char *argv[])
                     ("help", "produce help message")
                     ("E", boost::program_options::value<unsigned>()->default_value(5),"The energy parameter for the Epi-Epi cohesion")
                     ("Mo", boost::program_options::value<unsigned>()->default_value(12),"The parameter for the motility force")
-                    ("Eb", boost::program_options::value<unsigned>()->default_value(10),"The energy parameter for the Epi-Bndd adhesion");
+                    ("Eb", boost::program_options::value<unsigned>()->default_value(10),"The energy parameter for the Epi-Bndd adhesion")
+                    ("Enb", boost::program_options::value<unsigned>()->default_value(10),"The energy parameter for the Endo-Bndd adhesion");
 
     // Define parse command line into variables_map
     boost::program_options::variables_map variables_map;
@@ -145,15 +146,16 @@ int main(int argc, char *argv[])
     unsigned epiepi = variables_map["E"].as<unsigned>();
     unsigned motility = variables_map["Mo"].as<unsigned>();
     unsigned epibnd = variables_map["Eb"].as<unsigned>();
+    unsigned endobnd = variables_map["Enb"].as<unsigned>();
 
     SetupSingletons();
     // Create results file handler
-    OutputFileHandler results_handler("calibration_results", false);
+    OutputFileHandler results_handler("FromHaloCalibrationDynamicCellCycleNotFixedMotile/calibration_results", false);
     // Create overall results file
     std::string overall_results_filename = "overall_results" + boost::lexical_cast<std::string>(epiepi) + "_" + boost::lexical_cast<std::string>(motility) + "_" + boost::lexical_cast<std::string>(epibnd) + ".dat";
     out_stream overall_results_file = results_handler.OpenOutputFile(overall_results_filename);
 
-    SetupAndRunSimulation(epiepi, motility, epibnd, overall_results_file);
+    SetupAndRunSimulation(epiepi, motility, epibnd, endobnd, overall_results_file);
 
     *overall_results_file << "SIMULATIONS COMPLETE\n" << std::flush;
     overall_results_file->close();
@@ -172,14 +174,14 @@ void DestroySingletons()
     CellPropertyRegistry::Instance()->Clear();
 }
 
-void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBnd, out_stream overall_results_file)
+void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBnd, unsigned mEndoBnd, out_stream overall_results_file)
 {
 
         // Permet d'importer un fichier test et s'en servir pour taguer les cellules, voir ci-après
         std::cout << "Importing label data from txt" << std::endl ;
         ifstream inFile ;
         int x ;
-        inFile.open("/home/gonayl/Chaste/chaste-src/testoutput/test_label.txt") ;
+        inFile.open("/home/gonayl/Chaste/chaste-src/testoutput/test_label_simple.txt") ;
         std::vector<double> label_input;
         if(!inFile)
         {
@@ -223,7 +225,7 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 1.0);
+            p_cell->GetCellData()->SetItem("target area", 0.8);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -237,7 +239,7 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 1.0);
+            p_cell->GetCellData()->SetItem("target area", 0.8);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -251,7 +253,7 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 1.0);
+            p_cell->GetCellData()->SetItem("target area", 0.8);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -264,10 +266,10 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
 
         VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
 
-        //cell_population.AddCellWriter<CellAgesWriter>();
-        //cell_population.AddCellWriter<CellPosWriter>();
+        cell_population.AddCellWriter<CellAgesWriter>();
+        cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
-        //cell_population.AddCellWriter<CellVolumesWriter>();
+        cell_population.AddCellWriter<CellVolumesWriter>();
         cell_population.AddPopulationWriter<CalibrationErrorWriter>();
 
         MAKE_PTR(CellEpi, p_epi);
@@ -297,10 +299,10 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
         p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(6.0);
 
-        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(mEpiBnd);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(mEndoBnd);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEpiBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEpiBoundaryAdhesionEnergyParameter(mEpiBnd);
 
         simulator.AddForce(p_force);
 
@@ -313,8 +315,8 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
         //MAKE_PTR(AdhesionCoefModifier<2>, p_coef_modifier);
         //simulator.AddSimulationModifier(p_coef_modifier);
 
-        MAKE_PTR(NeighbourTrackingModifier<2>, p_neighbour_modifier) ;
-        simulator.AddSimulationModifier(p_neighbour_modifier) ;
+        //MAKE_PTR(NeighbourTrackingModifier<2>, p_neighbour_modifier) ;
+        //simulator.AddSimulationModifier(p_neighbour_modifier) ;
         //MAKE_PTR(PolarTrackingModifier<2>, p_polar_modifier) ;
         //simulator.AddSimulationModifier(p_polar_modifier) ;
         //MAKE_PTR(CalibrationErrorModifier<2>, p_calib_modifier) ;
@@ -346,6 +348,7 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
         //MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
+
         // Diffusion de gradient, pas encore utile à ce stade (besoin pour simuler la motilité des cellules endo)
         std::cout << "VeGF diffusion" << endl ;
 
@@ -369,6 +372,11 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
 
         simulator.AddSimulationModifier(p_pde_modifier);
 
+        MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+        simulator.AddSimulationModifier(morphogen_modifier);
+
+
+
         std::cout << "Adding active force" << endl ;
         MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (mMotility,0.55));
         simulator.AddForce(p_motile_force);
@@ -388,10 +396,11 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mMotility, unsigned mEpiBn
         cout << "Testing parameters set : (" << mEpiEpi << " / " << mEpiBnd << " / " << mMotility << " ) " << endl;
 
         // Specify output directory (unique to each simulation)
-        std::string output_directory = std::string("FromHaloCalibrationEpiEpiEpiBndMotile")
+        std::string output_directory = std::string("FromHaloCalibrationDynamicCellCycleNotFixedMotile/")
         + std::string("_E") + boost::lexical_cast<std::string>(mEpiEpi)
         + std::string("_Mo") + boost::lexical_cast<std::string>(mMotility)
-        + std::string("_Eb") + boost::lexical_cast<std::string>(mEpiBnd);
+        + std::string("_Eb") + boost::lexical_cast<std::string>(mEpiBnd)
+        + std::string("_Enb") + boost::lexical_cast<std::string>(mEndoBnd);
 
         /* END of Calibration part */
         simulator.SetOutputDirectory(output_directory);
