@@ -93,6 +93,7 @@
 // #include "MergeNodeModifier.hpp"
 
 #include "FixedBoundaryCondition.hpp"
+#include "ObstructionBoundaryCondition.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "StochasticLumenCellCycleModel.hpp"
 #include "SimplePositionBasedCellCycleModel.hpp"
@@ -178,10 +179,11 @@ public:
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellStalk, p_stalk);
+        MAKE_PTR(CellLumen, p_lumen);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestMeshReader/TestBoundaryConditions");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsionForce");
 
 
         simulator.SetOutputDivisionLocations(true);
@@ -217,22 +219,15 @@ public:
         MAKE_PTR(BorderTrackingModifier<2>, p_border_modifier);
         simulator.AddSimulationModifier(p_border_modifier);
 
+
         std::cout << "Labelling Epi cells" << endl ;
         for (AbstractCellPopulation<2>::Iterator cell_iter = cell_population.Begin();
              cell_iter != cell_population.End();
              ++cell_iter)
         {
-
-          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 0)
-          {
-              cell_iter->AddCellProperty(p_endo);
-          }
-          else
-          {
-              cell_iter->AddCellProperty(p_epi);
-           }
-
+              cell_iter->AddCellProperty(p_lumen);
         }
+
 
 
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
@@ -245,15 +240,19 @@ public:
         simulator.AddSimulationModifier(p_fixing_modifier);
         */
 
-        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+        std::cout << "Adding repulsion force" << endl ;
+        MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.3));
+        simulator.AddForce(p_repulsion_force);
+
+        MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(48.0);
-        simulator.SetDt(1.0/100.0);
+        simulator.SetEndTime(200.0);
+        simulator.SetDt(1.0/20.0);
         simulator.SetSamplingTimestepMultiple(1.0);
 
         simulator.Solve();
