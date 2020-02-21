@@ -4,7 +4,9 @@
 #include "DifferentiatedCellProliferativeType.hpp"
 #include "CellCore.hpp"
 #include "CellPeriph.hpp"
+#include "SimulationParameters.hpp"
 #include "CellLumen.hpp"
+#include "CellEpi.hpp"
 #include <math.h>
 
 UniformG1GenerationalBoundaryCellCycleModel::UniformG1GenerationalBoundaryCellCycleModel()
@@ -48,6 +50,63 @@ double UniformG1GenerationalBoundaryCellCycleModel::GetCycleDuration() const
 {
     return mCycleDuration;
 }
+
+
+bool UniformG1GenerationalBoundaryCellCycleModel::ReadyToDivide()
+{
+   assert(mpCell != NULL);
+   //si Normal
+   if (!mReadyToDivide)
+   {
+     if (!mpCell->HasCellProperty<CellLumen>())
+     {
+       UpdateCellCyclePhase();
+       if ( (GetCurrentCellCyclePhase() != G_ZERO_PHASE) &&
+            (GetAge() >=  GetMDuration() +  GetG1Duration() +  GetSDuration() + GetG2Duration()) )
+       {
+           mReadyToDivide = true;
+       }
+     }
+   }
+
+
+   //Si pour lumen
+   if (!mReadyToDivide)
+   {
+     if (mpCell->HasCellProperty<CellEpi>() && mpCell->HasCellProperty<CellCore>())
+     {
+       double timeFromLastGen = mpCell->GetCellData()->GetItem("timeFromLastLumenGeneration");
+
+       double xl = mpCell->GetCellData()->GetItem("vecPolaX");
+       double yl = mpCell->GetCellData()->GetItem("vecPolaY");
+
+       double norme = sqrt(xl*xl + yl*yl);
+       if(norme >SimulationParameters::THRESHOLD_POLARISATION_EPI)
+       {
+
+         if(timeFromLastGen > SimulationParameters::TIME_BEETWEN_TWO_LUMEN_GENERATION)
+         {
+           if (GetAge() > SimulationParameters::AGE_DIV_LUMEN_MIN)
+           {
+             if(mpCell->GetCellData()->GetItem("lumenNearby") == 0)
+             {
+               //on ajoute un tag pour savoir que c'est pas une vraie division
+               mpCell->GetCellData()->SetItem("hadALumenDivision",1);
+
+               mReadyToDivide = true;
+             }
+
+           }
+         }
+       }
+     }
+   }
+
+
+   return mReadyToDivide;
+}
+
+
 
 
 void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()

@@ -106,6 +106,18 @@
 #include <iomanip>
 #include <fstream>
 #include <stdlib.h>
+
+//FOR LUMEN
+#include "SimulationParameters.hpp"
+
+#include "LumenGenerationModifier.hpp"
+#include "LumenModifier.hpp"
+#include "PolarisationModifier.hpp"
+#include "SimuInfoModifier.hpp"
+
+#include "CellPolarityXWriter.hpp"
+#include "CellPolarityYWriter.hpp"
+
 using namespace std ;
 
 static const double M_TIME_FOR_SIMULATION = 48;
@@ -204,7 +216,7 @@ public:
         std::cout << "Importing label data from txt" << std::endl ;
         ifstream inFile ;
         int x ;
-        inFile.open("testoutput/test_label_vessel.txt") ;
+        inFile.open("testoutput/SimpleConditionInit/test_label_simple.txt") ;
         std::vector<double> label_input;
         if(!inFile)
         {
@@ -218,7 +230,7 @@ public:
 
         ifstream inFileBnd ;
         int x_bnd ;
-        inFileBnd.open("testoutput/boundary_input_vessel.txt") ;
+        inFileBnd.open("testoutput/SimpleConditionInit/boundary_input.txt") ;
         std::vector<double> boundary_input;
         if(!inFileBnd)
         {
@@ -235,7 +247,7 @@ public:
 
         std::cout << "Creating mesh" << endl ;
 
-        VertexMeshReader<2,2> mesh_reader("testoutput/mesh/vertex_based_mesh_vessel");
+        VertexMeshReader<2,2> mesh_reader("testoutput/TestMorphogenMeshWriter/morphogen_mesh");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
         p_mesh.SetCellRearrangementThreshold(0.1);
@@ -255,9 +267,15 @@ public:
         cell_population.AddCellWriter<CellAgesWriter>();
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
-        cell_population.AddCellWriter<CellVolumesWriter>();
+        //cell_population.AddCellWriter<CellVolumesWriter>();                   COMMENTE PAR MOI
         //cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
-        cell_population.AddPopulationWriter<CalibrationErrorWriter>();
+        //cell_population.AddPopulationWriter<CalibrationErrorWriter>();        COMMENTE PAR MOI
+
+
+        //FOR LUMEN
+        cell_population.AddCellWriter<CellPolarityXWriter>();
+        cell_population.AddCellWriter<CellPolarityYWriter>();
+
 
         MAKE_PTR(CellEpi, p_epi);
         MAKE_PTR(CellTip, p_tip);
@@ -287,8 +305,8 @@ public:
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetPeriphPeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetEndoEpiAdhesionEnergyParameter(M_ENDOEPI);
-        p_force->SetEpiLumenAdhesionEnergyParameter(5.0);
-        p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
+        p_force->SetEpiLumenAdhesionEnergyParameter(4.0);
+        p_force->SetEndoLumenAdhesionEnergyParameter(15.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetEndoBoundaryAdhesionEnergyParameter(M_ENDOBND);
@@ -339,7 +357,7 @@ public:
         p_pde_modifier->SetOutputGradient(true);
         p_pde_modifier->GetOutputGradient();
 
-        simulator.AddSimulationModifier(p_pde_modifier);
+        //simulator.AddSimulationModifier(p_pde_modifier);                      COMMENTER PAR MOI
 
 
 
@@ -357,6 +375,15 @@ public:
              cell_iter != cell_population.End();
              ++cell_iter)
         {
+
+          //FOR LUMEN
+          cell_iter->GetCellData()->SetItem("cellIndex",SimulationParameters::getNextIndex());
+          cell_iter->GetCellData()->SetItem("timeFromLastLumenGeneration",0);
+          cell_iter->GetCellData()->SetItem("hadALumenDivision",0);
+          cell_iter->GetCellData()->SetItem("lumenNearby",1);
+          cell_iter->GetCellData()->SetItem("vecPolaX",0);
+          cell_iter->GetCellData()->SetItem("vecPolaY",0);
+
 
           if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 0)
           {
@@ -380,6 +407,20 @@ public:
         }
 
 
+        //FOR LUMEN
+        std::cout << "Adding lumen" << endl ;
+        MAKE_PTR(SimuInfoModifier<2>, p_simuInfoModifier);
+        simulator.AddSimulationModifier(p_simuInfoModifier);
+        MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
+        simulator.AddSimulationModifier(p_polarisation_modifier);
+
+        MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
+        simulator.AddSimulationModifier(p_lumen_generation_modifier);
+
+        MAKE_PTR(LumenModifier<2>, p_lumen_modifier);
+        simulator.AddSimulationModifier(p_lumen_modifier);
+
+
         MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
         simulator.AddSimulationModifier(morphogen_modifier);
 
@@ -401,10 +442,10 @@ public:
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(48.0);
-        simulator.SetDt(1.0/10.0);
-        simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestMeeting/6");
+        simulator.SetEndTime(SimulationParameters::TIME_OF_SIMULATION);
+        simulator.SetDt(SimulationParameters::TIMESTEP);
+        simulator.SetSamplingTimestepMultiple(6);
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLumen/02");
 
         simulator.Solve();
 

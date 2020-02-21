@@ -91,6 +91,8 @@ public:
      */
     AbstractCellCycleModel* CreateCellCycleModel();
 
+    virtual bool ReadyToDivide();
+
     void SetCycleDuration(double cycleduration) ;
 
     double GetCycleDuration() const ;

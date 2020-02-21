@@ -63,7 +63,7 @@
 #include "PerimeterTrackingModifier.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
 
-static const double M_TIME_FOR_SIMULATION = 100;
+static const double M_TIME_FOR_SIMULATION = 10;
 static const double M_NUM_CELLS_ACROSS = 10;
 static const double M_UPTAKE_RATE = 10.0 ;
 static const double M_DIFFUSION_CONSTANT = 5e-1;
