@@ -62,6 +62,8 @@
 #include "PetscSetupAndFinalize.hpp"
 
 #include "MorphogenDrivenCellForce.hpp"
+#include "RepulsionForce.hpp"
+
 #include "CellLabel.hpp"
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
@@ -117,9 +119,9 @@ static const double M_DUDT_COEFFICIENT = 1.0;
 static const double M_DECAY_COEFFICIENT = 9.0;
 static const double M_RADIUS = 100.0;
 static const double M_EPI = 5.0 ;
-static const double M_EPIBND = 6.0 ;
-static const double M_ENDOBND = 10.0 ;
-static const double M_ENDOEPI = 10.0 ;
+static const double M_EPIBND = 5.0 ;
+static const double M_ENDOBND = 5.0 ;
+static const double M_ENDOEPI = 5.0 ;
 static const double M_MOTILITY = 15.0 ;
 
 
@@ -204,7 +206,7 @@ public:
         std::cout << "Importing label data from txt" << std::endl ;
         ifstream inFile ;
         int x ;
-        inFile.open("testoutput/test_label_vessel.txt") ;
+        inFile.open("projects/cellMorphogen/test_label_simple.txt") ;
         std::vector<double> label_input;
         if(!inFile)
         {
@@ -218,7 +220,7 @@ public:
 
         ifstream inFileBnd ;
         int x_bnd ;
-        inFileBnd.open("testoutput/boundary_input_vessel.txt") ;
+        inFileBnd.open("projects/cellMorphogen/boundary_input.txt") ;
         std::vector<double> boundary_input;
         if(!inFileBnd)
         {
@@ -235,7 +237,7 @@ public:
 
         std::cout << "Creating mesh" << endl ;
 
-        VertexMeshReader<2,2> mesh_reader("testoutput/mesh/vertex_based_mesh_vessel");
+        VertexMeshReader<2,2> mesh_reader("projects/cellMorphogen/mesh/vertex_based_mesh");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
         p_mesh.SetCellRearrangementThreshold(0.1);
@@ -292,7 +294,7 @@ public:
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
         p_force->SetEndoBoundaryAdhesionEnergyParameter(M_ENDOBND);
-        p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetLumenBoundaryAdhesionEnergyParameter(5.0);
         p_force->SetEpiBoundaryAdhesionEnergyParameter(M_EPIBND);
 
         simulator.AddForce(p_force);
@@ -372,11 +374,6 @@ public:
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_tip);
           }
-          else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 3)
-          {
-              cell_iter->AddCellProperty(p_endo);
-              cell_iter->AddCellProperty(p_vessel);
-          }
         }
 
 
@@ -386,17 +383,20 @@ public:
 
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
-
         std::cout << "Adding active force" << endl ;
         MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (16,0.55));
         simulator.AddForce(p_motile_force);
 
+        /*std::cout << "Adding repulsion force" << endl ;
+        MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.3));
+        simulator.AddForce(p_repulsion_force);
+        */
 
         //MAKE_PTR(TargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
-        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
-        simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
+        //MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+        //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
         std::cout << "Growing Monolayer" << endl ;
@@ -404,7 +404,7 @@ public:
         simulator.SetEndTime(48.0);
         simulator.SetDt(1.0/10.0);
         simulator.SetSamplingTimestepMultiple(1.0);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestMeeting/6");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLudovicVERIF");
 
         simulator.Solve();
 
