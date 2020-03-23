@@ -6,6 +6,10 @@
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
 
+#include <stdlib.h>
+#include "CellTip.hpp"
+#include "CellStalk.hpp"
+
 double xmoy ;
 double ymoy ;
 
@@ -41,6 +45,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
 {
     // Make sure the cell population is updated
     rCellPopulation.Update();
+
     /**
      * This hack is needed because in the case of a MeshBasedCellPopulation in which
      * multiple cell divisions have occurred over one time step, the Voronoi tessellation
@@ -93,6 +98,74 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
       cell_iter->GetCellData()->SetItem("mass_center_x", xmoy);
       cell_iter->GetCellData()->SetItem("mass_center_y", ymoy);
     }
+
+
+
+
+
+
+    for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
+         cell_iter != rCellPopulation.End();
+         ++cell_iter)
+    {
+      CellPtr pCell = *cell_iter;
+
+      //regarde si il y a des voisines des Tip
+      if (pCell->HasCellProperty<CellStalk>())
+      {
+
+        pCell->GetCellData()->SetItem("have_tip_neighboor", 0);
+
+        VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
+        std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
+
+
+
+        for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
+             neighbour_iter != neighbour_indices.end();
+             ++neighbour_iter)
+        {
+          CellPtr p_neighbour_cell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
+
+          //Cell Epithéliale
+          bool neighbour_is_Tip = p_neighbour_cell->template HasCellProperty<CellTip>();
+
+          if ( neighbour_is_Tip == 1)
+          {
+            double nbrVoisin = pCell->GetCellData()->GetItem("have_tip_neighboor");
+            pCell->GetCellData()->SetItem("have_tip_neighboor", nbrVoisin+1);
+          }
+        }
+      }
+
+
+      //change les Tip qui se touchent en stalk (les voisines seulement)
+      if (pCell->HasCellProperty<CellTip>())
+      {
+
+        VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
+        std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
+
+
+        for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
+             neighbour_iter != neighbour_indices.end();
+             ++neighbour_iter)
+        {
+          CellPtr p_neighbour_cell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
+
+          //Cell Epithéliale
+          bool neighbour_is_Tip = p_neighbour_cell->template HasCellProperty<CellTip>();
+          if ( neighbour_is_Tip == 1)
+          {
+            p_neighbour_cell->RemoveCellProperty<CellTip>();
+            //p_neighbour_cell->AddCellProperty(p_stalk);
+          }
+        }
+      }
+
+
+    }
+
 
 }
 

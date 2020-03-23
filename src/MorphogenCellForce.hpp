@@ -58,7 +58,7 @@ private:
     double mTreshold;
     friend class boost::serialization::access;
     template<class Archive>
- 
+
     void serialize(Archive & archive, const unsigned int version)
     {
         archive & boost::serialization::base_object<AbstractForce<DIM> >(*this);
@@ -71,7 +71,7 @@ public:
     /**
      * Constructor.
      */
-    MorphogenCellForce(double a=1.0, double k=1.0);
+    MorphogenCellForce(double a=1.0);
 
     /**
      * Destructor.

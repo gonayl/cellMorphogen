@@ -1,11 +1,12 @@
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "RandomNumberGenerator.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
+#include "CellStalk.hpp"
 
 PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
     : AbstractCellCycleModel(),
-      mMaxStretch(3.5),
-      mMinimumDivisionAge(1.0)
+      mMaxStretch(2.1),
+      mMinimumDivisionAge(0.2)
 {
 }
 
@@ -34,7 +35,8 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
             if (!(mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>()))
             {
                 double cell_elongation = mpCell->GetCellData()->GetItem("perimeter");
-                if (cell_elongation > mMaxStretch)
+                double have_tip_neighboor = mpCell->GetCellData()->GetItem("have_tip_neighboor");
+                if (cell_elongation > mMaxStretch && have_tip_neighboor > 0)
                 {
                     mReadyToDivide = true;
                 }

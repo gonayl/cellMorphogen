@@ -159,6 +159,7 @@ void LumenGenerationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM
                       p_neighbour_cell->GetCellData()->SetItem("mustDie", 0);
                       p_neighbour_cell->GetCellData()->SetItem("vecPolaX", 0);
                       p_neighbour_cell->GetCellData()->SetItem("vecPolaY", 0);
+                      p_neighbour_cell->GetCellData()->SetItem("target area", SimulationParameters::SIZE_MIN_LUMEN);
                     }
 
                     else{
@@ -168,6 +169,7 @@ void LumenGenerationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM
                       pCell->GetCellData()->SetItem("mustDie", 0);
                       pCell->GetCellData()->SetItem("vecPolaX", 0);
                       pCell->GetCellData()->SetItem("vecPolaY", 0);
+                      pCell->GetCellData()->SetItem("target area", SimulationParameters::SIZE_MIN_LUMEN);
                     }
 
 

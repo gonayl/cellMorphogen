@@ -1,5 +1,5 @@
-#ifndef MASSCENTERTRACKINGMODIFIER_HPP_
-#define MASSCENTERTRACKINGMODIFIER_HPP_
+#ifndef LUMENMODIFIER_HPP_
+#define LUMENMODIFIER_HPP_
 
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
@@ -7,12 +7,10 @@
 #include "AbstractCellBasedSimulationModifier.hpp"
 
 /**
- * A modifier class which at each simulation time step calculates the perimeter of each cell
- * and stores it in in the CellData property as "perimeter". To be used in conjunction with
- * contact inhibition cell cycle models.
+ * A modifier class which compute the size of the lumen and destroy cell lumen in some condition
  */
 template<unsigned DIM>
-class MassCenterTrackingModifier : public AbstractCellBasedSimulationModifier<DIM,DIM>
+class LumenModifier : public AbstractCellBasedSimulationModifier<DIM,DIM>
 {
     /** Needed for serialization. */
     friend class boost::serialization::access;
@@ -34,12 +32,12 @@ public:
     /**
      * Default constructor.
      */
-    MassCenterTrackingModifier();
+    LumenModifier();
 
     /**
      * Destructor.
      */
-    virtual ~MassCenterTrackingModifier();
+    virtual ~LumenModifier();
 
     /**
      * Overridden UpdateAtEndOfTimeStep() method.
@@ -65,9 +63,6 @@ public:
      *
      * @param rCellPopulation reference to the cell population
      */
-
-    double GetMassCenter();
-
     void UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPopulation);
 
     /**
@@ -80,6 +75,6 @@ public:
 };
 
 #include "SerializationExportWrapper.hpp"
-EXPORT_TEMPLATE_CLASS_SAME_DIMS(MassCenterTrackingModifier)
+EXPORT_TEMPLATE_CLASS_SAME_DIMS(LumenModifier)
 
-#endif /*MassCenterTrackingModifier_HPP_*/
+#endif /*LumenModifier_HPP_*/

@@ -38,17 +38,16 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **********************************************/
 
 #include "MorphogenCellForce.hpp"
-#include "CellLabel.hpp"
+#include "CellTip.hpp"
 #include "VertexBasedCellPopulation.hpp"
-#include <numeric> 
-#include <iostream> 
+#include <numeric>
+#include <iostream>
 #include <cmath>
 
 template<unsigned DIM>
-MorphogenCellForce<DIM>::MorphogenCellForce(double a, double k)
+MorphogenCellForce<DIM>::MorphogenCellForce(double a)
     : AbstractForce<DIM>(),
-      mStrength(a),
-      mTreshold(k)
+      mStrength(a)
 {
 assert(mStrength > 0.0);
 }
@@ -70,44 +69,25 @@ void MorphogenCellForce<DIM>::AddForceContribution(AbstractCellPopulation<DIM>& 
     // Helper variable that is a static cast of the cell population
     VertexBasedCellPopulation<DIM>* p_cell_population = static_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation);
 
-    // Iterate over cells in the cell population
-    
-    c_vector<double,DIM> mass_x_centre;
-    c_vector<double,DIM> mass_y_centre;
-
-    double i = 0.0 ;
-
-    for (typename AbstractCellPopulation<DIM>::Iterator cell_iter = rCellPopulation.Begin();
-             cell_iter != rCellPopulation.End();
-             ++cell_iter)
-     {
-	c_vector<double, 2> centre_of_cell = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
-	mass_x_centre(i) = centre_of_cell[0];
-	mass_y_centre(i) = centre_of_cell[1];
-	i = i + 1.0 ;
-
-     }
-
-    double xmoy = std::accumulate(mass_x_centre.begin(), mass_x_centre.end(), 0)/ mass_x_centre.size();
-    double ymoy = std::accumulate(mass_y_centre.begin(), mass_y_centre.end(), 0)/ mass_x_centre.size();
-
-
     for (typename AbstractCellPopulation<DIM>::Iterator cell_iter = rCellPopulation.Begin();
              cell_iter != rCellPopulation.End();
              ++cell_iter)
 
     	{
-        if (cell_iter->template HasCellProperty<CellLabel>())
+        if (cell_iter->template HasCellProperty<CellTip>())
         {
+            double xmoy = cell_iter->GetCellData()->GetItem("mass_center_x");
+            double ymoy = cell_iter->GetCellData()->GetItem("mass_center_y");
             c_vector<double, 2> centre_of_cell2 = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
             double x = centre_of_cell2[0];
             double y = centre_of_cell2[1];
-	    c_vector<double,DIM> force;
-            force(1) =   - mStrength * (y - ymoy) / (mTreshold + std::abs(y - ymoy)) ;
-            force(0) =   - mStrength * (x - xmoy) / (mTreshold + std::abs(x - xmoy));
+            double norme = sqrt((y - ymoy) * (y - ymoy) + (x - xmoy) * (x - xmoy));
+            c_vector<double,DIM> force;
+            force(1) =   - mStrength * (y - ymoy) / norme;
+            force(0) =   - mStrength * (x - xmoy) / norme;
 
 	    VertexElement<DIM, DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
-		
+
 		// Iterate over nodes owned by this VertexElement
 		unsigned num_nodes_in_vertex_element = p_element->GetNumNodes();
 		for (unsigned local_index=0; local_index<num_nodes_in_vertex_element; local_index++)
@@ -115,7 +95,7 @@ void MorphogenCellForce<DIM>::AddForceContribution(AbstractCellPopulation<DIM>& 
         		unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
 			p_cell_population->GetNode(node_index)->AddAppliedForceContribution(force);
 
-       		 }   
+       		 }
         }
     }
 }

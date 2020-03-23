@@ -63,13 +63,6 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
         EXCEPTION("Lumen Modifier is to be used with a VertexBasedCellPopulation only");
     }
 
-    // MAKE_PTR(CellBoundary, p_border);
-
-    //double num_cells = 0 ;
-    // Iterate over cell population
-    //VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
-
-
     for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
          cell_iter != rCellPopulation.End();
          ++cell_iter)
@@ -79,86 +72,193 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
 
       if (pCell->HasCellProperty<CellLumen>())
       {
-        double targetSize = SimulationParameters::SIZE_MIN_LUMEN;
+
+        //On regarde la derivee
+        if(SimulationParameters::SIZE_INCREMENTALE){
+          for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
+               cell_iter != rCellPopulation.End();
+               ++cell_iter)
+          {
+
+            CellPtr pCell = *cell_iter;
 
 
-        //on cherche la cellule fille
-        VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
-        std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
 
-        // If this cell has any neighbours (as defined by mesh/population/interaction distance)...
-        if (!neighbour_indices.empty() )
-        {
 
-            for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
-                 neighbour_iter != neighbour_indices.end();
-                 ++neighbour_iter)
+            if (pCell->HasCellProperty<CellLumen>())
             {
-
-              CellPtr pnCell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
-
-              bool neighbour_is_epi = pnCell->template HasCellProperty<CellEpi>();
-              if(neighbour_is_epi)
+              for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
+                   cell_iter != rCellPopulation.End();
+                   ++cell_iter)
               {
 
-                c_vector<double, DIM> neighbour_location = p_cell_population->GetLocationOfCellCentre(pnCell);
-                c_vector<double, DIM> cell_location = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
-
-                double dx = neighbour_location[0] - cell_location[0];
-                double dy = neighbour_location[1] - cell_location[1];
-
-                double deltaX1 = dx - pnCell->GetCellData()->GetItem("vecPolaX");
-                double deltaY1 = dy - pnCell->GetCellData()->GetItem("vecPolaY");
-
-                double deltaX2 = -dx - pnCell->GetCellData()->GetItem("vecPolaX");
-                double deltaY2 = -dy - pnCell->GetCellData()->GetItem("vecPolaY");
+                CellPtr pCell = *cell_iter;
 
 
-                //regarde si ce vecteur est plus proche de celui polarisé que l'autre (pas de racine, inutile)
-                double Vec1 = deltaX1 * deltaX1 + deltaY1 * deltaY1;
-                double Vec2 = deltaX2 * deltaX2 + deltaY2 * deltaY2;
-
-                if(Vec1 > Vec2){
-
-                  double xl = pnCell->GetCellData()->GetItem("vecPolaX");
-                  double yl = pnCell->GetCellData()->GetItem("vecPolaY");
-
-                  double norme = sqrt(xl*xl + yl*yl);
 
 
-                  double coefSize = 1;
+                if (pCell->HasCellProperty<CellLumen>())
+                {
+                  double sumVector = 0;
 
-                  if(pCell->GetAge() < SimulationParameters::AGE_TO_LUMEN_MATURITY)
+
+                  //on cherche la cellule fille
+                  VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
+                  std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
+
+                  // If this cell has any neighbours (as defined by mesh/population/interaction distance)...
+                  if (!neighbour_indices.empty() )
                   {
-                    coefSize = pCell->GetAge() / SimulationParameters::AGE_TO_LUMEN_MATURITY;
+
+                      for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
+                           neighbour_iter != neighbour_indices.end();
+                           ++neighbour_iter)
+                      {
+
+                        CellPtr pnCell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
+
+                        bool neighbour_is_epi = pnCell->template HasCellProperty<CellEpi>();
+                        if(neighbour_is_epi)
+                        {
+
+                          c_vector<double, DIM> neighbour_location = p_cell_population->GetLocationOfCellCentre(pnCell);
+                          c_vector<double, DIM> cell_location = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
+
+                          double dx = neighbour_location[0] - cell_location[0];
+                          double dy = neighbour_location[1] - cell_location[1];
+
+                          double deltaX1 = dx - pnCell->GetCellData()->GetItem("vecPolaX");
+                          double deltaY1 = dy - pnCell->GetCellData()->GetItem("vecPolaY");
+
+                          double deltaX2 = -dx - pnCell->GetCellData()->GetItem("vecPolaX");
+                          double deltaY2 = -dy - pnCell->GetCellData()->GetItem("vecPolaY");
+
+
+                          //regarde si ce vecteur est plus proche de celui polarisé que l'autre (pas de racine, inutile)
+                          double Vec1 = deltaX1 * deltaX1 + deltaY1 * deltaY1;
+                          double Vec2 = deltaX2 * deltaX2 + deltaY2 * deltaY2;
+
+                          if(Vec1 > Vec2){
+
+                            double xl = pnCell->GetCellData()->GetItem("vecPolaX");
+                            double yl = pnCell->GetCellData()->GetItem("vecPolaY");
+
+                            double norme = sqrt(xl*xl + yl*yl);
+
+
+                            sumVector = sumVector + norme * SimulationParameters::VECTOR_IMPACT_ON_LUMEN_DERIVATE;
+                          }
+
+
+
+                        }
+
+
+                      bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
+                      if(neighbour_is_lumen){
+                        std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
+                        pnCell->Kill();
+                      }
+                    }
                   }
-
-                  targetSize = targetSize + norme * SimulationParameters::LUMEN_SIZE_FACTOR * coefSize;
+                  double derivate = (sumVector - SimulationParameters::SURFACE_IMPACT_ON_LUMEN_DERIVATE * pCell->GetCellData()->GetItem("target area"))*SimulationParameters::TIMESTEP;
+                  if(derivate>0){
+                    pCell->GetCellData()->SetItem("target area",pCell->GetCellData()->GetItem("target area") + derivate);
+                  }
                 }
-
               }
 
 
-              bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
-              if(neighbour_is_lumen){
-                std::cout << "Kill" << '\n';
-                pnCell->Kill();
-              }
+
             }
           }
-          pCell->GetCellData()->SetItem("target area",targetSize);
+        }
+        //Absolue
+        else{
+          for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
+               cell_iter != rCellPopulation.End();
+               ++cell_iter)
+          {
+
+            CellPtr pCell = *cell_iter;
 
 
 
+
+            if (pCell->HasCellProperty<CellLumen>())
+            {
+              double targetSize = SimulationParameters::SIZE_MIN_LUMEN;
+
+
+              //on cherche la cellule fille
+              VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
+              std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
+
+              // If this cell has any neighbours (as defined by mesh/population/interaction distance)...
+              if (!neighbour_indices.empty() )
+              {
+
+                  for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
+                       neighbour_iter != neighbour_indices.end();
+                       ++neighbour_iter)
+                  {
+
+                    CellPtr pnCell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
+
+                    bool neighbour_is_epi = pnCell->template HasCellProperty<CellEpi>();
+                    if(neighbour_is_epi)
+                    {
+
+                      c_vector<double, DIM> neighbour_location = p_cell_population->GetLocationOfCellCentre(pnCell);
+                      c_vector<double, DIM> cell_location = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
+
+                      double dx = neighbour_location[0] - cell_location[0];
+                      double dy = neighbour_location[1] - cell_location[1];
+
+                      double deltaX1 = dx - pnCell->GetCellData()->GetItem("vecPolaX");
+                      double deltaY1 = dy - pnCell->GetCellData()->GetItem("vecPolaY");
+
+                      double deltaX2 = -dx - pnCell->GetCellData()->GetItem("vecPolaX");
+                      double deltaY2 = -dy - pnCell->GetCellData()->GetItem("vecPolaY");
+
+
+                      //regarde si ce vecteur est plus proche de celui polarisé que l'autre (pas de racine, inutile)
+                      double Vec1 = deltaX1 * deltaX1 + deltaY1 * deltaY1;
+                      double Vec2 = deltaX2 * deltaX2 + deltaY2 * deltaY2;
+
+                      if(Vec1 > Vec2){
+
+                        double xl = pnCell->GetCellData()->GetItem("vecPolaX");
+                        double yl = pnCell->GetCellData()->GetItem("vecPolaY");
+
+                        double norme = sqrt(xl*xl + yl*yl);
+
+
+                        double coefSize = 1;
+
+                        if(pCell->GetAge() < SimulationParameters::AGE_TO_LUMEN_MATURITY)
+                        {
+                          coefSize = pCell->GetAge() / SimulationParameters::AGE_TO_LUMEN_MATURITY;
+                        }
+                        targetSize = targetSize + norme * SimulationParameters::LUMEN_SIZE_FACTOR * coefSize;
+                      }
+
+                    }
+
+
+                  bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
+                  if(neighbour_is_lumen){
+                    std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
+                    pnCell->Kill();
+                  }
+                }
+              }
+              pCell->GetCellData()->SetItem("target area",targetSize);
+            }
+          }
+        }
     }
-
-
-
-
   }
-
-
-
 }
 
 
