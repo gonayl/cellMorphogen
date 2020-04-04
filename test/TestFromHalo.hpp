@@ -405,11 +405,14 @@ public:
           {
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_stalk);
+              cell_iter->GetCellData()->SetItem("tagVessel",-1);
           }
           else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 2)
           {
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_tip);
+              cell_iter->GetCellData()->SetItem("tagVessel",cell_iter->GetCellData()->GetItem("cellIndex"));
+
           }
         }
 
@@ -455,7 +458,7 @@ public:
         simulator.SetEndTime(SimulationParameters::TIME_OF_SIMULATION);
         simulator.SetDt(SimulationParameters::TIMESTEP);
         simulator.SetSamplingTimestepMultiple(6);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLumen/03");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLumen/04");
 
         simulator.Solve();
 

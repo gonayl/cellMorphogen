@@ -8,7 +8,6 @@
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
 #include "SimulationParameters.hpp"
-#include "SimulationParameters.hpp"
 
 
 template<unsigned DIM>

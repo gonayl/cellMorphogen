@@ -10,6 +10,8 @@
 #include "CellTip.hpp"
 #include "CellStalk.hpp"
 
+#include "SimulationParameters.hpp"
+
 double xmoy ;
 double ymoy ;
 
@@ -45,7 +47,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
 {
     // Make sure the cell population is updated
     rCellPopulation.Update();
-
+    //template <class CellStalk> class CellStalk;
     /**
      * This hack is needed because in the case of a MeshBasedCellPopulation in which
      * multiple cell divisions have occurred over one time step, the Voronoi tessellation
@@ -99,10 +101,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
       cell_iter->GetCellData()->SetItem("mass_center_y", ymoy);
     }
 
-
-
-
-
+    //Regarde le nomobre de tip voisin
 
     for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
          cell_iter != rCellPopulation.End();
@@ -127,7 +126,6 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
         {
           CellPtr p_neighbour_cell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
 
-          //Cell Epithéliale
           bool neighbour_is_Tip = p_neighbour_cell->template HasCellProperty<CellTip>();
 
           if ( neighbour_is_Tip == 1)
@@ -139,12 +137,47 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
       }
 
 
-      //change les Tip qui se touchent en stalk (les voisines seulement)
+    //Retire les tips en réalisant des vaisseaux
+    if(SimulationParameters::GENERATE_VESSEL){
+
+      for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
+           cell_iter != rCellPopulation.End();
+           ++cell_iter)
+      {
+        CellPtr pCell = *cell_iter;
+
+        //attribue la cellule stalk à un vaisseau
+        if (pCell->HasCellProperty<CellStalk>())
+        {
+          //seulement si elle ne faisait pas partie d'un vaisseau
+          if(pCell->GetCellData()->GetItem("tagVessel")==-1)
+          {
+            VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
+            std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
+
+
+
+            for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
+                 neighbour_iter != neighbour_indices.end();
+                 ++neighbour_iter)
+            {
+              CellPtr p_neighbour_cell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
+
+              if(p_neighbour_cell->HasCellProperty<CellTip>())
+              {
+                pCell->GetCellData()->SetItem("tagVessel",p_neighbour_cell->GetCellData()->GetItem("tagVessel"));
+              }
+
+            }
+        }
+      }
+      //rtransforme une tip en non tip si elle rencontre un vaisseau autre que le siens
       if (pCell->HasCellProperty<CellTip>())
       {
-
+        bool removeTip = false;
         VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
         std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
+
 
 
         for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
@@ -153,19 +186,64 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
         {
           CellPtr p_neighbour_cell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
 
-          //Cell Epithéliale
-          bool neighbour_is_Tip = p_neighbour_cell->template HasCellProperty<CellTip>();
-          if ( neighbour_is_Tip == 1)
+          if(p_neighbour_cell->HasCellProperty<CellEndo>())
           {
-            p_neighbour_cell->RemoveCellProperty<CellTip>();
-            //p_neighbour_cell->AddCellProperty(p_stalk);
+            if(p_neighbour_cell->GetCellData()->GetItem("tagVessel")>-1 && p_neighbour_cell->GetCellData()->GetItem("tagVessel") !=pCell->GetCellData()->GetItem("tagVessel"))
+            {
+              removeTip = true;
+            }
+
           }
+
+        }
+        //on la met stalk si en contact avec un autre vaisseau
+        if(removeTip)
+        {
+          pCell->RemoveCellProperty<CellTip>();
+
+          boost::shared_ptr<AbstractCellProperty> p_stalk(CellPropertyRegistry::Instance()->Get<CellStalk>());
+
+          pCell->AddCellProperty(p_stalk);
         }
       }
 
 
-    }
+      }
 
+
+    }
+    //Supprime les tip cote a cote
+    else{
+
+
+
+        //change les Tip qui se touchent en stalk (les voisines seulement)
+        if (pCell->HasCellProperty<CellTip>())
+        {
+
+          VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
+          std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
+
+
+          for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
+               neighbour_iter != neighbour_indices.end();
+               ++neighbour_iter)
+          {
+            CellPtr p_neighbour_cell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
+
+            //Cell Epithéliale
+            bool neighbour_is_Tip = p_neighbour_cell->template HasCellProperty<CellTip>();
+            if ( neighbour_is_Tip == 1)
+            {
+              p_neighbour_cell->RemoveCellProperty<CellTip>();
+              //p_neighbour_cell->AddCellProperty(p_stalk);
+            }
+          }
+        }
+
+
+      }
+  }
 
 }
 
