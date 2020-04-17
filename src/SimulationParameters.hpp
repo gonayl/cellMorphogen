@@ -10,11 +10,19 @@ public:
 
 /*
   //influence the size of the polarization vector
+<<<<<<< HEAD
   static constexpr double IMPACT_POLARISATION_EPI_ON_EPI = -0.08;
   static constexpr double IMPACT_POLARISATION_ENDO_ON_EPI = 0.24;
   static constexpr double IMPACT_POLARISATION_LUMEN_ON_EPI = -0.15;
   static constexpr double VEC_POLARISATION_DECREASE = 0.075;
 */
+=======
+  static constexpr double IMPACT_POLARISATION_EPI_ON_EPI = -0.8;
+  static constexpr double IMPACT_POLARISATION_ENDO_ON_EPI = 2.4;
+  static constexpr double IMPACT_POLARISATION_LUMEN_ON_EPI = -1.5;
+  static constexpr double IMPACT_POLARISATION_PERIPH_ON_EPI = 4;
+  static constexpr double VEC_POLARISATION_DECREASE = 0.75;
+>>>>>>> c5af17ff564bb2f8cfbf117c005d7758abdd1189
 
   //Rules for lumen generation
   static constexpr double THRESHOLD_POLARISATION_EPI = 5;
