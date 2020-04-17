@@ -139,6 +139,9 @@ static const double M_EPIBND = 5.0 ;
 static const double M_ENDOBND = 4.0 ;//chang
 static const double M_ENDOEPI = 5.0 ;
 static const double M_MOTILITY = 15.0 ;
+static const double M_EPIEPI_INI = -0.08 ;
+static const double M_ENDOEPI_INI = 0.15 ;
+static const double M_LUMENEPI_INI = -0.08 ;
 
 
 class TestFromHalo : public AbstractCellBasedWithTimingsTestSuite
@@ -253,8 +256,6 @@ public:
 
         // Create Mesh
 
-        std::cout << "Creating mesh" << endl ;
-
         //VertexMeshReader<2,2> mesh_reader("testoutput/TestMorphogenMeshWriter/morphogen_mesh");
         VertexMeshReader<2,2> mesh_reader("testoutput/mesh/vertex_based_mesh");
         MutableVertexMesh<2,2> p_mesh;
@@ -267,11 +268,15 @@ public:
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
         p_mesh->SetCellRearrangementThreshold(0.1);*/
 
+        std::cout << "mesh generated" << endl ;
+
         // Create Cells
         std::vector<CellPtr> cells;
         GenerateCells(p_mesh.GetNumElements(),cells,label_input,boundary_input);
 
         VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
+
+       std::cout << "cells generated" << endl ;
 
         cell_population.AddCellWriter<CellAgesWriter>();
         cell_population.AddCellWriter<CellPosWriter>();
@@ -423,6 +428,11 @@ public:
         simulator.AddSimulationModifier(p_simuInfoModifier);
         MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
         simulator.AddSimulationModifier(p_polarisation_modifier);
+        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI);
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI);
+        p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI);
+
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(0.24);
 
         MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
         simulator.AddSimulationModifier(p_lumen_generation_modifier);
@@ -431,8 +441,8 @@ public:
         simulator.AddSimulationModifier(p_lumen_modifier);
 
 
-        MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
-        simulator.AddSimulationModifier(morphogen_modifier);
+        //MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
+        //simulator.AddSimulationModifier(morphogen_modifier);
 
 
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
@@ -457,8 +467,8 @@ public:
 
         simulator.SetEndTime(SimulationParameters::TIME_OF_SIMULATION);
         simulator.SetDt(SimulationParameters::TIMESTEP);
-        simulator.SetSamplingTimestepMultiple(6);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLumen/04");
+        simulator.SetSamplingTimestepMultiple(1);
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLumen/TestForCalibration/2");
 
         simulator.Solve();
 

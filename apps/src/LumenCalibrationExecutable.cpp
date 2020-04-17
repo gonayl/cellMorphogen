@@ -1,12 +1,7 @@
-#ifndef TESTFROMHALO_HPP_
-#define TESTFROMHALO_HPP_
-
-#include <cxxtest/TestSuite.h>
-
+#include "ExecutableSupport.hpp"
 #include "CellBasedSimulationArchiver.hpp"
 
 #include "SmartPointers.hpp"
-#include "AbstractCellBasedWithTimingsTestSuite.hpp"
 #include "DifferentialAdhesionGeneralisedLinearSpringForce.hpp"
 #include "TrianglesMeshWriter.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
@@ -58,8 +53,6 @@
 #include "DiffusionCaUpdateRule.hpp"
 #include "ShovingCaBasedDivisionRule.hpp"
 #include "AdhesionCaSwitchingUpdateRule.hpp"
-
-#include "PetscSetupAndFinalize.hpp"
 
 #include "MorphogenDrivenCellForce.hpp"
 #include "RepulsionForce.hpp"
@@ -139,6 +132,9 @@ static const double M_EPIBND = 5.0 ;
 static const double M_ENDOBND = 4.0 ;//chang
 static const double M_ENDOEPI = 5.0 ;
 static const double M_MOTILITY = 15.0 ;
+static const double M_EPIEPI_INI = -0.08 ;
+static const double M_ENDOEPI_INI = 0.15 ;
+static const double M_LUMENEPI_INI = -0.08 ;
 
 
 // Program option includes for handling command line arguments
@@ -152,7 +148,7 @@ static const double M_MOTILITY = 15.0 ;
  */
 
 void SetupSingletons();
-void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file);
+void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned mLumenEpiMult);
 void DestroySingletons();
 
 int main(int argc, char *argv[])
@@ -164,7 +160,9 @@ int main(int argc, char *argv[])
     boost::program_options::options_description general_options("This is the lumen calibration executable.\n");
     general_options.add_options()
                     ("help", "produce help message")
-                    ("X", boost::program_options::value<unsigned>()->default_value(1),"scaling factor");
+                    ("Ep", boost::program_options::value<unsigned>()->default_value(0.08),"influence of other epithelial cells on epithelial cells polarisation")
+                    ("En", boost::program_options::value<unsigned>()->default_value(0.24),"influence of other endothelial cells on epithelial cells polarisation")
+                    ("L", boost::program_options::value<unsigned>()->default_value(0.15),"influence of other lumen cells on epithelial cells polarisation");
 
     // Define parse command line into variables_map
     boost::program_options::variables_map variables_map;
@@ -179,19 +177,14 @@ int main(int argc, char *argv[])
     }
 
     // Get ID and name from command line
-    unsigned scaling = variables_map["X"].as<unsigned>();
+    unsigned epiepi = variables_map["Ep"].as<unsigned>();
+    unsigned endoepi = variables_map["En"].as<unsigned>();
+    unsigned lumenepi = variables_map["L"].as<unsigned>();
 
     SetupSingletons();
-    // Create results file handler
-    OutputFileHandler results_handler("TestLumenCalibraiton/lumen_calibration_results", false);
-    // Create overall results file
-    std::string overall_results_filename = "overall_results" + "_x" + boost::lexical_cast<std::string>(scaling) + ".dat";
-    out_stream overall_results_file = results_handler.OpenOutputFile(overall_results_filename);
 
-    SetupAndRunSimulation(scaling, overall_results_file);
+    SetupAndRunSimulation(epiepi, endoepi, lumenepi);
 
-    *overall_results_file << "SIMULATIONS COMPLETE\n" << std::flush;
-    overall_results_file->close();
     DestroySingletons();
 }
 
@@ -209,7 +202,7 @@ void DestroySingletons()
 
 
 
-void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
+void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned mLumenEpiMult)
 {
 
   // Permet d'importer un fichier test et s'en servir pour taguer les cellules, voir ci-après
@@ -217,7 +210,7 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
   ifstream inFile ;
   int x ;
   //inFile.open("testoutput/SimpleConditionInit/test_label_simple.txt") ;
-  inFile.open("testoutput/test_label_simple.txt") ;
+  inFile.open("inputs/test_label_simple.txt") ;
   std::vector<double> label_input;
   if(!inFile)
   {
@@ -232,7 +225,7 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
   ifstream inFileBnd ;
   int x_bnd ;
   //inFileBnd.open("testoutput/SimpleConditionInit/boundary_input.txt") ;
-  inFileBnd.open("testoutput/boundary_input.txt") ;
+  inFileBnd.open("inputs/boundary_input.txt") ;
   std::vector<double> boundary_input;
   if(!inFileBnd)
   {
@@ -246,7 +239,7 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
   cout << boundary_input.size() << endl ;
 
         // Create Mesh
-        VertexMeshReader<2,2> mesh_reader("/home/gonayl/Chaste/chaste-src/testoutput/mesh/vertex_based_mesh");
+        VertexMeshReader<2,2> mesh_reader("inputs/vertex_based_mesh");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
         p_mesh.SetCellRearrangementThreshold(0.1);
@@ -288,7 +281,7 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
-            rCells.push_back(p_cell);
+            cells.push_back(p_cell);
           }
           else if (label_input[i] == 1 )
           {
@@ -302,7 +295,7 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
             p_cell->GetCellData()->SetItem("morphogen",0.0);
                     p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
-            rCells.push_back(p_cell);
+            cells.push_back(p_cell);
           }
           else if (label_input[i] == 2 or label_input[i] == 3)
           {
@@ -316,7 +309,7 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
-            rCells.push_back(p_cell);
+            cells.push_back(p_cell);
           }
         }
 
@@ -421,12 +414,6 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
               cell_iter->GetCellData()->SetItem("tagVessel",cell_iter->GetCellData()->GetItem("cellIndex"));
 
           }
-          else if (label_input[cell_population.GetLocationIndexUsingCell(*cell_iter)] == 3)
-          {
-              cell_iter->AddCellProperty(p_endo);
-              cell_iter->AddCellProperty(p_vessel);
-
-          }
         }
 
 
@@ -434,8 +421,13 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
         std::cout << "Adding lumen" << endl ;
         MAKE_PTR(SimuInfoModifier<2>, p_simuInfoModifier);
         simulator.AddSimulationModifier(p_simuInfoModifier);
+
         MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
         simulator.AddSimulationModifier(p_polarisation_modifier);
+        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*mEpiEpiMult);
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*mEndoEpiMult);
+        p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI*mLumenEpiMult);
+
 
         MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
         simulator.AddSimulationModifier(p_lumen_generation_modifier);
@@ -465,12 +457,15 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
         /* Calibration part */
 
 
-        *overall_results_file << "Simulation with scaling x " << mScaling << std::flush;
-        cout << "Testing scaling x" << mScaling << endl;
+        cout << "Testing parameters : (" << mEpiEpiMult << ";" << mEndoEpiMult << ";" << mLumenEpiMult << ")" << endl;
 
         // Specify output directory (unique to each simulation)
-        std::string output_directory = std::string("TestLumenCalibraiton/")
-        + std::string("_X") + boost::lexical_cast<std::string>(mScaling);
+        std::string output_directory = std::string("TestLumenCalibration/")
+        + std::string("_Ep") + boost::lexical_cast<std::string>(mEpiEpiMult)
+        + std::string("_En") + boost::lexical_cast<std::string>(mEndoEpiMult)
+        + std::string("_L") + boost::lexical_cast<std::string>(mLumenEpiMult);
+
+
 
         /* END of Calibration part */
         simulator.SetOutputDirectory(output_directory);

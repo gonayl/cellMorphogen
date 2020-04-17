@@ -12,6 +12,13 @@
 template<unsigned DIM>
 class PolarisationModifier : public AbstractCellBasedSimulationModifier<DIM,DIM>
 {
+private:
+
+    double mVecPolarisationDecrease ;
+    double mEpiEpiPolarisationParameter ;
+    double mEndoEpiPolarisationParameter ;
+    double mLumenEpiPolarisationParameter ;
+
     /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
@@ -25,6 +32,10 @@ class PolarisationModifier : public AbstractCellBasedSimulationModifier<DIM,DIM>
     void serialize(Archive & archive, const unsigned int version)
     {
         archive & boost::serialization::base_object<AbstractCellBasedSimulationModifier<DIM,DIM> >(*this);
+        archive & mVecPolarisationDecrease;
+        archive & mEpiEpiPolarisationParameter;
+        archive & mEndoEpiPolarisationParameter;
+        archive & mLumenEpiPolarisationParameter;
     }
 
 public:
@@ -64,6 +75,22 @@ public:
      * @param rCellPopulation reference to the cell population
      */
     void UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPopulation);
+
+    double GetVecPolarisationDecrease();
+
+    double GetEpiEpiPolarisationParameter();
+
+    double GetEndoEpiPolarisationParameter();
+
+    double GetLumenEpiPolarisationParameter();
+
+    void SetVecPolarisationDecrease(double vecPolarisationDecrease);
+
+    void SetEpiEpiPolarisationParameter(double epiEpiPolarisationParameter);
+
+    void SetEndoEpiPolarisationParameter(double endoEpiPolarisationParameter);
+
+    void SetLumenEpiPolarisationParameter(double lumenEpiPolarisationParameter);
 
     /**
      * Overridden OutputSimulationModifierParameters() method.

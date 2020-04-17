@@ -5,14 +5,16 @@ class SimulationParameters{
 public:
 
   //Simulation
-  static constexpr double TIMESTEP = 0.01;
-  static constexpr double TIME_OF_SIMULATION = 38;
+  static constexpr double TIMESTEP = 0.001;
+  static constexpr double TIME_OF_SIMULATION = 48;
 
+/*
   //influence the size of the polarization vector
   static constexpr double IMPACT_POLARISATION_EPI_ON_EPI = -0.08;
   static constexpr double IMPACT_POLARISATION_ENDO_ON_EPI = 0.24;
   static constexpr double IMPACT_POLARISATION_LUMEN_ON_EPI = -0.15;
   static constexpr double VEC_POLARISATION_DECREASE = 0.075;
+*/
 
   //Rules for lumen generation
   static constexpr double THRESHOLD_POLARISATION_EPI = 5;

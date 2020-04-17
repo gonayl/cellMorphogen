@@ -12,7 +12,11 @@
 
 template<unsigned DIM>
 PolarisationModifier<DIM>::PolarisationModifier()
-    : AbstractCellBasedSimulationModifier<DIM>()
+    : AbstractCellBasedSimulationModifier<DIM>(),
+      mVecPolarisationDecrease(0.075),
+      mEpiEpiPolarisationParameter(-0.08),
+      mEndoEpiPolarisationParameter(0.24),
+      mLumenEpiPolarisationParameter(-0.15)
 {
 }
 
@@ -51,6 +55,7 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
      *
      * \todo work out how to properly fix this (#1986)
      */
+
     if (bool(dynamic_cast<MeshBasedCellPopulation<DIM>*>(&rCellPopulation)))
     {
         static_cast<MeshBasedCellPopulation<DIM>*>(&(rCellPopulation))->CreateVoronoiTessellation();
@@ -82,8 +87,8 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
         double vecPolaY = pCell->GetCellData()->GetItem("vecPolaY");
 
 
-        vecPolaX = vecPolaX - vecPolaX * SimulationParameters::VEC_POLARISATION_DECREASE * SimulationParameters::TIMESTEP;
-        vecPolaY = vecPolaY - vecPolaY * SimulationParameters::VEC_POLARISATION_DECREASE * SimulationParameters::TIMESTEP;
+        vecPolaX = vecPolaX - vecPolaX * this->GetVecPolarisationDecrease() * SimulationParameters::TIMESTEP;
+        vecPolaY = vecPolaY - vecPolaY * this->GetVecPolarisationDecrease() * SimulationParameters::TIMESTEP;
 
 
 
@@ -142,17 +147,17 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
                   cosAngle = sqrt(cosAngle*cosAngle);//valeur absolue
                   //std::cout << cosAngle << "  " << normalisationInterCell << " " << prodScalaire << "  " << normeVecPolaNeighbour << '\n';
                   if(vecPolaXNeighbour > 0){
-                    vecPolaX = vecPolaX + SimulationParameters::IMPACT_POLARISATION_EPI_ON_EPI * SimulationParameters::TIMESTEP*cosAngle;
+                    vecPolaX = vecPolaX + this->GetEpiEpiPolarisationParameter() * SimulationParameters::TIMESTEP*cosAngle;
                   }
                   else if(vecPolaXNeighbour < 0){
-                    vecPolaX = vecPolaX - SimulationParameters::IMPACT_POLARISATION_EPI_ON_EPI * SimulationParameters::TIMESTEP*cosAngle;
+                    vecPolaX = vecPolaX - this->GetEpiEpiPolarisationParameter() * SimulationParameters::TIMESTEP*cosAngle;
                   }
 
                   if(vecPolaYNeighbour > 0){
-                    vecPolaY = vecPolaY + SimulationParameters::IMPACT_POLARISATION_EPI_ON_EPI * SimulationParameters::TIMESTEP*cosAngle;
+                    vecPolaY = vecPolaY + this->GetEpiEpiPolarisationParameter() * SimulationParameters::TIMESTEP*cosAngle;
                   }
                   else if(vecPolaYNeighbour < 0){
-                    vecPolaY = vecPolaY - SimulationParameters::IMPACT_POLARISATION_EPI_ON_EPI * SimulationParameters::TIMESTEP*cosAngle;
+                    vecPolaY = vecPolaY - this->GetEpiEpiPolarisationParameter() * SimulationParameters::TIMESTEP*cosAngle;
                   }
                 }
 
@@ -160,8 +165,8 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
 
 
 
-                  vecPolaX = vecPolaX + dx / normalisationInterCell * SimulationParameters::IMPACT_POLARISATION_ENDO_ON_EPI * SimulationParameters::TIMESTEP;
-                  vecPolaY = vecPolaY + dy / normalisationInterCell * SimulationParameters::IMPACT_POLARISATION_ENDO_ON_EPI * SimulationParameters::TIMESTEP;
+                  vecPolaX = vecPolaX + dx / normalisationInterCell * this->GetEndoEpiPolarisationParameter() * SimulationParameters::TIMESTEP;
+                  vecPolaY = vecPolaY + dy / normalisationInterCell * this->GetEndoEpiPolarisationParameter() * SimulationParameters::TIMESTEP;
 
                   //std::cout << vecPolaX << std::endl;
 
@@ -170,8 +175,8 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
 
                 if(neighbour_is_lumen == 1 && p_neighbour_cell->GetCellData()->GetItem("mustDie")==0){
 
-                  vecPolaX = vecPolaX + dx / normalisationInterCell * SimulationParameters::IMPACT_POLARISATION_LUMEN_ON_EPI * SimulationParameters::TIMESTEP;
-                  vecPolaY = vecPolaY + dy / normalisationInterCell * SimulationParameters::IMPACT_POLARISATION_LUMEN_ON_EPI * SimulationParameters::TIMESTEP;
+                  vecPolaX = vecPolaX + dx / normalisationInterCell * this->GetLumenEpiPolarisationParameter() * SimulationParameters::TIMESTEP;
+                  vecPolaY = vecPolaY + dy / normalisationInterCell * this->GetLumenEpiPolarisationParameter() * SimulationParameters::TIMESTEP;
 
                   //std::cout << vecPolaX << std::endl;
 
@@ -190,12 +195,68 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
 
 }
 
+template<unsigned DIM>
+double PolarisationModifier<DIM>::GetVecPolarisationDecrease()
+{
+    return mVecPolarisationDecrease;
+}
+template<unsigned DIM>
+double PolarisationModifier<DIM>::GetEpiEpiPolarisationParameter()
+{
+    return mEpiEpiPolarisationParameter;
+}
 
+template<unsigned DIM>
+double PolarisationModifier<DIM>::GetEndoEpiPolarisationParameter()
+{
+    return mEndoEpiPolarisationParameter;
+}
+
+template<unsigned DIM>
+double PolarisationModifier<DIM>::GetLumenEpiPolarisationParameter()
+{
+    return mLumenEpiPolarisationParameter;
+}
+
+//----*----//
+
+template<unsigned DIM>
+void PolarisationModifier<DIM>::SetVecPolarisationDecrease(double vecPolarisationDecrease)
+{
+    mVecPolarisationDecrease = vecPolarisationDecrease;
+}
+
+template<unsigned DIM>
+void PolarisationModifier<DIM>::SetEpiEpiPolarisationParameter(double epiEpiPolarisationParameter)
+{
+    mEpiEpiPolarisationParameter = epiEpiPolarisationParameter;
+}
+
+template<unsigned DIM>
+void PolarisationModifier<DIM>::SetEndoEpiPolarisationParameter(double endoEpiPolarisationParameter)
+{
+    mEndoEpiPolarisationParameter = endoEpiPolarisationParameter;
+}
+
+template<unsigned DIM>
+void PolarisationModifier<DIM>::SetLumenEpiPolarisationParameter(double lumenEpiPolarisationParameter)
+{
+    mLumenEpiPolarisationParameter = lumenEpiPolarisationParameter;
+}
 
 template<unsigned DIM>
 void PolarisationModifier<DIM>::OutputSimulationModifierParameters(out_stream& rParamsFile)
 {
-    // No SimulationParameters to output, so just call method on direct parent class
+    // Output member variables
+    *rParamsFile << "\t\t\t<VecPolarisationDecrease" << mVecPolarisationDecrease << "/VecPolarisationDecrease> \n" ;
+
+    *rParamsFile << "\t\t\t<EpiEpiPolarisationParameter" << mEpiEpiPolarisationParameter << "</EpiEpiPolarisationParameter> \n";
+
+    *rParamsFile << "\t\t\t<EndoEpiPolarisationParameter" << mEndoEpiPolarisationParameter << "</EndoEpiPolarisationParameter> \n";
+
+    *rParamsFile << "\t\t\t<LumenEpiPolarisationParameter" << mLumenEpiPolarisationParameter << "</LumenEpiPolarisationParameter> \n";
+
+    //Call method on direct parent class
     AbstractCellBasedSimulationModifier<DIM>::OutputSimulationModifierParameters(rParamsFile);
 }
 
