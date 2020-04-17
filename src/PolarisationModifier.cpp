@@ -98,6 +98,9 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
         VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
         std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
 
+        c_vector<double, DIM> cell_location = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
+
+
         // If this cell has any neighbours (as defined by mesh/population/interaction distance)...
         if (!neighbour_indices.empty() )
         {
@@ -121,7 +124,6 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
 
 
                 c_vector<double, DIM> neighbour_location = p_cell_population->GetLocationOfCellCentre(p_neighbour_cell);
-                c_vector<double, DIM> cell_location = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
 
                 double dx = cell_location[0] - neighbour_location[0];
                 double dy = cell_location[1] - neighbour_location[1];
@@ -185,6 +187,38 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
             }
 
         }
+        //polarise la périphérie
+
+        VertexElement<DIM,DIM>* cell_pos = p_cell_population->GetElementCorrespondingToCell(pCell);
+
+        unsigned num_nodes_in_element = cell_pos->GetNumNodes();
+
+        //calcul du vecteur
+        double dx = 0;
+        double dy = 0;
+        for (unsigned i=0; i<num_nodes_in_element; i++)
+        {
+
+          if(cell_pos->GetNode(i)->IsBoundaryNode())
+          {
+            c_vector<double, DIM> node_pos = cell_pos->GetNodeLocation(i);
+            dx = dx + cell_location[0] - node_pos[0];
+            dy = dy + cell_location[1] - node_pos[1];
+          }
+
+        }
+        if(dx != 0 || dy !=0)
+        {
+          double normalisation = sqrt(dx*dx + dy*dy);
+
+          vecPolaX = vecPolaX + dx / normalisation * SimulationParameters::IMPACT_POLARISATION_PERIPH_ON_EPI * SimulationParameters::TIMESTEP;
+          vecPolaY = vecPolaY + dy / normalisation * SimulationParameters::IMPACT_POLARISATION_PERIPH_ON_EPI * SimulationParameters::TIMESTEP;
+
+        }
+
+
+
+        //on assigne
         pCell->GetCellData()->SetItem("vecPolaX",vecPolaX);
         pCell->GetCellData()->SetItem("vecPolaY",vecPolaY);
 
