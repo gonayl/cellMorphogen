@@ -278,13 +278,11 @@ public:
 
         VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
 
-<<<<<<< HEAD
-       std::cout << "cells generated" << endl ;
+        std::cout << "cells generated" << endl ;
 
         cell_population.AddCellWriter<CellAgesWriter>();
-=======
-        //cell_population.AddCellWriter<CellAgesWriter>();                      COMMEN PAR MOI 
->>>>>>> c5af17ff564bb2f8cfbf117c005d7758abdd1189
+        //cell_population.AddCellWriter<CellAgesWriter>();                      COMMEN PAR MOI
+
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
         //cell_population.AddCellWriter<CellVolumesWriter>();                   COMMENTE PAR MOI
@@ -477,7 +475,7 @@ public:
         simulator.SetEndTime(SimulationParameters::TIME_OF_SIMULATION);
         simulator.SetDt(SimulationParameters::TIMESTEP);
         simulator.SetSamplingTimestepMultiple(1);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLumen/TestForCalibration/2");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestLumen/TestForCalibration/3");
 
         simulator.Solve();
 
