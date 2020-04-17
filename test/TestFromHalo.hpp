@@ -124,6 +124,8 @@
 #include "CellPolarityXWriter.hpp"
 #include "CellPolarityYWriter.hpp"
 
+#include "EndoDensityWriter.hpp"
+
 using namespace std ;
 
 static const double M_TIME_FOR_SIMULATION = 48;
@@ -273,12 +275,15 @@ public:
 
         VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
 
-        cell_population.AddCellWriter<CellAgesWriter>();
+        //cell_population.AddCellWriter<CellAgesWriter>();                      COMMEN PAR MOI 
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
         //cell_population.AddCellWriter<CellVolumesWriter>();                   COMMENTE PAR MOI
         //cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
         //cell_population.AddPopulationWriter<CalibrationErrorWriter>();        COMMENTE PAR MOI
+
+
+        cell_population.AddPopulationWriter<EndoDensityWriter>();
 
 
         //FOR LUMEN
