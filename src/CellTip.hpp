@@ -25,7 +25,7 @@ private:
 
 public:
 
-    CellTip(unsigned colour=9);
+    CellTip(unsigned colour=10);
 
     virtual ~CellTip();
 

@@ -77,6 +77,7 @@
 #include "CellPeriph.hpp"
 #include "CellLabelWriter.hpp"
 #include "CellTypeWriter.hpp"
+#include "CellAllTypeWriter.hpp"
 #include "CellVolumesWriter.hpp"
 #include "CellAncestorWriter.hpp"
 #include "CellPosWriter.hpp"
@@ -125,6 +126,10 @@
 #include "CellPolarityYWriter.hpp"
 
 #include "EndoDensityWriter.hpp"
+
+#include "SurfaceEndoWriter.hpp"
+#include "SurfaceEpiWriter.hpp"
+#include "SurfaceLumenWriter.hpp"
 
 using namespace std ;
 
@@ -285,13 +290,16 @@ public:
 
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
+        cell_population.AddCellWriter<CellAllTypeWriter>();
         //cell_population.AddCellWriter<CellVolumesWriter>();                   COMMENTE PAR MOI
         //cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
         //cell_population.AddPopulationWriter<CalibrationErrorWriter>();        COMMENTE PAR MOI
 
 
         cell_population.AddPopulationWriter<EndoDensityWriter>();
-
+        cell_population.AddPopulationWriter<SurfaceEndoWriter>();
+        cell_population.AddPopulationWriter<SurfaceEpiWriter>();
+        cell_population.AddPopulationWriter<SurfaceLumenWriter>();
 
         //FOR LUMEN
         cell_population.AddCellWriter<CellPolarityXWriter>();
