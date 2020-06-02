@@ -129,6 +129,8 @@
 
 #include "EndoDensityWriter.hpp"
 
+#include "RapportEpiLumenWriter.hpp"
+
 #include "SurfaceEndoWriter.hpp"
 #include "SurfaceEpiWriter.hpp"
 #include "SurfaceLumenWriter.hpp"
@@ -308,6 +310,8 @@ public:
         cell_population.AddPopulationWriter<SurfaceEndoWriter>();
         cell_population.AddPopulationWriter<SurfaceEpiWriter>();
         cell_population.AddPopulationWriter<SurfaceLumenWriter>();
+
+        cell_population.AddPopulationWriter<RapportEpiLumenWriter>();
 
         //FOR LUMEN
         cell_population.AddCellWriter<CellPolarityXWriter>();
