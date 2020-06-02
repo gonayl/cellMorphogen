@@ -12,6 +12,11 @@
 template<unsigned DIM>
 class LumenModifier : public AbstractCellBasedSimulationModifier<DIM,DIM>
 {
+private:
+
+    double mLumenSizeFactor ;
+    double mLumenDuration2TargetArea ;
+
     /** Needed for serialization. */
     friend class boost::serialization::access;
     /**
@@ -64,6 +69,14 @@ public:
      * @param rCellPopulation reference to the cell population
      */
     void UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPopulation);
+
+    double GetLumenSizeFactor();
+
+    double GetLumenDuration2TargetArea();
+
+    void SetLumenSizeFactor(double lumenSizeFactor);
+
+    void SetlumenDuration2TargetArea(double lumenDuration2TargetArea);
 
     /**
      * Overridden OutputSimulationModifierParameters() method.

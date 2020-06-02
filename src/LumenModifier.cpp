@@ -12,7 +12,9 @@
 
 template<unsigned DIM>
 LumenModifier<DIM>::LumenModifier()
-    : AbstractCellBasedSimulationModifier<DIM>()
+    : AbstractCellBasedSimulationModifier<DIM>(),
+      mLumenSizeFactor(0.022),
+      mLumenDuration2TargetArea(48)
 {
 }
 
@@ -154,11 +156,11 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
                         }
 
 
-                      bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
+                    /*  bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
                       if(neighbour_is_lumen){
                         std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
                         pnCell->Kill();
-                      }
+                      }*/
                     }
                   }
                   double derivate = (sumVector - SimulationParameters::SURFACE_IMPACT_ON_LUMEN_DERIVATE * pCell->GetCellData()->GetItem("target area"))*SimulationParameters::TIMESTEP;
@@ -236,11 +238,11 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
 
                         double coefSize = 1;
 
-                        if(pCell->GetAge() < SimulationParameters::AGE_TO_LUMEN_MATURITY)
+                        if(pCell->GetAge() < this->GetLumenDuration2TargetArea())
                         {
-                          coefSize = pCell->GetAge() / SimulationParameters::AGE_TO_LUMEN_MATURITY;
+                          coefSize = pCell->GetAge() / this->GetLumenDuration2TargetArea();
                         }
-                        targetSize = targetSize + norme * SimulationParameters::LUMEN_SIZE_FACTOR * coefSize;
+                        targetSize = targetSize + norme * this->GetLumenSizeFactor() * coefSize;
                       }
 
                     }
@@ -249,7 +251,7 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
                   bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
                   if(neighbour_is_lumen){
                     std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
-                    pnCell->Kill();
+                    //pnCell->Kill();
                   }
                 }
               }
@@ -261,12 +263,39 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
   }
 }
 
+template<unsigned DIM>
+double LumenModifier<DIM>::GetLumenSizeFactor()
+{
+    return mLumenSizeFactor;
+}
 
+template<unsigned DIM>
+double LumenModifier<DIM>::GetLumenDuration2TargetArea()
+{
+    return mLumenDuration2TargetArea;
+}
+
+
+template<unsigned DIM>
+void LumenModifier<DIM>::SetLumenSizeFactor(double lumenSizeFactor)
+{
+    mLumenSizeFactor = lumenSizeFactor;
+}
+
+template<unsigned DIM>
+void LumenModifier<DIM>::SetlumenDuration2TargetArea(double lumenDuration2TargetArea)
+{
+    mLumenDuration2TargetArea = lumenDuration2TargetArea;
+}
 
 template<unsigned DIM>
 void LumenModifier<DIM>::OutputSimulationModifierParameters(out_stream& rParamsFile)
 {
-    // No parameters to output, so just call method on direct parent class
+    // Output member variables
+    *rParamsFile << "\t\t\t<LumenSizeFactor" << mLumenSizeFactor << "/LumenSizeFactor> \n" ;
+    *rParamsFile << "\t\t\t<LumenDuration2TargetArea" << mLumenSizeFactor << "/LumenDuration2TargetArea> \n" ;
+
+    // Call method on direct parent class
     AbstractCellBasedSimulationModifier<DIM>::OutputSimulationModifierParameters(rParamsFile);
 }
 

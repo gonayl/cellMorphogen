@@ -5,23 +5,16 @@ class SimulationParameters{
 public:
 
   //Simulation
-  static constexpr double TIMESTEP = 0.001;
+  static constexpr double TIMESTEP = 0.002;
   static constexpr double TIME_OF_SIMULATION = 48;
 
-/*
   //influence the size of the polarization vector
 
-  static constexpr double IMPACT_POLARISATION_EPI_ON_EPI = -0.08;
-  static constexpr double IMPACT_POLARISATION_ENDO_ON_EPI = 0.24;
-  static constexpr double IMPACT_POLARISATION_LUMEN_ON_EPI = -0.15;
-  static constexpr double VEC_POLARISATION_DECREASE = 0.075;
-*/
-
-  static constexpr double IMPACT_POLARISATION_EPI_ON_EPI = -0.8;
-  static constexpr double IMPACT_POLARISATION_ENDO_ON_EPI = 2.4;
-  static constexpr double IMPACT_POLARISATION_LUMEN_ON_EPI = -1.5;
-  static constexpr double IMPACT_POLARISATION_PERIPH_ON_EPI = 4;
-  static constexpr double VEC_POLARISATION_DECREASE = 0.75;
+  static constexpr double IMPACT_POLARISATION_EPI_ON_EPI = -0.008;
+  static constexpr double IMPACT_POLARISATION_ENDO_ON_EPI = 0.024;
+  static constexpr double IMPACT_POLARISATION_LUMEN_ON_EPI = -0.015;
+  static constexpr double IMPACT_POLARISATION_PERIPH_ON_EPI = 0;
+  static constexpr double VEC_POLARISATION_DECREASE = 0.0075;
 
 
   //Rules for lumen generation
@@ -33,7 +26,7 @@ public:
 
   //size of the lumen
   static constexpr double LUMEN_SIZE_FACTOR = 0.022;
-  static constexpr double AGE_TO_LUMEN_MATURITY = 30;
+  static constexpr double AGE_TO_LUMEN_MATURITY = 48;
   static constexpr double SIZE_MIN_LUMEN = 0.2;
 
   static constexpr bool SIZE_INCREMENTALE = false;

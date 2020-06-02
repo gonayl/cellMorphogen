@@ -1,5 +1,5 @@
-#ifndef CELLSTALK_HPP_
-#define CELLSTALK_HPP_
+#ifndef CELLPERIPH_HPP_
+#define CELLPERIPH_HPP_
 
 #include <boost/shared_ptr.hpp>
 #include "AbstractCellProperty.hpp"

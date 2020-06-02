@@ -1,5 +1,5 @@
-#ifndef LUMENMODIFIER_HPP_
-#define LUMENMODIFIER_HPP_
+#ifndef CELLANGIONMODIFIER_HPP_
+#define CELLANGIONMODIFIER_HPP_
 
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
@@ -10,7 +10,7 @@
  * A modifier class which compute the size of the lumen and destroy cell lumen in some condition
  */
 template<unsigned DIM>
-class LumenModifier : public AbstractCellBasedSimulationModifier<DIM,DIM>
+class CellAngioModifier : public AbstractCellBasedSimulationModifier<DIM,DIM>
 {
     /** Needed for serialization. */
     friend class boost::serialization::access;
@@ -32,12 +32,12 @@ public:
     /**
      * Default constructor.
      */
-    LumenModifier();
+    CellAngioModifier();
 
     /**
      * Destructor.
      */
-    virtual ~LumenModifier();
+    virtual ~CellAngioModifier();
 
     /**
      * Overridden UpdateAtEndOfTimeStep() method.
@@ -75,6 +75,6 @@ public:
 };
 
 #include "SerializationExportWrapper.hpp"
-EXPORT_TEMPLATE_CLASS_SAME_DIMS(LumenModifier)
+EXPORT_TEMPLATE_CLASS_SAME_DIMS(CellAngioModifier)
 
-#endif /*LumenModifier_HPP_*/
+#endif /*CellAngioModifier_HPP_*/

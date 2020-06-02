@@ -145,7 +145,7 @@ void UniformG1GenerationalBoundaryCellCycleModel::SetG1Duration()
         }
         else if (mpCell->HasCellProperty<CellLumen>())
         {
-          mG1Duration = 1/(a_thyr*exp(b_thyr*x_thyr)) ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE PERIPH
+          mG1Duration = 1/(a_thyr*exp(b_thyr*x_thyr)) ; // ICI : MODIFIER DUREE PHASE G1 POUR CELLULE LUMEN
           mSDuration =  1/(a_thyr*exp(b_thyr*x_thyr)) ;
           mG2Duration = 1/(a_thyr*exp(b_thyr*x_thyr)) ;
           mMDuration =  1/(a_thyr*exp(b_thyr*x_thyr)) ;

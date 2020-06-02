@@ -1,22 +1,28 @@
 #include "DifferentialAdhesionForce.hpp"
 #include "CellEndo.hpp"
+#include "CellStalk.hpp"
+#include "CellTip.hpp"
 #include "CellLumen.hpp"
 #include "CellEpi.hpp"
 #include "CellCore.hpp"
 #include "CellPeriph.hpp"
+#include "Debug.hpp"
 
 template<unsigned DIM>
 DifferentialAdhesionForce<DIM>::DifferentialAdhesionForce()
     : NagaiHondaForce<DIM>(),
       mEndoEndoAdhesionEnergyParameter(1.0),
       mLumenLumenAdhesionEnergyParameter(1.0),
-      mEpiEpiAdhesionEnergyParameter(5.0),
+      mEpiEpiAdhesionEnergyParameter(1.0),
       mCoreCoreAdhesionEnergyParameter(1.0),
       mCorePeriphAdhesionEnergyParameter(1.0),
       mPeriphPeriphAdhesionEnergyParameter(1.0),
       mEndoEpiAdhesionEnergyParameter(1.0),
       mEpiLumenAdhesionEnergyParameter(1.0),
       mEndoLumenAdhesionEnergyParameter(1.0),
+      mStalkStalkAdhesionEnergyParameter(1.0),
+      mStalkTipAdhesionEnergyParameter(1.0),
+      mTipTipAdhesionEnergyParameter(1.0),
       mEndoBoundaryAdhesionEnergyParameter(1.0),
       mLumenBoundaryAdhesionEnergyParameter(1.0),
       mEpiBoundaryAdhesionEnergyParameter(1.0)
@@ -88,6 +94,8 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
     {
         // Work out the number of labelled cells: 0,1 or 2
         unsigned num_endo_cells = 0;
+        unsigned num_endo_stalk_cells = 0;
+        unsigned num_endo_tip_cells = 0;
         unsigned num_lumen_cells = 0;
         unsigned num_epi_cells = 0;
         unsigned num_epi_core_cells = 0;
@@ -101,15 +109,20 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             // Get cell associated with this element
             CellPtr p_cell = rVertexCellPopulation.GetCellUsingLocationIndex(element_index);
 
-            if (p_cell->template HasCellProperty<CellEndo>())
+            if (p_cell->template HasCellProperty<CellEndo>() && p_cell->template HasCellProperty<CellStalk>())
             {
                 num_endo_cells++;
+                num_endo_stalk_cells++;
+            }
+            else if (p_cell->template HasCellProperty<CellEndo>() && p_cell->template HasCellProperty<CellTip>())
+            {
+                num_endo_cells++;
+                num_endo_tip_cells++;
             }
             else if (p_cell->template HasCellProperty<CellLumen>())
             {
                 num_lumen_cells++;
             }
-
             else if (p_cell->template HasCellProperty<CellEpi>() && p_cell->template HasCellProperty<CellCore>())
             {
                 num_epi_cells++;
@@ -129,14 +142,35 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             }
             else
             {
-                EXCEPTION("Every epi cells need to be core or periph ! Check if BorderTrackingModifier is used");
+                EXCEPTION("Every epi cells need to be core, periph, tip or stalk ! Check if BorderTrackingModifier is used");
             }
         }
 
         if (num_endo_cells == 2)
         {
-            // Both cells are labelled "endo"
+
+          // Both cells are labelled "endo"
+          if (num_endo_stalk_cells == 2)
+          {
+              // Both cells are labelled "endo + stalk"
+              return this->GetStalkStalkAdhesionEnergyParameter();
+          }
+          else if (num_endo_tip_cells == 2)
+          {
+              // Both cells are labelled "endo + tip"
+              return this->GetTipTipAdhesionEnergyParameter() ;
+          }
+          else if (num_endo_tip_cells == 1 && num_endo_stalk_cells == 1)
+          {
+              // one cell is labelled "endo + stalk" and the other "endo + tip"
+              return this->GetStalkTipAdhesionEnergyParameter() ;
+          }
+          else
+          {
+            // At least one cell is not labelled
+            EXCEPTION("Need better ddefinition of stalk/tip to use DifferentialAdhesionForce ! ");
             return this->GetEndoEndoAdhesionEnergyParameter();
+          }
         }
         else if (num_lumen_cells == 2)
         {
@@ -249,6 +283,24 @@ double DifferentialAdhesionForce<DIM>::GetEndoLumenAdhesionEnergyParameter()
 }
 
 template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetStalkStalkAdhesionEnergyParameter()
+{
+    return mStalkStalkAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetStalkTipAdhesionEnergyParameter()
+{
+    return mStalkTipAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetTipTipAdhesionEnergyParameter()
+{
+    return mTipTipAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
 double DifferentialAdhesionForce<DIM>::GetEndoBoundaryAdhesionEnergyParameter()
 {
     return mEndoBoundaryAdhesionEnergyParameter;
@@ -323,6 +375,24 @@ void DifferentialAdhesionForce<DIM>::SetEndoLumenAdhesionEnergyParameter(double 
 }
 
 template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetStalkStalkAdhesionEnergyParameter(double stalkStalkAdhesionEnergyParameter)
+{
+    mStalkStalkAdhesionEnergyParameter = stalkStalkAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetStalkTipAdhesionEnergyParameter(double stalkTipAdhesionEnergyParameter)
+{
+    mStalkTipAdhesionEnergyParameter = stalkTipAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetTipTipAdhesionEnergyParameter(double tipTipAdhesionEnergyParameter)
+{
+    mTipTipAdhesionEnergyParameter = tipTipAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
 void DifferentialAdhesionForce<DIM>::SetEndoBoundaryAdhesionEnergyParameter(double endoBoundaryAdhesionEnergyParameter)
 {
     mEndoBoundaryAdhesionEnergyParameter = endoBoundaryAdhesionEnergyParameter;
@@ -362,6 +432,12 @@ void DifferentialAdhesionForce<DIM>::OutputForceParameters(out_stream& rParamsFi
     *rParamsFile << "\t\t\t<EpiLumenAdhesionEnergyParameter>" << mEpiLumenAdhesionEnergyParameter << "</EpiLumenAdhesionEnergyParameter> \n";
 
     *rParamsFile << "\t\t\t<EndoLumenAdhesionEnergyParameter>" << mEndoLumenAdhesionEnergyParameter << "</EndoLumenAdhesionEnergyParameter> \n";
+
+    *rParamsFile << "\t\t\t<StalkTipAdhesionEnergyParameter>" << mStalkTipAdhesionEnergyParameter << "</StalkTipAdhesionEnergyParameter> \n";
+
+    *rParamsFile << "\t\t\t<StalkStalkAdhesionEnergyParameter>" << mStalkStalkAdhesionEnergyParameter << "</StalkStalkAdhesionEnergyParameter> \n";
+
+    *rParamsFile << "\t\t\t<TipTipAdhesionEnergyParameter>" << mTipTipAdhesionEnergyParameter << "</TipTipAdhesionEnergyParameter> \n";
 
     *rParamsFile << "\t\t\t<EndoBoundaryAdhesionEnergyParameter>" << mEndoBoundaryAdhesionEnergyParameter << "</EndoBoundaryAdhesionEnergyParameter> \n";
 

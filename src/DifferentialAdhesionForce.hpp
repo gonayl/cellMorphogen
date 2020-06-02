@@ -89,6 +89,27 @@ private:
     double mEndoLumenAdhesionEnergyParameter;
 
     /**
+     * Cell-cell adhesion energy parameter for lumen and endothelial cells.
+     * Has has units of kg (cell size at equilibrium rest length)^2 s^-2.
+     * Takes the default value 1.0.
+     */
+    double mStalkStalkAdhesionEnergyParameter;
+
+    /**
+     * Cell-cell adhesion energy parameter for lumen and endothelial cells.
+     * Has has units of kg (cell size at equilibrium rest length)^2 s^-2.
+     * Takes the default value 1.0.
+     */
+    double mStalkTipAdhesionEnergyParameter;
+
+    /**
+     * Cell-cell adhesion energy parameter for lumen and endothelial cells.
+     * Has has units of kg (cell size at equilibrium rest length)^2 s^-2.
+     * Takes the default value 1.0.
+     */
+    double mTipTipAdhesionEnergyParameter;
+
+    /**
      * Cell-boundary adhesion energy parameter for endothelial cells.
      * Has units of kg (cell size at equilibrium rest length)^2 s^-2.
      * Takes the default value 1.0.
@@ -130,6 +151,9 @@ private:
         archive & mEndoEpiAdhesionEnergyParameter;
         archive & mEpiLumenAdhesionEnergyParameter;
         archive & mEndoLumenAdhesionEnergyParameter;
+        archive & mStalkStalkAdhesionEnergyParameter;
+        archive & mStalkTipAdhesionEnergyParameter;
+        archive & mTipTipAdhesionEnergyParameter;
         archive & mEndoBoundaryAdhesionEnergyParameter;
         archive & mLumenBoundaryAdhesionEnergyParameter;
         archive & mEpiBoundaryAdhesionEnergyParameter;
@@ -181,6 +205,12 @@ public:
 
     double GetEndoLumenAdhesionEnergyParameter();
 
+    double GetStalkStalkAdhesionEnergyParameter();
+
+    double GetStalkTipAdhesionEnergyParameter();
+
+    double GetTipTipAdhesionEnergyParameter();
+
     double GetEndoBoundaryAdhesionEnergyParameter();
 
     double GetLumenBoundaryAdhesionEnergyParameter();
@@ -205,6 +235,12 @@ public:
     void SetEpiLumenAdhesionEnergyParameter(double epiLumenAdhesionEnergyParameter);
 
     void SetEndoLumenAdhesionEnergyParameter(double endoLumenAdhesionEnergyParameter);
+
+    void SetStalkStalkAdhesionEnergyParameter(double stalkStalkAdhesionEnergyParameter);
+
+    void SetStalkTipAdhesionEnergyParameter(double stalkTipAdhesionEnergyParameter);
+
+    void SetTipTipAdhesionEnergyParameter(double tipTipAdhesionEnergyParameter);
 
     void SetEndoBoundaryAdhesionEnergyParameter(double endoBoundaryAdhesionEnergyParameter);
 

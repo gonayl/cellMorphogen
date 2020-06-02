@@ -77,7 +77,11 @@
 #include "CellPosWriter.hpp"
 #include "CellAdjacencyMatrixWriter.hpp"
 #include "CalibrationErrorWriter.hpp"
-
+#include "CellAllTypeWriter.hpp"
+#include "EndoDensityWriter.hpp"
+#include "SurfaceEndoWriter.hpp"
+#include "SurfaceEpiWriter.hpp"
+#include "SurfaceLumenWriter.hpp"
 
 #include "VertexMeshWriter.hpp"
 #include "MorphogenTrackingModifier.hpp"
@@ -131,10 +135,14 @@ static const double M_EPI = 5.0 ;
 static const double M_EPIBND = 5.0 ;
 static const double M_ENDOBND = 4.0 ;//chang
 static const double M_ENDOEPI = 5.0 ;
+static const double M_ENDOENDO = 1.7 ;
 static const double M_MOTILITY = 15.0 ;
-static const double M_EPIEPI_INI = -0.08 ;
-static const double M_ENDOEPI_INI = 0.15 ;
-static const double M_LUMENEPI_INI = -0.08 ;
+static const double M_EPIEPI_INI = -0.008 ;
+static const double M_ENDOEPI_INI = 0.024 ;
+static const double M_LUMENEPI_INI = -0.015 ;
+static const double M_POLARDEC_INI = 0.0075 ;
+static const double M_LUMEN_SIZE_FACTOR_INI = 0.007 ;
+static const double M_DURATION2_INI = 48.0 ;
 
 
 // Program option includes for handling command line arguments
@@ -160,9 +168,9 @@ int main(int argc, char *argv[])
     boost::program_options::options_description general_options("This is the lumen calibration executable.\n");
     general_options.add_options()
                     ("help", "produce help message")
-                    ("Ep", boost::program_options::value<unsigned>()->default_value(0.08),"influence of other epithelial cells on epithelial cells polarisation")
-                    ("En", boost::program_options::value<unsigned>()->default_value(0.24),"influence of other endothelial cells on epithelial cells polarisation")
-                    ("L", boost::program_options::value<unsigned>()->default_value(0.15),"influence of other lumen cells on epithelial cells polarisation");
+                    ("Ep", boost::program_options::value<unsigned>()->default_value(1.0),"influence of other epithelial cells on epithelial cells polarisation")
+                    ("En", boost::program_options::value<unsigned>()->default_value(48.0),"influence of other endothelial cells on epithelial cells polarisation")
+                    ("L", boost::program_options::value<unsigned>()->default_value(5.0),"influence of other lumen cells on epithelial cells polarisation");
 
     // Define parse command line into variables_map
     boost::program_options::variables_map variables_map;
@@ -320,12 +328,18 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
         std::cout << "cells generated" << endl ;
 
         cell_population.AddCellWriter<CellAgesWriter>();
+
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
+        cell_population.AddCellWriter<CellAllTypeWriter>();
         //cell_population.AddCellWriter<CellVolumesWriter>();                   COMMENTE PAR MOI
         //cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
         //cell_population.AddPopulationWriter<CalibrationErrorWriter>();        COMMENTE PAR MOI
 
+        cell_population.AddPopulationWriter<EndoDensityWriter>();
+        cell_population.AddPopulationWriter<SurfaceEndoWriter>();
+        cell_population.AddPopulationWriter<SurfaceEpiWriter>();
+        cell_population.AddPopulationWriter<SurfaceLumenWriter>();
 
         //FOR LUMEN
         cell_population.AddCellWriter<CellPolarityXWriter>();
@@ -355,6 +369,9 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
         p_force->SetEndoEndoAdhesionEnergyParameter(1.7);
+        p_force->SetStalkStalkAdhesionEnergyParameter(1.7);
+        p_force->SetStalkTipAdhesionEnergyParameter(1.7);
+        p_force->SetTipTipAdhesionEnergyParameter(1.7);
         p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
@@ -424,9 +441,10 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
 
         MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
         simulator.AddSimulationModifier(p_polarisation_modifier);
-        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*mEpiEpiMult);
-        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*mEndoEpiMult);
-        p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI*mLumenEpiMult);
+        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*mLumenEpiMult);
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*mLumenEpiMult);
+        p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI);
+        p_polarisation_modifier->SetVecPolarisationDecrease(M_POLARDEC_INI);
 
 
         MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
@@ -434,6 +452,8 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
 
         MAKE_PTR(LumenModifier<2>, p_lumen_modifier);
         simulator.AddSimulationModifier(p_lumen_modifier);
+        p_lumen_modifier->SetLumenSizeFactor(M_LUMEN_SIZE_FACTOR_INI*mEpiEpiMult) ;
+        p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI*mEndoEpiMult) ;
 
 
         //MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
@@ -449,21 +469,23 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(SimulationParameters::TIME_OF_SIMULATION);
-        simulator.SetDt(SimulationParameters::TIMESTEP);
-        simulator.SetSamplingTimestepMultiple(1);
+        simulator.SetEndTime(48.0);
+        simulator.SetDt(0.002);
+        simulator.SetSamplingTimestepMultiple(500);
 
 
         /* Calibration part */
 
 
-        cout << "Testing parameters : (" << mEpiEpiMult << ";" << mEndoEpiMult << ";" << mLumenEpiMult << ")" << endl;
+        cout << "Testing parameters : (" << mEpiEpiMult << " ; " << mEndoEpiMult << ")" << endl;
 
         // Specify output directory (unique to each simulation)
-        std::string output_directory = std::string("TestLumenCalibration/")
-        + std::string("_Ep") + boost::lexical_cast<std::string>(mEpiEpiMult)
+        std::string output_directory = std::string("TestLumenCalibration/TestNewLumenSize/")
+        + std::string("Ep") + boost::lexical_cast<std::string>(mEpiEpiMult)
         + std::string("_En") + boost::lexical_cast<std::string>(mEndoEpiMult)
-        + std::string("_L") + boost::lexical_cast<std::string>(mLumenEpiMult);
+        + std::string("_L") + boost::lexical_cast<std::string>(mLumenEpiMult)
+        + std::string("_V") + boost::lexical_cast<std::string>(M_POLARDEC_INI);
+
 
 
 
