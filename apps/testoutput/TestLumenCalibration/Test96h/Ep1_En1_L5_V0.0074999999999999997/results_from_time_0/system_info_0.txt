@@ -1,0 +1,37 @@
+Process 0 of 1.
+uname sysname  = Linux
+uname nodename = chaste-server
+uname release  = 5.3.0-53-generic
+uname version  = #47~18.04.1-Ubuntu SMP Thu May 7 13:10:50 UTC 2020
+uname machine  = x86_64
+
+Information on number and type of processors:
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+model name	: Intel(R) Core(TM) i7-8700 CPU @ 3.20GHz
+
+Information on processor caches, in the same order as above:
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+cache size	: 12288 KB
+
+Information on system memory:
+MemTotal:       16223364 kB

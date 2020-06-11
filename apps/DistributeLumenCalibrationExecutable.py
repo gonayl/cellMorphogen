@@ -19,8 +19,8 @@ def run_simulations():
 
     # Make a list of calls to a Chaste executable
     command_list = []
-    for epiepi in np.arange(1, 4, 1):
-        for endoepi in np.arange(48, 100, 24):
+    for epiepi in np.arange(1, 2, 1):
+        for endoepi in np.arange(1, 2, 1):
             for lumenepi in np.arange(5, 6, 2):
                 command_list.append("nice -n 19 /home/gonayl/Chaste/build/projects/cellMorphogen/apps/LumenCalibrationExecutable --Ep "+str(epiepi)+" --En "+str(endoepi)+" --L "+str(lumenepi))
 

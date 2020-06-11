@@ -96,6 +96,7 @@
 #include "CellFixingModifier.hpp"
 #include "AdhesionCoefModifier.hpp"
 // #include "MergeNodeModifier.hpp"
+#include "DifferentialTargetAreaModifier.hpp"
 
 #include "FixedBoundaryCondition.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
@@ -449,6 +450,8 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
 
         MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
         simulator.AddSimulationModifier(p_lumen_generation_modifier);
+        MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
+        simulator.AddSimulationModifier(p_growth_modifier);
 
         MAKE_PTR(LumenModifier<2>, p_lumen_modifier);
         simulator.AddSimulationModifier(p_lumen_modifier);
@@ -469,9 +472,9 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(48.0);
-        simulator.SetDt(0.002);
-        simulator.SetSamplingTimestepMultiple(500);
+        simulator.SetEndTime(96.0);
+        simulator.SetDt(0.001);
+        simulator.SetSamplingTimestepMultiple(100);
 
 
         /* Calibration part */
@@ -480,7 +483,7 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
         cout << "Testing parameters : (" << mEpiEpiMult << " ; " << mEndoEpiMult << ")" << endl;
 
         // Specify output directory (unique to each simulation)
-        std::string output_directory = std::string("TestLumenCalibration/TestNewLumenSize/")
+        std::string output_directory = std::string("TestLumenCalibration/TestNewTargetArea")
         + std::string("Ep") + boost::lexical_cast<std::string>(mEpiEpiMult)
         + std::string("_En") + boost::lexical_cast<std::string>(mEndoEpiMult)
         + std::string("_L") + boost::lexical_cast<std::string>(mLumenEpiMult)

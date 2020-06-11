@@ -45,7 +45,7 @@
 #include "VertexBasedCellPopulation.hpp"
 #include "HoneycombVertexMeshGenerator.hpp"
 #include "NagaiHondaForce.hpp"
-#include "TargetAreaModifier.hpp"
+#include "DifferentialTargetAreaModifier.hpp"
 #include "SimpleTargetAreaModifier.hpp"
 #include "TargetAreaLinearGrowthModifier.hpp"
 #include "DifferentialAdhesionForce.hpp"
@@ -299,7 +299,7 @@ public:
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellTypeWriter>();
         cell_population.AddCellWriter<CellAllTypeWriter>();
-        //cell_population.AddCellWriter<CellVolumesWriter>();                   COMMENTE PAR MOI
+        cell_population.AddCellWriter<CellVolumesWriter>();                   // COMMENTE PAR MOI
         //cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
         //cell_population.AddPopulationWriter<CalibrationErrorWriter>();        COMMENTE PAR MOI
 
@@ -485,8 +485,8 @@ public:
         simulator.AddForce(p_repulsion_force);
         */
 
-        //MAKE_PTR(SimpleTargetAreaModifier<2>, p_growth_modifier);
-        //simulator.AddSimulationModifier(p_growth_modifier);
+        MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
+        simulator.AddSimulationModifier(p_growth_modifier);
 
         //MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
