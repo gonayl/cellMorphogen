@@ -96,6 +96,7 @@
 #include "NeighbourTrackingModifier.hpp"
 #include "PolarTrackingModifier.hpp"
 #include "MassCenterTrackingModifier.hpp"
+#include "ForceTrackingModifier.hpp"
 //#include "PositionWeightTrackingModifier.hpp"
 //#include "PositionWeightConstantTrackingModifier.hpp"
 #include "BorderTrackingModifier.hpp"
@@ -146,15 +147,21 @@ static const double M_DUDT_COEFFICIENT = 1.0;
 static const double M_DECAY_COEFFICIENT = 9.0;
 static const double M_RADIUS = 100.0;
 static const double M_EPI = 5.0 ;
-static const double M_ENDOEPI = 5.0 ;
-static const double M_ENDOENDO = 1.7 ;
+static const double M_PEERIPHPERIPH = 7.0 ;
+static const double M_EPIBND = 8.0 ;
+static const double M_EPILUMEN = 5.0 ;
+static const double M_ENDOBND = 0.2 ;//chang
+static const double M_ENDOEPI = 7.0 ;
+static const double M_ENDOENDO = 0.2 ;
+static const double M_LUMENBND = 8.0 ;
 static const double M_MOTILITY = 15.0 ;
-static const double M_PERIPH_PERIPH = 6.0 ;
-static const double M_ENDOBND = 3.0 ;
-static const double M_EPIBND = 5.0 ;
 static const double M_EPIEPI_INI = -0.008 ;
 static const double M_ENDOEPI_INI = 0.024 ;
 static const double M_LUMENEPI_INI = -0.015 ;
+static const double M_POLARDEC_INI = 0.0075 ;
+static const double M_LUMEN_SIZE_FACTOR_INI = 0.007 ;
+static const double M_DURATION2_INI = 48.0 ;
+static const double M_SIM_NB = 6 ;
 
 static const double M_PIXEL_COEF = 256 ;
 
@@ -185,7 +192,7 @@ private:
             if (boundary_input[i] == 0)
             {
               p_cycle_model->SetCycleDuration(32) ;
-              p_cell->GetCellData()->SetItem("target area", 0.39);
+              p_cell->GetCellData()->SetItem("target area", 0.5);
             }
             else if (boundary_input[i] == 1 )
             {
@@ -206,11 +213,12 @@ private:
           else if (label_input[i] == 1 )
           {
             CellPtr p_cell(new Cell(p_state, p_elong_model));
+            p_elong_model->SetMaxStretch(3.0);
             p_cell->SetCellProliferativeType(p_transit_type);
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.3);
+            p_cell->GetCellData()->SetItem("target area", 0.5);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -224,7 +232,7 @@ private:
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.3);
+            p_cell->GetCellData()->SetItem("target area", 0.6);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -311,7 +319,6 @@ public:
         cell_population.AddPopulationWriter<SurfaceEpiWriter>();
         cell_population.AddPopulationWriter<SurfaceLumenWriter>();
 
-        cell_population.AddPopulationWriter<RapportEpiLumenWriter>();
 
         //FOR LUMEN
         cell_population.AddCellWriter<CellPolarityXWriter>();
@@ -340,22 +347,21 @@ public:
         p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
-        p_force->SetEndoEndoAdhesionEnergyParameter(M_ENDOENDO);
+        p_force->SetEndoEndoAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetStalkStalkAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetStalkTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetTipTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
         p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
-        p_force->SetPeriphPeriphAdhesionEnergyParameter(M_PERIPH_PERIPH);
+        p_force->SetPeriphPeriphAdhesionEnergyParameter(M_PEERIPHPERIPH);
         p_force->SetEndoEpiAdhesionEnergyParameter(M_ENDOEPI);
-        p_force->SetStalkStalkAdhesionEnergyParameter(M_ENDOENDO);
-        p_force->SetStalkTipAdhesionEnergyParameter(M_ENDOENDO);
-        p_force->SetTipTipAdhesionEnergyParameter(M_ENDOENDO);
-
-        p_force->SetEpiLumenAdhesionEnergyParameter(4.0);
+        p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(35.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(M_ENDOBND);
-        p_force->SetLumenBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetLumenBoundaryAdhesionEnergyParameter(7.0);
         p_force->SetEpiBoundaryAdhesionEnergyParameter(M_EPIBND);
 
 
@@ -372,6 +378,8 @@ public:
         simulator.AddSimulationModifier(p_border_modifier);
         MAKE_PTR(MassCenterTrackingModifier<2>, p_center_modifier);
         simulator.AddSimulationModifier(p_center_modifier) ;
+        //MAKE_PTR(ForceTrackingModifier<2>, p_force_modifier);
+        //simulator.AddSimulationModifier(p_force_modifier);
         //MAKE_PTR(AdhesionCoefModifier<2>, p_coef_modifier);
         //simulator.AddSimulationModifier(p_coef_modifier);
 
@@ -457,21 +465,24 @@ public:
         std::cout << "Adding lumen" << endl ;
         MAKE_PTR(SimuInfoModifier<2>, p_simuInfoModifier);
         simulator.AddSimulationModifier(p_simuInfoModifier);
+
         MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
         simulator.AddSimulationModifier(p_polarisation_modifier);
-        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI);
-        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI);
+        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*5.0);
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*5.0);
         p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI);
+        p_polarisation_modifier->SetVecPolarisationDecrease(M_POLARDEC_INI);
 
-        p_polarisation_modifier->SetEndoEpiPolarisationParameter(0.24);
 
         MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
         simulator.AddSimulationModifier(p_lumen_generation_modifier);
+        //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
+        //simulator.AddSimulationModifier(p_growth_modifier);
 
         MAKE_PTR(LumenModifier<2>, p_lumen_modifier);
         simulator.AddSimulationModifier(p_lumen_modifier);
-        p_lumen_modifier->SetLumenSizeFactor(0.022) ;
-        p_lumen_modifier->SetlumenDuration2TargetArea(48) ;
+        p_lumen_modifier->SetLumenSizeFactor(M_LUMEN_SIZE_FACTOR_INI) ;
+        p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI) ;
 
 
         //MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
@@ -481,18 +492,19 @@ public:
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
         std::cout << "Adding active force" << endl ;
-        MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (7.2));//force initiale, decroissement
+        MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (9.2));//force initiale, decroissement
         simulator.AddForce(p_motile_force);
 
-        /*std::cout << "Adding repulsion force" << endl ;
+        std::cout << "Adding repulsion force" << endl ;
         MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.3));
         simulator.AddForce(p_repulsion_force);
-        */
 
-        MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
-        simulator.AddSimulationModifier(p_growth_modifier);
 
-        //MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+
+        //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
+        //simulator.AddSimulationModifier(p_growth_modifier);
+
+      //  MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
@@ -500,8 +512,8 @@ public:
 
         simulator.SetEndTime(48);
         simulator.SetDt(0.001);
-        simulator.SetSamplingTimestepMultiple(1);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestCellCycle/NewTargetArea/2");
+        simulator.SetSamplingTimestepMultiple(10);
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsion/14");
 
         simulator.Solve();
 

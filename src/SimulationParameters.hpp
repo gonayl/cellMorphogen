@@ -6,7 +6,7 @@ public:
 
   //Simulation
   static constexpr double TIMESTEP = 0.002;
-  static constexpr double TIME_OF_SIMULATION = 48;
+  static constexpr double TIME_OF_SIMULATION = 96;
 
   //influence the size of the polarization vector
 
@@ -27,7 +27,7 @@ public:
   //size of the lumen
   static constexpr double LUMEN_SIZE_FACTOR = 0.022;
   static constexpr double AGE_TO_LUMEN_MATURITY = 48;
-  static constexpr double SIZE_MIN_LUMEN = 0.1;
+  static constexpr double SIZE_MIN_LUMEN = 0.2;
 
   static constexpr bool SIZE_INCREMENTALE = false;
   static constexpr double SURFACE_IMPACT_ON_LUMEN_DERIVATE = 0.002;

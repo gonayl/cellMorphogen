@@ -77,7 +77,7 @@ void DifferentialTargetAreaModifier<DIM>::UpdateAtEndOfTimeStep(AbstractCellPopu
         double cell_age = cell_iter->GetAge();
         double max_age = p_model->GetG1Duration() / 0.38 ;
       //  double target_area = cell_area * ((max_age - cell_age)/max_age) + (cell_age/max_age * 0.3) ;
-        double target_area = sqrt(cell_area*(1 - (cell_age/max_age))) + (cell_age/max_age * target) ;
+        double target_area = 0.8*sqrt(cell_area*(1 - (cell_age/max_age))) + (cell_age/max_age * target) ;
       //  std::cout << cell_index << " ; " << max_age << " ; " << cell_area << " ; " << cell_age << " ; " << target_area << std::endl;
         cell_iter->GetCellData()->SetItem("target area", target_area);
       }

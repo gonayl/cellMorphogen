@@ -5,6 +5,8 @@
 #include "CellEpi.hpp"
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
+#include "TransitCellProliferativeType.hpp"
+
 
 #include <stdlib.h>
 #include "CellTip.hpp"
@@ -204,6 +206,10 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
           boost::shared_ptr<AbstractCellProperty> p_stalk(CellPropertyRegistry::Instance()->Get<CellStalk>());
 
           pCell->AddCellProperty(p_stalk);
+
+          boost::shared_ptr<AbstractCellProperty> p_transit_type =
+              pCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
+          pCell->SetCellProliferativeType(p_transit_type);
         }
       }
 
@@ -236,7 +242,11 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
             if ( neighbour_is_Tip == 1)
             {
               p_neighbour_cell->RemoveCellProperty<CellTip>();
-              //p_neighbour_cell->AddCellProperty(p_stalk);
+              boost::shared_ptr<AbstractCellProperty> p_stalk(CellPropertyRegistry::Instance()->Get<CellStalk>());
+              p_neighbour_cell->AddCellProperty(p_stalk);
+              boost::shared_ptr<AbstractCellProperty> p_transit_type =
+                  pCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
+              pCell->SetCellProliferativeType(p_transit_type);
             }
           }
         }

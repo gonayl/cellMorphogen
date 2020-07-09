@@ -5,7 +5,7 @@
 
 PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
     : AbstractCellCycleModel(),
-      mMaxStretch(2.1),
+      mMaxStretch(3.2),
       mMinimumDivisionAge(0.2)
 {
 }
@@ -35,8 +35,9 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
             if (!(mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>()))
             {
                 double cell_elongation = mpCell->GetCellData()->GetItem("perimeter");
-                double have_tip_neighboor = mpCell->GetCellData()->GetItem("have_tip_neighboor");
-                if (cell_elongation > mMaxStretch && have_tip_neighboor > 0)
+                //double have_tip_neighboor = mpCell->GetCellData()->GetItem("have_tip_neighboor");
+              //  if (cell_elongation > mMaxStretch && have_tip_neighboor > 0)
+                if (cell_elongation > mMaxStretch )
                 {
                     mReadyToDivide = true;
                 }

@@ -90,6 +90,7 @@
 #include "PositionWeightConstantTrackingModifier.hpp"
 #include "BorderTrackingModifier.hpp"
 #include "CellFixingModifier.hpp"
+#include "NewEndoGeneratorModifier.hpp"
 // #include "MergeNodeModifier.hpp"
 
 #include "FixedBoundaryCondition.hpp"
@@ -127,20 +128,33 @@ private:
         for (unsigned i=0; i<num_cells; i++)
         {
             //StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
-            //UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
-            UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
+            UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
+            //UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
             //PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
-            CellPtr p_cell(new Cell(p_state, p_cycle_model));
-            p_cell->SetCellProliferativeType(p_transit_type);
-            double birth_time = rand() % 10 + 1 ;
-            p_cell->SetBirthTime(-birth_time);
-            p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 1.0);
-            // Initial Condition for Morphogen PDE
-            p_cell->GetCellData()->SetItem("morphogen",0.0);
-            p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
-            p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
+            if (i == 134)
+            {
+              CellPtr p_cell(new Cell(p_state, p_cycle_model));
+              p_cell->SetCellProliferativeType(p_diff_type);
+              p_cycle_model->SetMaxTransitGenerations(10);
+              double birth_time = 10 ;
+              p_cell->SetBirthTime(-birth_time);
+              p_cell->InitialiseCellCycleModel();
+              p_cell->GetCellData()->SetItem("target area", 0.6);
+
             rCells.push_back(p_cell);
+            }
+            else
+            {
+              CellPtr p_cell(new Cell(p_state, p_cycle_model));
+              p_cell->SetCellProliferativeType(p_transit_type);
+              p_cycle_model->SetMaxTransitGenerations(10);
+              double birth_time = 10 ;
+              p_cell->SetBirthTime(-birth_time);
+              p_cell->InitialiseCellCycleModel();
+              p_cell->GetCellData()->SetItem("target area", 0.6);
+
+              rCells.push_back(p_cell);
+            }
           }
         }
 
@@ -154,21 +168,27 @@ public:
         // Create Mesh
 
         std::cout << "Creating mesh" << endl ;
-
+        /*
         HoneycombVertexMeshGenerator generator(4, 4);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
         p_mesh->SetCellRearrangementThreshold(0.1);
+        */
+
+        VertexMeshReader<2,2> mesh_reader("testoutput/TestRepulsionForceMeshWriter/repulsion_mesh");
+        MutableVertexMesh<2,2> p_mesh;
+        p_mesh.ConstructFromMeshReader(mesh_reader);
+        p_mesh.SetCellRearrangementThreshold(0.1);
 
 	      std::cout << "Creating mesh" << endl ;
 
         // Create Cells
         std::vector<CellPtr> cells;
 
-        //GenerateCells(p_mesh.GetNumElements(),cells);
-        GenerateCells(p_mesh->GetNumElements(),cells);
+        GenerateCells(p_mesh.GetNumElements(),cells);
+        //GenerateCells(p_mesh->GetNumElements(),cells);
 
-        //VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
-        VertexBasedCellPopulation<2> cell_population(*p_mesh, cells);
+        VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
+        //VertexBasedCellPopulation<2> cell_population(*p_mesh, cells);
 
         cell_population.AddCellWriter<CellAgesWriter>();
         cell_population.AddCellWriter<CellPosWriter>();
@@ -183,7 +203,7 @@ public:
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsionForce");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsionForce/MeshReader/WithNewObstru/2");
 
 
         simulator.SetOutputDivisionLocations(true);
@@ -218,6 +238,8 @@ public:
         simulator.AddSimulationModifier(p_volume_modifier);
         MAKE_PTR(BorderTrackingModifier<2>, p_border_modifier);
         simulator.AddSimulationModifier(p_border_modifier);
+        //MAKE_PTR(MassCenterTrackingModifier<2>, p_center_modifier);
+        //simulator.AddSimulationModifier(p_center_modifier) ;
 
 
         std::cout << "Labelling Epi cells" << endl ;
@@ -225,7 +247,15 @@ public:
              cell_iter != cell_population.End();
              ++cell_iter)
         {
-              cell_iter->AddCellProperty(p_lumen);
+          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 134)
+          {
+              cell_iter->AddCellProperty(p_endo);
+              cell_iter->AddCellProperty(p_stalk);
+          }
+          else
+          {
+              cell_iter->AddCellProperty(p_epi);
+          }
         }
 
 
@@ -241,21 +271,27 @@ public:
         */
 
         std::cout << "Adding repulsion force" << endl ;
-        MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.3));
+        MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.5));
         simulator.AddForce(p_repulsion_force);
 
         MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
+        //MAKE_PTR(NewEndoGeneratorModifier<2>, p_newendo_modifier);
+        //simulator.AddSimulationModifier(p_newendo_modifier);
 
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(200.0);
-        simulator.SetDt(1.0/20.0);
+        simulator.SetEndTime(96.0);
+        simulator.SetDt(0.02);
         simulator.SetSamplingTimestepMultiple(1.0);
 
         simulator.Solve();
+
+        // Record mesh
+      //  VertexMeshWriter<2,2> vertex_mesh_writer("TestRepulsionForcenMeshWriter", "repulsion_mesh");
+      //  vertex_mesh_writer.WriteFilesUsingMesh(*p_mesh);
 
     }
 };

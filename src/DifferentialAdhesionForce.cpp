@@ -153,7 +153,7 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
           if (num_endo_stalk_cells == 2)
           {
               // Both cells are labelled "endo + stalk"
-              return this->GetStalkStalkAdhesionEnergyParameter();
+              return this->GetStalkStalkAdhesionEnergyParameter() - (0.5*(SimulationTime::Instance()->GetTime()/simulation_time));
           }
           else if (num_endo_tip_cells == 2)
           {

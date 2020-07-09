@@ -4,7 +4,10 @@
 #include "CellStalk.hpp"
 #include "CellTip.hpp"
 #include "CellVessel.hpp"
+#include "CellPeriph.hpp"
+#include "CounterSingletonRepulsion.hpp"
 #include <stdlib.h>
+#include<cmath>
 using namespace std ;
 
 template<unsigned ELEMENT_DIM, unsigned SPACE_DIM>
@@ -22,19 +25,110 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
         EXCEPTION("ObstructionBoundaryCondition requires a subclass of AbstractOffLatticeCellPopulation.");
     }
 
+
+
+    int endo_count = 0 ;
+    int endo_count_local = 0 ;
+    int endo_count_global = CounterSingletonRepulsion::Instance()->GetCount() ;
+
+
+    for (typename AbstractCellPopulation<ELEMENT_DIM,SPACE_DIM>::Iterator cell_iter = this->mpCellPopulation->Begin();
+         cell_iter != this->mpCellPopulation->End();
+         ++cell_iter)
+
+    {
+      if (cell_iter->template HasCellProperty<CellStalk>() && cell_iter->template HasCellProperty<CellPeriph>())
+      {
+
+        endo_count_local++ ;
+
+      }
+
+    }
+
+    if (endo_count_global != endo_count_local)
+    {
+
+      // PHASE 0, computing mass center (will not be used after)
+
+      vector<double> moy_x_pos;
+      vector<double> moy_y_pos;
+
+
+      for (typename AbstractCellPopulation<ELEMENT_DIM,SPACE_DIM>::Iterator cell_iter = this->mpCellPopulation->Begin();
+           cell_iter != this->mpCellPopulation->End();
+           ++cell_iter)
+      {
+        c_vector<double, SPACE_DIM> cell_location = this->mpCellPopulation->GetLocationOfCellCentre(*cell_iter) ;
+        moy_x_pos.push_back(cell_location[0]);
+        moy_y_pos.push_back(cell_location[1]);
+
+      }
+
+      double xsum = accumulate(moy_x_pos.begin(), moy_x_pos.end(), 0.0);
+      double ysum = accumulate(moy_y_pos.begin(), moy_y_pos.end(), 0.0);
+      double xmoy = xsum / moy_x_pos.size() ;
+      double ymoy = ysum / moy_y_pos.size() ;
+
+      // For the description of phases, see lab notes pages xx
+
+      // PHASE 1
+      // iterate over cell AddPopulationWriter
+    double endocells[][4]{} ;
+
+
+    CounterSingletonRepulsion::Instance()->ResetCountToZero() ;
+    //int endo_count = 0 ;
+
+
+
+    for (typename AbstractCellPopulation<ELEMENT_DIM,SPACE_DIM>::Iterator cell_iter = this->mpCellPopulation->Begin();
+         cell_iter != this->mpCellPopulation->End();
+         ++cell_iter)
+
+    {
+
+      if ( cell_iter->template HasCellProperty<CellStalk>() && cell_iter->template HasCellProperty<CellPeriph>())
+      {
+
+        c_vector<double, 2> direct_vector ;
+
+        c_vector<double, 2> centre_of_cell = this->mpCellPopulation->GetLocationOfCellCentre(*cell_iter);
+
+        direct_vector[0] = centre_of_cell[0] - xmoy ;
+        direct_vector[1] = centre_of_cell[1] - ymoy ;
+
+        endocells[endo_count][0] =  direct_vector[1] ; // a
+        endocells[endo_count][1] =  - direct_vector[0] ; // b
+        endocells[endo_count][2] = - endocells[endo_count][0]*(centre_of_cell[0] - 0.2) - endocells[endo_count][1]*(centre_of_cell[1] - 0.2) ; // l
+        endocells[endo_count][3] = - endocells[endo_count][0]*(centre_of_cell[0] + 0.4) - endocells[endo_count][1]*(centre_of_cell[1] + 0.4) ; // r
+
+        endo_count++ ;
+
+        CounterSingletonRepulsion::Instance()->IncrementCounter();
+
+
+
+      }
+
+    }
+
+    double endo_count_current = CounterSingletonRepulsion::Instance()->GetCount();
+    cout << endo_count_current << "endo cells" << endl ;
+
+    }
+
+
+
+    //cout << endo_count << "endo stalk fixed cell(s), a = " << endocells[0][0] << ", b = " << endocells[0][1]
+    //<< " and l and r = " << endocells[0][2] << " ; " <<  endocells[0][3] << endl ;
+
+
     assert((dynamic_cast<AbstractCentreBasedCellPopulation<ELEMENT_DIM,SPACE_DIM>*>(this->mpCellPopulation))
             || (SPACE_DIM==ELEMENT_DIM && (dynamic_cast<VertexBasedCellPopulation<SPACE_DIM>*>(this->mpCellPopulation))) );
 
     if (SPACE_DIM != 1)
     {
-        if (dynamic_cast<AbstractCentreBasedCellPopulation<ELEMENT_DIM,SPACE_DIM>*>(this->mpCellPopulation))
-        {
-            // to be implemented
-        }
-
-        else
-        {
-
             assert(SPACE_DIM == ELEMENT_DIM);
             assert(dynamic_cast<VertexBasedCellPopulation<SPACE_DIM>*>(this->mpCellPopulation));
 
@@ -44,21 +138,59 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
             {
                 Node<SPACE_DIM>* p_node = this->mpCellPopulation->GetNode(node_index);
                 c_vector<double, SPACE_DIM> node_location = p_node->rGetLocation();
+                double y_coordinate = p_node->rGetLocation()[1];
+                double x_coordinate = p_node->rGetLocation()[0];
 
-                double obsruction_radius = 2.0;
+                // "left" limit equation (l) : ax + by - l = 0
+                // "right" limit equation : ax + by = r
 
-                c_vector<double, 2> obstruction_centre;
-                obstruction_centre[0] = 2.0;
-                obstruction_centre[1] = 4.8;
+                // normal to limit eq = dx + ey + f = 0
 
-                double radius = norm_2(node_location-obstruction_centre);
-                if (radius < obsruction_radius)
+
+
+                double a = 1;
+                double b = 0 ;
+                double l = - 1.44;
+                double r = - 2.10 ;
+
+                double d = b ;
+                double e = -a ;
+                double f = (-b * x_coordinate) + (a * y_coordinate) ;
+
+                // now that we have the equation for the normal line to the left limit, we need the closest point on this line to the current node (orthogonal projection)
+
+                double x_proj_l ;
+                double y_proj_l ;
+
+                double x_proj_r ;
+                double y_proj_r ;
+
+                y_proj_l = (((d*l)/a)- f ) / (((-d*b)/a) + e) ;
+                x_proj_l = (-b*y_proj_l - l) / a ;
+
+                y_proj_r = (((d*r)/a)- f ) / (((-d*b)/a) + e) ;
+                x_proj_r = (-b*y_proj_r - r) / a ;
+
+
+                double dist1 = sqrt(pow((x_coordinate - x_proj_l),2) + pow((y_coordinate - y_proj_l),2)) ;
+                double dist2 = sqrt(pow((x_coordinate - x_proj_r),2) + pow((y_coordinate - y_proj_r),2)) ;
+
+                // c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second; // node previous location
+
+                if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 < dist2  )
                 {
-                    p_node->rGetModifiableLocation() = obstruction_centre + obsruction_radius/radius*(node_location-obstruction_centre);
+                  p_node->rGetModifiableLocation()[0] = x_proj_l;
+                  p_node->rGetModifiableLocation()[1] = y_proj_l;
+                  //p_node->rGetModifiableLocation() = old_node_location;
                 }
-            }
+                else if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 > dist2  )
+                {
+                  p_node->rGetModifiableLocation()[0] = x_proj_r;
+                  p_node->rGetModifiableLocation()[1] = y_proj_r ;
+                  //p_node->rGetModifiableLocation() = old_node_location;
+                }
 
-        }
+              }
     }
     else
     {

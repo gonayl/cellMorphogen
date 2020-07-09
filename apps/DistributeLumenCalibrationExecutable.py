@@ -19,10 +19,9 @@ def run_simulations():
 
     # Make a list of calls to a Chaste executable
     command_list = []
-    for epiepi in np.arange(1, 2, 1):
-        for endoepi in np.arange(1, 2, 1):
-            for lumenepi in np.arange(5, 6, 2):
-                command_list.append("nice -n 19 /home/gonayl/Chaste/build/projects/cellMorphogen/apps/LumenCalibrationExecutable --Ep "+str(epiepi)+" --En "+str(endoepi)+" --L "+str(lumenepi))
+    for motile in np.arange(9, 12, 1):
+        for elong in np.arange(15, 19, 1):
+                command_list.append("nice -n 19 /home/gonayl/Chaste/build/projects/cellMorphogen/apps/LumenCalibrationExecutable --Em "+str(motile)+" --En "+str(elong))
 
     # Use processes equal to the number of cpus available
     count = multiprocessing.cpu_count()

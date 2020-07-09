@@ -133,10 +133,13 @@ static const double M_DUDT_COEFFICIENT = 1.0;
 static const double M_DECAY_COEFFICIENT = 9.0;
 static const double M_RADIUS = 100.0;
 static const double M_EPI = 5.0 ;
-static const double M_EPIBND = 5.0 ;
-static const double M_ENDOBND = 4.0 ;//chang
-static const double M_ENDOEPI = 5.0 ;
-static const double M_ENDOENDO = 1.7 ;
+static const double M_PEERIPHPERIPH = 7.0 ;
+static const double M_EPIBND = 8.0 ;
+static const double M_EPILUMEN = 5.0 ;
+static const double M_ENDOBND = 0.2 ;//chang
+static const double M_ENDOEPI = 7.0 ;
+static const double M_ENDOENDO = 0.2 ;
+static const double M_LUMENBND = 8.0 ;
 static const double M_MOTILITY = 15.0 ;
 static const double M_EPIEPI_INI = -0.008 ;
 static const double M_ENDOEPI_INI = 0.024 ;
@@ -144,6 +147,10 @@ static const double M_LUMENEPI_INI = -0.015 ;
 static const double M_POLARDEC_INI = 0.0075 ;
 static const double M_LUMEN_SIZE_FACTOR_INI = 0.007 ;
 static const double M_DURATION2_INI = 48.0 ;
+static const double M_SIM_NB = 6 ;
+static const double M_STRETCH_INI = 0.2 ;
+
+static const double M_PIXEL_COEF = 256 ;
 
 
 // Program option includes for handling command line arguments
@@ -157,7 +164,7 @@ static const double M_DURATION2_INI = 48.0 ;
  */
 
 void SetupSingletons();
-void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned mLumenEpiMult);
+void SetupAndRunSimulation(unsigned mMotile, unsigned mElong);
 void DestroySingletons();
 
 int main(int argc, char *argv[])
@@ -169,9 +176,8 @@ int main(int argc, char *argv[])
     boost::program_options::options_description general_options("This is the lumen calibration executable.\n");
     general_options.add_options()
                     ("help", "produce help message")
-                    ("Ep", boost::program_options::value<unsigned>()->default_value(1.0),"influence of other epithelial cells on epithelial cells polarisation")
-                    ("En", boost::program_options::value<unsigned>()->default_value(48.0),"influence of other endothelial cells on epithelial cells polarisation")
-                    ("L", boost::program_options::value<unsigned>()->default_value(5.0),"influence of other lumen cells on epithelial cells polarisation");
+                    ("Em", boost::program_options::value<unsigned>()->default_value(1.0),"endo-matrix adhesion")
+                    ("En", boost::program_options::value<unsigned>()->default_value(1.0),"endo-endo adhesion");
 
     // Define parse command line into variables_map
     boost::program_options::variables_map variables_map;
@@ -186,13 +192,12 @@ int main(int argc, char *argv[])
     }
 
     // Get ID and name from command line
-    unsigned epiepi = variables_map["Ep"].as<unsigned>();
-    unsigned endoepi = variables_map["En"].as<unsigned>();
-    unsigned lumenepi = variables_map["L"].as<unsigned>();
+    unsigned motile = variables_map["Em"].as<unsigned>();
+    unsigned elong = variables_map["En"].as<unsigned>();
 
     SetupSingletons();
 
-    SetupAndRunSimulation(epiepi, endoepi, lumenepi);
+    SetupAndRunSimulation(motile, elong);
 
     DestroySingletons();
 }
@@ -211,7 +216,7 @@ void DestroySingletons()
 
 
 
-void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned mLumenEpiMult)
+void SetupAndRunSimulation(unsigned mMotile, unsigned mElong)
 {
 
   // Permet d'importer un fichier test et s'en servir pour taguer les cellules, voir ci-après
@@ -272,20 +277,21 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
 
           if (label_input[i] == 0)
           {
+            CellPtr p_cell(new Cell(p_state, p_cycle_model));
             if (boundary_input[i] == 0)
             {
               p_cycle_model->SetCycleDuration(32) ;
+              p_cell->GetCellData()->SetItem("target area", 0.5);
             }
             else if (boundary_input[i] == 1 )
             {
               p_cycle_model->SetCycleDuration(11);
             }
-            CellPtr p_cell(new Cell(p_state, p_cycle_model));
             p_cell->SetCellProliferativeType(p_transit_type);
             double birth_time = rand() % 5 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.8);
+            p_cell->GetCellData()->SetItem("target area", 0.5);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -295,11 +301,12 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
           else if (label_input[i] == 1 )
           {
             CellPtr p_cell(new Cell(p_state, p_elong_model));
+            p_elong_model->SetMaxStretch(M_STRETCH_INI*mElong);
             p_cell->SetCellProliferativeType(p_transit_type);
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.8);
+            p_cell->GetCellData()->SetItem("target area", 0.5);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
                     p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -313,7 +320,7 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.8);
+            p_cell->GetCellData()->SetItem("target area", 0.6);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -369,26 +376,25 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
         p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
-        p_force->SetEndoEndoAdhesionEnergyParameter(1.7);
-        p_force->SetStalkStalkAdhesionEnergyParameter(1.7);
-        p_force->SetStalkTipAdhesionEnergyParameter(1.7);
-        p_force->SetTipTipAdhesionEnergyParameter(1.7);
+        p_force->SetEndoEndoAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetStalkStalkAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetStalkTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetTipTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
         p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
-        p_force->SetPeriphPeriphAdhesionEnergyParameter(M_EPI);
+        p_force->SetPeriphPeriphAdhesionEnergyParameter(M_PEERIPHPERIPH);
         p_force->SetEndoEpiAdhesionEnergyParameter(M_ENDOEPI);
-        p_force->SetEpiLumenAdhesionEnergyParameter(4.0);
+        p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(35.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(M_ENDOBND);
-        p_force->SetLumenBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetLumenBoundaryAdhesionEnergyParameter(7.0);
         p_force->SetEpiBoundaryAdhesionEnergyParameter(M_EPIBND);
 
 
         p_force->SetEpiEpiAdhesionEnergyParameter(6);
-
         simulator.AddForce(p_force);
 
         MAKE_PTR(VolumeTrackingModifier<2>, p_volume_modifier);
@@ -442,21 +448,21 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
 
         MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
         simulator.AddSimulationModifier(p_polarisation_modifier);
-        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*mLumenEpiMult);
-        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*mLumenEpiMult);
+        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*5.0);
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*5.0);
         p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI);
         p_polarisation_modifier->SetVecPolarisationDecrease(M_POLARDEC_INI);
 
 
         MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
         simulator.AddSimulationModifier(p_lumen_generation_modifier);
-        MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
-        simulator.AddSimulationModifier(p_growth_modifier);
+        //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
+        //simulator.AddSimulationModifier(p_growth_modifier);
 
         MAKE_PTR(LumenModifier<2>, p_lumen_modifier);
         simulator.AddSimulationModifier(p_lumen_modifier);
-        p_lumen_modifier->SetLumenSizeFactor(M_LUMEN_SIZE_FACTOR_INI*mEpiEpiMult) ;
-        p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI*mEndoEpiMult) ;
+        p_lumen_modifier->SetLumenSizeFactor(M_LUMEN_SIZE_FACTOR_INI) ;
+        p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI) ;
 
 
         //MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
@@ -466,28 +472,30 @@ void SetupAndRunSimulation(unsigned mEpiEpiMult, unsigned mEndoEpiMult, unsigned
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
         std::cout << "Adding active force" << endl ;
-        MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (7.2));//force initiale, decroissement
+        MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (mMotile));//force initiale, decroissement
         simulator.AddForce(p_motile_force);
+
+        std::cout << "Adding repulsion force" << endl ;
+        MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.3));
+        simulator.AddForce(p_repulsion_force);
 
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(96.0);
+        simulator.SetEndTime(48.0);
         simulator.SetDt(0.001);
-        simulator.SetSamplingTimestepMultiple(100);
+        simulator.SetSamplingTimestepMultiple(1000);
 
 
         /* Calibration part */
 
 
-        cout << "Testing parameters : (" << mEpiEpiMult << " ; " << mEndoEpiMult << ")" << endl;
+        cout << "Testing parameters : " << mMotile << " / " << mElong <<  endl;
 
         // Specify output directory (unique to each simulation)
-        std::string output_directory = std::string("TestLumenCalibration/TestNewTargetArea")
-        + std::string("Ep") + boost::lexical_cast<std::string>(mEpiEpiMult)
-        + std::string("_En") + boost::lexical_cast<std::string>(mEndoEpiMult)
-        + std::string("_L") + boost::lexical_cast<std::string>(mLumenEpiMult)
-        + std::string("_V") + boost::lexical_cast<std::string>(M_POLARDEC_INI);
+        std::string output_directory = std::string("TestLumenCalibration/TestNewRepulsionCalibration/")
+        + std::string("Em") + boost::lexical_cast<std::string>(mMotile)
+        + std::string("En") + boost::lexical_cast<std::string>(mElong);
 
 
 

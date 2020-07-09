@@ -104,7 +104,8 @@ void ForceTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
 
       VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
       VertexElement<DIM, DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
-      std::vector<double> force;
+      std::vector<double> force_x;
+      std::vector<double> force_y;
       // Iterate over nodes owned by this VertexElement
       unsigned num_nodes_in_vertex_element = p_element->GetNumNodes();
       for (unsigned local_index=0; local_index<num_nodes_in_vertex_element; local_index++)
@@ -113,14 +114,16 @@ void ForceTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>&
              double forcex = p_cell_population->GetNode(node_index)->rGetAppliedForce()[0];
              double forcey = p_cell_population->GetNode(node_index)->rGetAppliedForce()[1];
 
-             double forceresult = sqrt((forcex * forcex) + (forcey * forcey));
 
-             force.push_back(forceresult);
+             force_x.push_back(forcex);
+             force_y.push_back(forcey);
            }
 
         // Store the cell's volume in CellData
-        double forcetot = std::accumulate(force.begin(), force.end(), 0.0);
-        cell_iter->GetCellData()->SetItem("forcetot", forcetot);
+        double forcetotx = std::accumulate(force_x.begin(), force_x.end(), 0.0);
+        double forcetoty = std::accumulate(force_y.begin(), force_y.end(), 0.0);
+        cell_iter->GetCellData()->SetItem("forcetotx", forcetotx);
+        cell_iter->GetCellData()->SetItem("forcetoty", forcetoty);
 
     }
 }
