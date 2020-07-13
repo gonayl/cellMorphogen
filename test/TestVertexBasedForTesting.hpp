@@ -131,7 +131,7 @@ private:
             UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
             //UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
             //PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
-            if (i == 134)
+            if (i == 134 || i == 174)
             {
               CellPtr p_cell(new Cell(p_state, p_cycle_model));
               p_cell->SetCellProliferativeType(p_diff_type);
@@ -247,7 +247,7 @@ public:
              cell_iter != cell_population.End();
              ++cell_iter)
         {
-          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 134)
+          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 134 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 174)
           {
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_stalk);
@@ -284,7 +284,7 @@ public:
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(96.0);
-        simulator.SetDt(0.02);
+        simulator.SetDt(0.01);
         simulator.SetSamplingTimestepMultiple(1.0);
 
         simulator.Solve();

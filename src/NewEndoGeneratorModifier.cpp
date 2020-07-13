@@ -9,6 +9,7 @@
 #include "CellPolar.hpp"
 #include "CellPeriph.hpp"
 #include "CellCore.hpp"
+#include "DifferentiatedCellProliferativeType.hpp"
 
 #include "CounterSingleton.hpp"
 
@@ -99,12 +100,13 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
         cell_iter->template RemoveCellProperty<CellEpi>();
         cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellEndo>());
         cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellStalk>());
+        cell_iter->SetCellProliferativeType(CellPropertyRegistry::Instance()->Get<DifferentiatedCellProliferativeType>());
 
         CounterSingleton::Instance()->IncrementCounter();
 
-        double countbis = CounterSingleton::Instance()->GetCount() ;
+        //double countbis = CounterSingleton::Instance()->GetCount() ;
 
-        cout << countbis << " new endo cells" << endl;
+        //cout << countbis << " new endo cells" << endl;
 
       }
 
