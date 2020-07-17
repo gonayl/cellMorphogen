@@ -3,6 +3,7 @@
 #include "VertexBasedCellPopulation.hpp"
 #include "CellStalk.hpp"
 #include "CellTip.hpp"
+#include "CellEndo.hpp"
 #include "CellVessel.hpp"
 #include "CellPeriph.hpp"
 #include "CounterSingletonRepulsion.hpp"
@@ -28,10 +29,10 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
         EXCEPTION("ObstructionBoundaryCondition requires a subclass of AbstractOffLatticeCellPopulation.");
     }
 
-    const int n_columns = 4;
-    double endocells[][n_columns]{} ;
+    //const int n_columns = 4;
+    //double endocells[][n_columns]{} ;
+    vector<double> endo_cells_tofile;
     int endo_count = 0 ;
-
     int endo_count_local = 0 ;
 
     int endo_count_global = CounterSingletonRepulsion::Instance()->GetCount() ;
@@ -57,7 +58,7 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
     if (endo_count_global != endo_count_local)
     {
 
-      cout << "New endo cell" << endl ;
+
 
       // PHASE 0, computing mass center (will not be used after)
 
@@ -87,8 +88,8 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
     //double endocells[][4]{} ;
 
 
-    CounterSingletonRepulsion::Instance()->ResetCountToZero() ;
-    //int endo_count = 0 ;
+
+
 
 
 
@@ -100,7 +101,7 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
 
       if ( cell_iter->template HasCellProperty<CellStalk>() && cell_iter->template HasCellProperty<CellPeriph>())
       {
-
+        double a; double b; double l; double r;
         c_vector<double, 2> direct_vector ;
 
         c_vector<double, 2> centre_of_cell = this->mpCellPopulation->GetLocationOfCellCentre(*cell_iter);
@@ -108,10 +109,17 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
         direct_vector[0] = centre_of_cell[0] - xmoy ;
         direct_vector[1] = centre_of_cell[1] - ymoy ;
 
-        endocells[endo_count][0] =  direct_vector[1] ; // a
-        endocells[endo_count][1] =  - direct_vector[0] ; // b
-        endocells[endo_count][2] = - endocells[endo_count][0]*(centre_of_cell[0] - 0.4) - endocells[endo_count][1]*(centre_of_cell[1] - 0.4) ; // l
-        endocells[endo_count][3] = - endocells[endo_count][0]*(centre_of_cell[0] + 0.4) - endocells[endo_count][1]*(centre_of_cell[1] + 0.4) ; // r
+        a =  direct_vector[1] ; // a
+        b =  - direct_vector[0] ; // b
+        l = - direct_vector[1]*(centre_of_cell[0] - 0.4) + direct_vector[0]*(centre_of_cell[1] - 0.4) ; // l
+        r = - direct_vector[1]*(centre_of_cell[0] + 0.4) + direct_vector[0]*(centre_of_cell[1] + 0.4) ; // r
+
+        endo_cells_tofile.push_back(a) ;
+        endo_cells_tofile.push_back(b) ;
+        endo_cells_tofile.push_back(l) ;
+        endo_cells_tofile.push_back(r) ;
+
+        cout << "pushing data for cell " << this->mpCellPopulation->GetLocationIndexUsingCell(*cell_iter) << endl ;
 
         endo_count++ ;
 
@@ -120,6 +128,9 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
     }
 
     double endo_count_previous = CounterSingletonRepulsion::Instance()->GetCount();
+
+    //cout << endo_count << endl ;
+    //cout << endo_count_previous << endl ;
     //cout << endo_count_current << "endo cells" << endl ;
 
     //<< endocells[0][0] << ", b = " << endocells[0][1]
@@ -127,34 +138,24 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
 
 
 
+    cout <<  endo_count_local << " total cell(s), " << endo_count_global << " previous cell(s), " << endo_count_local - endo_count_global << " new endo cell(s)" << endl ;
+
+    int vector_size = endo_cells_tofile.size() ;
+    assert(endo_count*4 == vector_size) ; // make sure the vector size is a multiple of 4 and countain the right number of endo cells info
+
     // int n_line = endo_count_current - 1 ;
     ofstream myfile ("example.txt", ios::app);
-    for (int i_endo = endo_count_previous; i_endo < endo_count ; i_endo++ )
+    for (int i_endo = endo_count_previous*4; i_endo < endo_count*4 ; i_endo++ )
     {
-      if (i_endo == 0)
-      {
+      // NEED TO EMPTY THE FILE FIRST
         if (myfile.is_open())
         {
-          //cout << "creating file" << endl ;
-          for(int count = 0; count < n_columns; count ++)
-          {
-            myfile << endocells[i_endo][count] << " " ;
-          }
+          myfile << endo_cells_tofile[i_endo] << " " ;
         }
-      }
-      else
-      {
-        if (myfile.is_open())
-        {
-          //cout << "updating" << endl ;
-          myfile << endl ;
-          for(int count = 0; count < n_columns; count ++)
-          {
-            myfile << endocells[i_endo][count] << " " ;
-          }
-        }
-      } // end else
     } // end for
+
+
+    CounterSingletonRepulsion::Instance()->ResetCountToZero() ;
 
     for (int i_counter = 0; i_counter < endo_count ; i_counter++)
     {
@@ -200,10 +201,10 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
 
     }
 
-    else
-    {
+    //else
+    //{
       //cout << "No new endo cell" << endl ;
-    }
+  //  }
 
 
 
@@ -215,6 +216,7 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
 
     assert((dynamic_cast<AbstractCentreBasedCellPopulation<ELEMENT_DIM,SPACE_DIM>*>(this->mpCellPopulation))
             || (SPACE_DIM==ELEMENT_DIM && (dynamic_cast<VertexBasedCellPopulation<SPACE_DIM>*>(this->mpCellPopulation))) );
+
 
 
             ifstream inFile ;
@@ -232,6 +234,8 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
             }
             inFile.close() ;
 
+
+
             //vector<double> endoLoc;
             if (SPACE_DIM != 1)
             {
@@ -242,11 +246,33 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
 
             // Iterate over all nodes and update their positions according to the boundary conditions
             unsigned num_nodes = this->mpCellPopulation->GetNumNodes();
-            int n_lines_endo = CounterSingletonRepulsion::Instance()->GetCount() ;
+            //int n_lines_endo = CounterSingletonRepulsion::Instance()->GetCount() ;
+            int n_lines_endo = endo_cells_fromfile.size()/4 ;
+
             for (unsigned node_index=0; node_index<num_nodes; node_index++)
             {
                 Node<SPACE_DIM>* p_node = this->mpCellPopulation->GetNode(node_index);
                 c_vector<double, SPACE_DIM> node_location = p_node->rGetLocation();
+
+                std::set<unsigned> elements_containing_node = this->mpCellPopulation->GetNode(node_index)->rGetContainingElementIndices();
+
+
+                /*
+                int is_endo = 0 ;
+
+                for (std::set<unsigned>::iterator element_index = elements_containing_node.begin();
+                     element_index != elements_containing_node.end();
+                     ++element_index)
+                {
+                  CellPtr p_cell = this->mpCellPopulation->GetCellUsingLocationIndex(*element_index);
+                  if (p_cell->HasCellProperty<CellEndo>())
+                  {
+                    is_endo++ ;
+                  }
+                }
+
+                */
+
                 double y_coordinate = p_node->rGetLocation()[1];
                 double x_coordinate = p_node->rGetLocation()[0];
 
@@ -256,15 +282,26 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
                 // normal to limit eq = dx + ey + f = 0
 
 
+
                 for(int endo_index = 0; endo_index < n_lines_endo; endo_index++)
                 {
 
                 int pos_in_vec = endo_index  * 4 ;
 
+
                 double a = endo_cells_fromfile[0 + pos_in_vec];
                 double b = endo_cells_fromfile[1 + pos_in_vec];
                 double l = endo_cells_fromfile[2 + pos_in_vec];
                 double r = endo_cells_fromfile[3 + pos_in_vec];
+
+                /*
+
+                double a = endocells[endo_index][0] ;
+                double b = endocells[endo_index][1] ;
+                double l = endocells[endo_index][2] ;
+                double r = endocells[endo_index][3] ;
+
+                */
 
                 // cout << a << " ; " << b << " ; " << l << " ; " << r << " ; " <<endl ;
 
@@ -292,13 +329,13 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
 
                 // c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second; // node previous location
 
-                if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 < dist2  )
+                if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 < dist2 )
                 {
                   p_node->rGetModifiableLocation()[0] = x_proj_l;
                   p_node->rGetModifiableLocation()[1] = y_proj_l;
                   //p_node->rGetModifiableLocation() = old_node_location;
                 }
-                else if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 > dist2  )
+                else if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 > dist2 )
                 {
                   p_node->rGetModifiableLocation()[0] = x_proj_r;
                   p_node->rGetModifiableLocation()[1] = y_proj_r ;

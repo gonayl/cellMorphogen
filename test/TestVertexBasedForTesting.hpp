@@ -17,6 +17,8 @@
 #include "CellMutationStatesWriter.hpp"
 #include "NeighbourWriter.hpp"
 
+#include "CounterSingletonEndo.hpp"
+
 #include "ParabolicGrowingDomainPdeModifier.hpp"
 #include "MorphogenCellwiseSourceParabolicPde.hpp"
 #include "VolumeTrackingModifier.hpp"
@@ -66,6 +68,7 @@
 #include "CellEndo.hpp"
 #include "CellLumen.hpp"
 #include "CellStalk.hpp"
+#include "CellTip.hpp"
 #include "CellEpi.hpp"
 #include "CellPolar.hpp"
 #include "CellBoundary.hpp"
@@ -91,6 +94,18 @@
 #include "BorderTrackingModifier.hpp"
 #include "CellFixingModifier.hpp"
 #include "NewEndoGeneratorModifier.hpp"
+
+//FOR LUMEN
+#include "SimulationParameters.hpp"
+
+#include "LumenGenerationModifier.hpp"
+#include "LumenModifier.hpp"
+#include "PolarisationModifier.hpp"
+#include "SimuInfoModifier.hpp"
+
+#include "CellPolarityXWriter.hpp"
+#include "CellPolarityYWriter.hpp"
+
 // #include "MergeNodeModifier.hpp"
 
 #include "FixedBoundaryCondition.hpp"
@@ -111,7 +126,12 @@ static const double M_DIFFUSION_CONSTANT = 5e-1;
 static const double M_DUDT_COEFFICIENT = 1.0;
 static const double M_DECAY_COEFFICIENT = 9.0;
 static const double M_RADIUS = 100.0;
-
+static const double M_EPIEPI_INI = -0.008 ;
+static const double M_ENDOEPI_INI = 0.024 ;
+static const double M_LUMENEPI_INI = -0.015 ;
+static const double M_POLARDEC_INI = 0.0075 ;
+static const double M_LUMEN_SIZE_FACTOR_INI = 0.007 ;
+static const double M_DURATION2_INI = 48.0 ;
 
 class TestVertexBasedForTesting : public AbstractCellBasedWithTimingsTestSuite
 {
@@ -131,7 +151,7 @@ private:
             UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
             //UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
             //PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
-            if (i == 134 || i == 174)
+            if (i == 174)
             {
               CellPtr p_cell(new Cell(p_state, p_cycle_model));
               p_cell->SetCellProliferativeType(p_diff_type);
@@ -203,7 +223,7 @@ public:
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsionForce/MeshReader/WithNewObstru/2");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsionForce/MeshReader/WithNewObstru/5"); // 3 with obstru OK, 4 with low periph  adhesion, 5 with new tip
 
 
         simulator.SetOutputDivisionLocations(true);
@@ -219,7 +239,7 @@ public:
         p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(5.0);
         p_force->SetCorePeriphAdhesionEnergyParameter(5.0);
-        p_force->SetPeriphPeriphAdhesionEnergyParameter(5.0);
+        p_force->SetPeriphPeriphAdhesionEnergyParameter(8.0);
         p_force->SetEndoEpiAdhesionEnergyParameter(5.0);
         p_force->SetEpiLumenAdhesionEnergyParameter(5.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
@@ -247,10 +267,20 @@ public:
              cell_iter != cell_population.End();
              ++cell_iter)
         {
-          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 134 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 174)
+          //FOR LUMEN
+          cell_iter->GetCellData()->SetItem("cellIndex",SimulationParameters::getNextIndex());
+          cell_iter->GetCellData()->SetItem("timeFromLastLumenGeneration",0);
+          cell_iter->GetCellData()->SetItem("hadALumenDivision",0);
+          cell_iter->GetCellData()->SetItem("lumenNearby",1);
+          cell_iter->GetCellData()->SetItem("vecPolaX",0);
+          cell_iter->GetCellData()->SetItem("vecPolaY",0);
+
+          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 174)
           {
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_stalk);
+
+              cell_iter->GetCellData()->SetItem("tagVessel",-1);
           }
           else
           {
@@ -271,14 +301,41 @@ public:
         */
 
         std::cout << "Adding repulsion force" << endl ;
-        MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.5));
-        simulator.AddForce(p_repulsion_force);
+        //MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.5));
+        //simulator.AddForce(p_repulsion_force);
 
-        MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+
+        MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_repuls_bc, (&cell_population));
+        simulator.AddCellPopulationBoundaryCondition(p_repuls_bc);
+
+        CounterSingletonEndo::Instance()->IncrementCounter();
+
+        std::cout << "Adding lumen" << endl ;
+        MAKE_PTR(SimuInfoModifier<2>, p_simuInfoModifier);
+        simulator.AddSimulationModifier(p_simuInfoModifier);
+
+        MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
+        simulator.AddSimulationModifier(p_polarisation_modifier);
+        p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*5.0);
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*5.0);
+        p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI);
+        p_polarisation_modifier->SetVecPolarisationDecrease(M_POLARDEC_INI);
+
+        MAKE_PTR(NewEndoGeneratorModifier<2>, p_newendo_modifier);
+        simulator.AddSimulationModifier(p_newendo_modifier);
+
+        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
-        //MAKE_PTR(NewEndoGeneratorModifier<2>, p_newendo_modifier);
-        //simulator.AddSimulationModifier(p_newendo_modifier);
+        MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
+        simulator.AddSimulationModifier(p_lumen_generation_modifier);
+        //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
+        //simulator.AddSimulationModifier(p_growth_modifier);
+
+        MAKE_PTR(LumenModifier<2>, p_lumen_modifier);
+        simulator.AddSimulationModifier(p_lumen_modifier);
+        p_lumen_modifier->SetLumenSizeFactor(M_LUMEN_SIZE_FACTOR_INI) ;
+        p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI) ;
 
 
         std::cout << "Growing Monolayer" << endl ;

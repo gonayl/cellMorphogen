@@ -105,6 +105,7 @@
 // #include "MergeNodeModifier.hpp"
 
 #include "FixedBoundaryCondition.hpp"
+#include "ObstructionBoundaryCondition.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "StochasticLumenCellCycleModel.hpp"
 //#include "SimplePositionBasedCellCycleModel.hpp"
@@ -152,7 +153,7 @@ static const double M_EPIBND = 8.0 ;
 static const double M_EPILUMEN = 5.0 ;
 static const double M_ENDOBND = 0.2 ;//chang
 static const double M_ENDOEPI = 7.0 ;
-static const double M_ENDOENDO = 0.2 ;
+static const double M_ENDOENDO = 0.1 ;
 static const double M_LUMENBND = 8.0 ;
 static const double M_MOTILITY = 15.0 ;
 static const double M_EPIEPI_INI = -0.008 ;
@@ -192,7 +193,7 @@ private:
             if (boundary_input[i] == 0)
             {
               p_cycle_model->SetCycleDuration(32) ;
-              p_cell->GetCellData()->SetItem("target area", 0.5);
+              p_cell->GetCellData()->SetItem("target area", 0.4);
             }
             else if (boundary_input[i] == 1 )
             {
@@ -213,12 +214,12 @@ private:
           else if (label_input[i] == 1 )
           {
             CellPtr p_cell(new Cell(p_state, p_elong_model));
-            p_elong_model->SetMaxStretch(3.0);
+            p_elong_model->SetMaxStretch(3.5);
             p_cell->SetCellProliferativeType(p_transit_type);
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.5);
+            p_cell->GetCellData()->SetItem("target area", 0.4);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -232,7 +233,7 @@ private:
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.6);
+            p_cell->GetCellData()->SetItem("target area", 0.5);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -492,7 +493,7 @@ public:
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
         std::cout << "Adding active force" << endl ;
-        MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (9.2));//force initiale, decroissement
+        MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (4.0));//force initiale, croissante
         simulator.AddForce(p_motile_force);
 
         std::cout << "Adding repulsion force" << endl ;
@@ -504,16 +505,19 @@ public:
         //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
-      //  MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
-        //simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
+        MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_obstruc_bc, (&cell_population));
+        simulator.AddCellPopulationBoundaryCondition(p_obstruc_bc);
+
+        MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
+        simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
 
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(48);
-        simulator.SetDt(0.001);
-        simulator.SetSamplingTimestepMultiple(10);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsion/14");
+        simulator.SetDt(0.01);
+        simulator.SetSamplingTimestepMultiple(1);
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TesttObstruction/1");
 
         simulator.Solve();
 

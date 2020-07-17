@@ -11,7 +11,7 @@
 #include "CellCore.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
 
-#include "CounterSingleton.hpp"
+#include "CounterSingletonEndo.hpp"
 
 #include <stdlib.h>
 #include <numeric>
@@ -71,17 +71,45 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
         EXCEPTION("Border Tracking Modifier is to be used with a VertexBasedCellPopulation only");
     }
 
+    //cout << endo_count_global << "endo stalk fixed cell(s) "  << endl ;
+
+    vector<double> endo_stalk_vector ;
+
+    for (typename AbstractCellPopulation<DIM,DIM>::Iterator cell_iter = rCellPopulation.Begin();
+         cell_iter != rCellPopulation.End();
+         ++cell_iter)
+
+    {
+      if ( cell_iter->template HasCellProperty<CellPeriph>() && cell_iter->template HasCellProperty<CellEpi>())
+      {
+
+        int cell_endo_location = rCellPopulation.GetLocationIndexUsingCell(*cell_iter) ;
+        endo_stalk_vector.push_back(cell_endo_location) ;
+
+
+      }
+
+    }
+
     // MAKE_PTR(CellBoundary, p_border);
 
-    double time_max = 1.0 ;
+    double time_max = 4.0 ;
     double chance_2_endo ;
-    double count = CounterSingleton::Instance()->GetCount() ;
-    double time_elapsed = SimulationTime::Instance()->GetTime() - count ;
+
+    double count = CounterSingletonEndo::Instance()->GetCount() ;
+    double time_elapsed = SimulationTime::Instance()->GetTime() ;
+
+    int randoEndo = rand() % endo_stalk_vector.size() ;
+    chance_2_endo = time_elapsed/(time_max*count) ;
+
+    //if (chance_2_endo >= 1)
+    //{cout << randoEndo << endl ;}
+
 
     // Iterate over cell population
     //VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
 
-    for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
+    for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin(); // stalk cell
          cell_iter != rCellPopulation.End();
          ++cell_iter)
     {
@@ -89,29 +117,95 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
       //VertexElement<DIM,DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
 
       //RandomNumberGenerator* p_gen = RandomNumberGenerator::Instance();
-      double rando100 = rand() % 101 ;
 
-      chance_2_endo = (rando100/100) + (time_elapsed / time_max)  ;
       //cout << chance_2_endo << endl ;
+      int n_neighbour_endo = 0;
 
-      if (cell_iter->template HasCellProperty<CellPeriph>() && cell_iter->template HasCellProperty<CellEpi>() && chance_2_endo > 1 )
+      int cell_location = rCellPopulation.GetLocationIndexUsingCell(*cell_iter) ;
+      set<unsigned> neighbours_of_cell = rCellPopulation.GetNeighbouringLocationIndices(*cell_iter) ;
+      for (set<unsigned>::iterator neighbour_iter = neighbours_of_cell.begin();
+           neighbour_iter != neighbours_of_cell.end();
+           ++neighbour_iter)
       {
+          // Determine whether this neighbour is endo or "polar"
+          CellPtr p_neighbour_cell = rCellPopulation.GetCellUsingLocationIndex(*neighbour_iter);
+          bool neighbour_is_endo = p_neighbour_cell->template HasCellProperty<CellEndo>();
+
+          if ( neighbour_is_endo)
+          {
+              n_neighbour_endo++;
+          }
+      }
+
+
+
+      if (cell_iter->template HasCellProperty<CellPeriph>() && cell_iter->template HasCellProperty<CellEpi>() && chance_2_endo >= 1 && cell_location == endo_stalk_vector[randoEndo] && n_neighbour_endo == 0)
+      {
+
+        cout << "cell " << rCellPopulation.GetLocationIndexUsingCell(*cell_iter) << " needs to be changed into a stalk cell" << endl ;
 
         cell_iter->template RemoveCellProperty<CellEpi>();
         cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellEndo>());
         cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellStalk>());
         cell_iter->SetCellProliferativeType(CellPropertyRegistry::Instance()->Get<DifferentiatedCellProliferativeType>());
 
-        CounterSingleton::Instance()->IncrementCounter();
+        CounterSingletonEndo::Instance()->IncrementCounter();
 
-        //double countbis = CounterSingleton::Instance()->GetCount() ;
 
-        //cout << countbis << " new endo cells" << endl;
+        /*
+        // labelling tip cell
+          int is_tip = 0 ;
 
+          set<unsigned> neighbours_of_cell = rCellPopulation.GetNeighbouringLocationIndices(*cell_iter) ;
+          cout << "itering over all cells around cell " << rCellPopulation.GetLocationIndexUsingCell(*cell_iter) << endl ;
+
+          for (set<unsigned>::iterator neighbour_iter = neighbours_of_cell.begin();
+               neighbour_iter != neighbours_of_cell.end();
+               ++neighbour_iter)
+          {
+
+              // Determine whether any nieghbour cell is already tip
+              CellPtr p_neighbour_cell = rCellPopulation.GetCellUsingLocationIndex(*neighbour_iter);
+              bool neighbour_is_tip = p_neighbour_cell->template HasCellProperty<CellTip>();
+
+              if ( neighbour_is_tip)
+              {
+                  is_tip++;
+
+              }
+
+
+          }
+
+          for (set<unsigned>::iterator neighbour_iter = neighbours_of_cell.begin();
+               neighbour_iter != neighbours_of_cell.end();
+               ++neighbour_iter)
+          {
+              // Determine whether this neighbour is epi and non periph
+              CellPtr p_neighbour_cell = rCellPopulation.GetCellUsingLocationIndex(*neighbour_iter);
+              bool neighbour_is_epi = p_neighbour_cell->template HasCellProperty<CellEpi>();
+              bool neighbour_is_core = p_neighbour_cell->template HasCellProperty<CellCore>();
+
+              if (neighbour_is_epi && neighbour_is_core && is_tip == 0)
+              {
+
+                cout << "cell " << rCellPopulation.GetLocationIndexUsingCell(p_neighbour_cell) << " needs to be changed into a tip cell" << endl ;
+
+                p_neighbour_cell->template RemoveCellProperty<CellEpi>();
+                p_neighbour_cell->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellEndo>());
+                p_neighbour_cell->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellTip>());
+                p_neighbour_cell->SetCellProliferativeType(CellPropertyRegistry::Instance()->Get<DifferentiatedCellProliferativeType>());
+
+                is_tip++;
+                //double countbis = CounterSingletonEndo::Instance()->GetCount() ;
+
+              }
+          } */
       }
 
 
     }
+
 
 }
 

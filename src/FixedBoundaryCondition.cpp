@@ -89,13 +89,13 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                     //cout << "node location : " << node_location[0] << " , " << node_location[1] << endl ;
                     //std::cout << node_index << " should be fixed at (" << old_node_location(0) << "," << old_node_location(1) << ")." << std::endl ;
 
-                    // p_node->rGetModifiableLocation() = old_node_location; // fix the node at the current location
+                     p_node->rGetModifiableLocation() = old_node_location; // fix the node at the current location
 
-                    c_vector<double, SPACE_DIM> force = p_node->rGetAppliedForce(); // get the force currently applied to the node to be fixed
-                    c_vector<double, SPACE_DIM> new_force = - 10 * force ; // apply a force 90% lighter
+                    //c_vector<double, SPACE_DIM> force = p_node->rGetAppliedForce(); // get the force currently applied to the node to be fixed
+                    //c_vector<double, SPACE_DIM> new_force = - 10 * force ; // apply a force 90% lighter
 
                     // Add the force contribution to each node
-                    p_node->AddAppliedForceContribution(new_force);
+                  //  p_node->AddAppliedForceContribution(new_force);
                   }
                   else if (p_cell->HasCellProperty<CellVessel>())
                   {
@@ -103,13 +103,13 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
 
                     //cout << "node location : " << node_location[0] << " , " << node_location[1] << endl ;
                     //std::cout << node_index << " should be fixed at (" << old_node_location(0) << "," << old_node_location(1) << ")." << std::endl ;
-                    // p_node->rGetModifiableLocation() = old_node_location;
+                    p_node->rGetModifiableLocation() = old_node_location;
 
-                    c_vector<double, SPACE_DIM> force = p_node->rGetAppliedForce(); // get the force currently applied to the node to be fixed
-                    c_vector<double, SPACE_DIM> new_force = - 10 * force ;
+                    //c_vector<double, SPACE_DIM> force = p_node->rGetAppliedForce(); // get the force currently applied to the node to be fixed
+                    //c_vector<double, SPACE_DIM> new_force = - 10 * force ;
 
                     // Add the force contribution to each node
-                    p_node->AddAppliedForceContribution(new_force); // add a opposite force contribution to dynamically fix the node
+                    //p_node->AddAppliedForceContribution(new_force); // add a opposite force contribution to dynamically fix the node
                   }
 
 
