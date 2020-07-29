@@ -27,6 +27,7 @@ private:
     {
         archive & boost::serialization::base_object<AbstractCellCycleModel>(*this);
         archive & mMaxStretch;
+        archive & mMaxStretchPeriph;
         archive & mMinimumDivisionAge;
     }
 
@@ -36,6 +37,12 @@ protected:
      * Defaults to ??.
      */
     double mMaxStretch;
+
+    /**
+     * Maximum stetching allowed for stalk periph cells.
+     * Defaults to ??.
+     */
+    double mMaxStretchPeriph;
 
     /**
      * Minimum age of a cell at which it may divide.
@@ -96,11 +103,25 @@ public:
     void SetMaxStretch(double divisionProbability);
 
     /**
+     * Set the value of mMaxStretchPeriph.
+     *
+     * @param divisionProbability the new value of mMaxStretchPeriph
+     */
+    void SetMaxStretchPeriph(double divisionProbability);
+
+    /**
      * Get mMaxStretch.
      *
      * @return mMaxStretch
      */
     double GetMaxStretch();
+
+    /**
+     * Get mMaxStretchPeriph.
+     *
+     * @return mMaxStretchPeriph
+     */
+    double GetMaxStretchPeriph();
 
     /**
      * Set the value of mMinimumDivisionAge.

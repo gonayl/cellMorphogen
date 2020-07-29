@@ -36,6 +36,13 @@ OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "PerimeterTrackingModifier.hpp"
 #include "MeshBasedCellPopulation.hpp"
 #include "VertexBasedCellPopulation.hpp"
+#include <stdlib.h>
+#include <cmath>
+#include <iostream>
+#include <fstream>
+#include <algorithm>
+
+using namespace std ;
 
 template<unsigned DIM>
 PerimeterTrackingModifier<DIM>::PerimeterTrackingModifier()
@@ -98,10 +105,35 @@ void PerimeterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,D
         // Get the perimeter of this cell
 
         VertexElement<DIM, DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
+
         unsigned p_index = p_element->GetIndex();
         double cell_perimeter = p_cell_population->rGetMesh().GetElongationShapeFactorOfElement(p_index);
         // Store the cell's perimeter in CellData
+
+
+        vector<double> distances ;
+        unsigned num_nodes = p_element->GetNumNodes();
+        unsigned this_node_index = p_element->GetNodeGlobalIndex(0);
+
+        for (unsigned local_index=0; local_index<num_nodes; local_index++)
+        {
+            unsigned next_node_index = p_element->GetNodeGlobalIndex((local_index+1)%num_nodes);
+
+            double distance = p_cell_population->rGetMesh().GetDistanceBetweenNodes(this_node_index, next_node_index);
+            distances.push_back(distance) ;
+            this_node_index = next_node_index;
+        }
+
+        auto result = std::minmax_element (distances.begin(),distances.end());
+        double max = *result.second ;
+        double min = *result.first ;
+        double maxmin = max/min ;
+
+
         cell_iter->GetCellData()->SetItem("perimeter", cell_perimeter);
+        cell_iter->GetCellData()->SetItem("maxmin", maxmin);
+
+
     }
 }
 

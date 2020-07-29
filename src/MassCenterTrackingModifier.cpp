@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include "CellTip.hpp"
 #include "CellStalk.hpp"
+using namespace std ;
 
 #include "SimulationParameters.hpp"
 
@@ -132,6 +133,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
 
           if ( neighbour_is_Tip == 1)
           {
+            //cout << "voisine tip cell" << endl ;
             double nbrVoisin = pCell->GetCellData()->GetItem("have_tip_neighboor");
             pCell->GetCellData()->SetItem("have_tip_neighboor", nbrVoisin+1);
           }

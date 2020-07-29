@@ -2,10 +2,14 @@
 #include "RandomNumberGenerator.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
 #include "CellStalk.hpp"
+#include "CellPeriph.hpp"
+#include "CellCore.hpp"
+using namespace std ;
 
 PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
     : AbstractCellCycleModel(),
       mMaxStretch(3.2),
+      mMaxStretchPeriph(7.0),
       mMinimumDivisionAge(0.2)
 {
 }
@@ -13,6 +17,7 @@ PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
 PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel(const PerimeterDependentCellCycleModel& rModel)
    : AbstractCellCycleModel(rModel),
      mMaxStretch(rModel.mMaxStretch),
+     mMaxStretchPeriph(rModel.mMaxStretchPeriph),
      mMinimumDivisionAge(rModel.mMinimumDivisionAge)
 {
     /*
@@ -34,13 +39,24 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
             // double dt = SimulationTime::Instance()->GetTimeStep();
             if (!(mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>()))
             {
+
+                double have_tip_neighboor = mpCell->GetCellData()->GetItem("have_tip_neighboor");
                 double cell_elongation = mpCell->GetCellData()->GetItem("perimeter");
-                //double have_tip_neighboor = mpCell->GetCellData()->GetItem("have_tip_neighboor");
-              //  if (cell_elongation > mMaxStretch && have_tip_neighboor > 0)
-                if (cell_elongation > mMaxStretch )
+                double cell_maxmin = mpCell->GetCellData()->GetItem("maxmin");
+                if (cell_elongation > mMaxStretch && have_tip_neighboor > 0)
+                //if (cell_elongation > 1.8 && cell_maxmin > mMaxStretchPeriph )
                 {
+
                     mReadyToDivide = true;
                 }
+
+                else if (cell_elongation > 1.0 && cell_maxmin > 8.0 && have_tip_neighboor > 0)
+                {
+                    cout << cell_maxmin << endl ;
+                    mReadyToDivide = true;
+                }
+
+
             }
         }
     }
@@ -57,10 +73,21 @@ void PerimeterDependentCellCycleModel::SetMaxStretch(double divisionProbability)
     mMaxStretch = divisionProbability;
 }
 
+void PerimeterDependentCellCycleModel::SetMaxStretchPeriph(double divisionProbability)
+{
+    mMaxStretchPeriph = divisionProbability;
+}
+
 double PerimeterDependentCellCycleModel::GetMaxStretch()
 {
     return mMaxStretch;
 }
+
+double PerimeterDependentCellCycleModel::GetMaxStretchPeriph()
+{
+    return mMaxStretchPeriph;
+}
+
 
 void PerimeterDependentCellCycleModel::SetMinimumDivisionAge(double minimumDivisionAge)
 {
@@ -85,6 +112,7 @@ double PerimeterDependentCellCycleModel::GetAverageStemCellCycleTime()
 void PerimeterDependentCellCycleModel::OutputCellCycleModelParameters(out_stream& rParamsFile)
 {
     *rParamsFile << "\t\t\t<MaxStretch>" << mMaxStretch << "</MaxStretch>\n";
+    *rParamsFile << "\t\t\t<MaxStretchPeriph>" << mMaxStretchPeriph << "</MaxStretchPeriph>\n";
     *rParamsFile << "\t\t\t<MinimumDivisionAge>" << mMinimumDivisionAge << "</MinimumDivisionAge>\n";
 
     // Call method on direct parent class

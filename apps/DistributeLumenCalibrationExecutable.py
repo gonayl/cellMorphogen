@@ -4,7 +4,7 @@ import subprocess
 
 import numpy as np
 
-executable = '/home/gonayl/Chaste/build/projects/cellMorphogen/apps/LumenCalibrationExecutable'
+executable = '/home/gonayl/Chaste/build/projects/cellMorphogen/apps/MotileCalibrationExecutable'
 
 if not(os.path.isfile(executable)):
     raise Exception('Could not find executable: ' + executable)
@@ -19,9 +19,10 @@ def run_simulations():
 
     # Make a list of calls to a Chaste executable
     command_list = []
-    for motile in np.arange(9, 12, 1):
-        for elong in np.arange(15, 19, 1):
-                command_list.append("nice -n 19 /home/gonayl/Chaste/build/projects/cellMorphogen/apps/LumenCalibrationExecutable --Em "+str(motile)+" --En "+str(elong))
+    for motile in np.arange(6, 9, 1):
+        for elong in np.arange(10, 19, 1):
+            for elong_periph in np.arange(3, 4, 1):
+                command_list.append("nice -n 19 /home/gonayl/Chaste/build/projects/cellMorphogen/apps/MotileCalibrationExecutable --Mo "+str(motile)+" --El "+str(elong)+" --Elp "+str(elong_periph))
 
     # Use processes equal to the number of cpus available
     count = multiprocessing.cpu_count()

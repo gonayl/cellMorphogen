@@ -63,6 +63,7 @@
 
 #include "PetscSetupAndFinalize.hpp"
 
+#include "MorphogenCellForce.hpp"
 #include "MorphogenDrivenCellForce.hpp"
 #include "CellLabel.hpp"
 #include "CellEndo.hpp"
@@ -148,10 +149,28 @@ private:
         for (unsigned i=0; i<num_cells; i++)
         {
             //StochasticLumenCellCycleModel* p_cycle_model = new StochasticLumenCellCycleModel();
-            UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
-            //UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
-            //PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
-            if (i == 174)
+            //UniformG1GenerationalCellCycleModel* p_cycle_model = new UniformG1GenerationalCellCycleModel();
+            UniformG1GenerationalBoundaryCellCycleModel* p_cycle_model = new UniformG1GenerationalBoundaryCellCycleModel();
+            PerimeterDependentCellCycleModel* p_elong_model = new PerimeterDependentCellCycleModel();
+            if (i == 188 || i == 239 || i == 35 || i == 160)
+            {
+              CellPtr p_cell(new Cell(p_state, p_elong_model));
+              p_cell->SetCellProliferativeType(p_diff_type);
+              p_cycle_model->SetMaxTransitGenerations(10);
+              double birth_time = 10 ;
+              p_cell->SetBirthTime(-birth_time);
+              p_cell->InitialiseCellCycleModel();
+              p_cell->GetCellData()->SetItem("target area", 0.6);
+              p_elong_model->SetMaxStretch(3.5);
+              p_elong_model->SetMaxStretchPeriph(6.0);
+              // Initial Condition for Morphogen PDE
+              p_cell->GetCellData()->SetItem("morphogen",0.0);
+              p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+              p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
+
+            rCells.push_back(p_cell);
+            }
+            else if (i == 212 || i == 109 || i == 103 || i == 81)
             {
               CellPtr p_cell(new Cell(p_state, p_cycle_model));
               p_cell->SetCellProliferativeType(p_diff_type);
@@ -159,19 +178,27 @@ private:
               double birth_time = 10 ;
               p_cell->SetBirthTime(-birth_time);
               p_cell->InitialiseCellCycleModel();
-              p_cell->GetCellData()->SetItem("target area", 0.6);
+              p_cell->GetCellData()->SetItem("target area", 0.5);
+              // Initial Condition for Morphogen PDE
+              p_cell->GetCellData()->SetItem("morphogen",0.0);
+              p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+              p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
-            rCells.push_back(p_cell);
+              rCells.push_back(p_cell);
             }
             else
             {
               CellPtr p_cell(new Cell(p_state, p_cycle_model));
               p_cell->SetCellProliferativeType(p_transit_type);
               p_cycle_model->SetMaxTransitGenerations(10);
-              double birth_time = 10 ;
+              double birth_time = rand() % 5 + 1 ;
               p_cell->SetBirthTime(-birth_time);
               p_cell->InitialiseCellCycleModel();
-              p_cell->GetCellData()->SetItem("target area", 0.6);
+              p_cell->GetCellData()->SetItem("target area", 0.5);
+              // Initial Condition for Morphogen PDE
+              p_cell->GetCellData()->SetItem("morphogen",0.0);
+              p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
+              p_cell->GetCellData()->SetItem("morphogen_grad_y",0.0);
 
               rCells.push_back(p_cell);
             }
@@ -194,7 +221,7 @@ public:
         p_mesh->SetCellRearrangementThreshold(0.1);
         */
 
-        VertexMeshReader<2,2> mesh_reader("testoutput/TestRepulsionForceMeshWriter/repulsion_mesh");
+        VertexMeshReader<2,2> mesh_reader("testoutput/mesh/morphogen_mesh");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
         p_mesh.SetCellRearrangementThreshold(0.1);
@@ -219,11 +246,12 @@ public:
         MAKE_PTR(CellEndo, p_endo);
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellStalk, p_stalk);
+        MAKE_PTR(CellTip, p_tip);
         MAKE_PTR(CellLumen, p_lumen);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsionForce/MeshReader/WithNewObstru/5"); // 3 with obstru OK, 4 with low periph  adhesion, 5 with new tip
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsionForce/MeshReader/WithNewObstru/WithNewIC/2"); // 1 with deformationparam = 55, 2 = 99
 
 
         simulator.SetOutputDivisionLocations(true);
@@ -235,19 +263,22 @@ public:
         p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
-        p_force->SetEndoEndoAdhesionEnergyParameter(5.0);
+        p_force->SetEndoEndoAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetStalkStalkAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetStalkTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
+        p_force->SetTipTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
         p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
-        p_force->SetCoreCoreAdhesionEnergyParameter(5.0);
-        p_force->SetCorePeriphAdhesionEnergyParameter(5.0);
-        p_force->SetPeriphPeriphAdhesionEnergyParameter(8.0);
-        p_force->SetEndoEpiAdhesionEnergyParameter(5.0);
-        p_force->SetEpiLumenAdhesionEnergyParameter(5.0);
-        p_force->SetEndoLumenAdhesionEnergyParameter(5.0);
+        p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
+        p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
+        p_force->SetPeriphPeriphAdhesionEnergyParameter(M_PEERIPHPERIPH);
+        p_force->SetEndoEpiAdhesionEnergyParameter(M_ENDOEPI);
+        p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
+        p_force->SetEndoLumenAdhesionEnergyParameter(35.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetLumenBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEpiBoundaryAdhesionEnergyParameter(10.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetLumenBoundaryAdhesionEnergyParameter(7.0);
+        p_force->SetEpiBoundaryAdhesionEnergyParameter(M_EPIBND);
 
         simulator.AddForce(p_force);
 
@@ -258,6 +289,8 @@ public:
         simulator.AddSimulationModifier(p_volume_modifier);
         MAKE_PTR(BorderTrackingModifier<2>, p_border_modifier);
         simulator.AddSimulationModifier(p_border_modifier);
+        MAKE_PTR(PerimeterTrackingModifier<2>, p_stretch_modifier);
+        simulator.AddSimulationModifier(p_stretch_modifier);
         //MAKE_PTR(MassCenterTrackingModifier<2>, p_center_modifier);
         //simulator.AddSimulationModifier(p_center_modifier) ;
 
@@ -275,13 +308,20 @@ public:
           cell_iter->GetCellData()->SetItem("vecPolaX",0);
           cell_iter->GetCellData()->SetItem("vecPolaY",0);
 
-          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 174)
+          if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 188 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 239 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 160 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 35 )
           {
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_stalk);
 
               cell_iter->GetCellData()->SetItem("tagVessel",-1);
           }
+          /*else if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 212 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 109 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 103 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 81 )
+          {
+              cell_iter->AddCellProperty(p_endo);
+              cell_iter->AddCellProperty(p_tip);
+
+              cell_iter->GetCellData()->SetItem("tagVessel",-1);
+          }*/
           else
           {
               cell_iter->AddCellProperty(p_epi);
@@ -299,6 +339,36 @@ public:
         MAKE_PTR(CellFixingModifier<2>, p_fixing_modifier);
         simulator.AddSimulationModifier(p_fixing_modifier);
         */
+/*
+        // Diffusion de gradient, pas encore utile à ce stade (besoin pour simuler la motilité des cellules endo)
+
+        std::cout << "VeGF diffusion" << endl ;
+
+        // Create a parabolic PDE object - see the header file for what the constructor arguments mean
+        MAKE_PTR_ARGS(MorphogenCellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_RADIUS));
+
+        // Create a constant boundary conditions object, taking the value zero
+        MAKE_PTR_ARGS(ConstBoundaryCondition<2>, p_bc, (0.0));
+
+        // Create a ParabolicGrowingDomainPdeModifier, which is a simulation modifier, using the PDE and BC objects, and use 'false' to specify that you want a Dirichlet (rather than Neumann) BC
+        MAKE_PTR_ARGS(ParabolicGrowingDomainPdeModifier<2>, p_pde_modifier, (p_pde, p_bc, false)); // Change this last argument to 'false' for fixed  BCs
+        // Optionally, name the PDE state variable (for visualization purposes)
+        p_pde_modifier->SetDependentVariableName("morphogen");
+
+        // Add the modifier to the simulation and run it
+
+        std::cout << "Adding Gradient Modifier" << endl ;
+
+        p_pde_modifier->SetOutputGradient(true);
+        p_pde_modifier->GetOutputGradient();
+
+        simulator.AddSimulationModifier(p_pde_modifier);
+        */
+
+        //MAKE_PTR(MorphogenTrackingModifier<2>, p_morphoendo_modifier);
+        //simulator.AddSimulationModifier(p_morphoendo_modifier);
+
+
 
         std::cout << "Adding repulsion force" << endl ;
         //MAKE_PTR_ARGS(RepulsionForce<2>, p_repulsion_force, (0.5));
@@ -321,14 +391,14 @@ public:
         p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI);
         p_polarisation_modifier->SetVecPolarisationDecrease(M_POLARDEC_INI);
 
-        MAKE_PTR(NewEndoGeneratorModifier<2>, p_newendo_modifier);
-        simulator.AddSimulationModifier(p_newendo_modifier);
+        //MAKE_PTR(NewEndoGeneratorModifier<2>, p_newendo_modifier);
+        //simulator.AddSimulationModifier(p_newendo_modifier);
 
         MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
-        MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
-        simulator.AddSimulationModifier(p_lumen_generation_modifier);
+        //MAKE_PTR(LumenGenerationModifier<2>, p_lumen_generation_modifier);
+        //simulator.AddSimulationModifier(p_lumen_generation_modifier);
         //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
@@ -337,11 +407,16 @@ public:
         p_lumen_modifier->SetLumenSizeFactor(M_LUMEN_SIZE_FACTOR_INI) ;
         p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI) ;
 
+/*
+        std::cout << "Adding active force" << endl ;
+        MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (5.0));//force initiale, croissante
+        simulator.AddForce(p_motile_force);
+*/
 
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(96.0);
-        simulator.SetDt(0.01);
+        simulator.SetDt(0.05);
         simulator.SetSamplingTimestepMultiple(1.0);
 
         simulator.Solve();

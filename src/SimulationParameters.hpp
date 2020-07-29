@@ -6,7 +6,7 @@ public:
 
   //Simulation
   static constexpr double TIMESTEP = 0.002;
-  static constexpr double TIME_OF_SIMULATION = 96;
+  static constexpr double TIME_OF_SIMULATION = 10;
 
   //influence the size of the polarization vector
 

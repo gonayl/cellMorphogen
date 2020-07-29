@@ -109,7 +109,8 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
     // Iterate over cell population
     //VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
 
-    for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin(); // stalk cell
+    // labelling new stalk cell
+    for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
          cell_iter != rCellPopulation.End();
          ++cell_iter)
     {
@@ -127,7 +128,7 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
            neighbour_iter != neighbours_of_cell.end();
            ++neighbour_iter)
       {
-          // Determine whether this neighbour is endo or "polar"
+          // Determine whether this neighbour is also endo 
           CellPtr p_neighbour_cell = rCellPopulation.GetCellUsingLocationIndex(*neighbour_iter);
           bool neighbour_is_endo = p_neighbour_cell->template HasCellProperty<CellEndo>();
 

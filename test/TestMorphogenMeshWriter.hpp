@@ -63,7 +63,7 @@
 #include "PerimeterTrackingModifier.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
 
-static const double M_TIME_FOR_SIMULATION = 17;
+static const double M_TIME_FOR_SIMULATION = 96;
 static const double M_NUM_CELLS_ACROSS = 10;
 static const double M_UPTAKE_RATE = 10.0 ;
 static const double M_DIFFUSION_CONSTANT = 5e-1;
@@ -94,7 +94,7 @@ private:
             p_cell->InitialiseCellCycleModel();
 
             // Set Target Area so dont need to use a growth model in vertex simulations
-            p_cell->GetCellData()->SetItem("target area", 1.0);
+            p_cell->GetCellData()->SetItem("target area", 0.5);
             rCells.push_back(p_cell);
         }
      }
@@ -104,7 +104,7 @@ public:
     void TestMorphogenMeshWriter()
     {
         // Create Mesh
-        HoneycombVertexMeshGenerator generator(6.0, 6.0);
+        HoneycombVertexMeshGenerator generator(4.0, 4.0);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
         p_mesh->SetCellRearrangementThreshold(0.1);
 
@@ -124,8 +124,8 @@ public:
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
         simulator.SetOutputDirectory("MorphogenMonolayer/MeshWriter");
-        simulator.SetDt(1.0/5.0);
-        simulator.SetSamplingTimestepMultiple(5);
+        simulator.SetDt(1.0/10.0);
+        simulator.SetSamplingTimestepMultiple(10);
         simulator.SetEndTime(M_TIME_FOR_SIMULATION);
 
         simulator.SetOutputDivisionLocations(true);

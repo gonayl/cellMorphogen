@@ -8,6 +8,8 @@
 #include <iostream>
 #include "CellLabel.hpp"
 #include "CellEndo.hpp"
+#include "CellTip.hpp"
+#include "CellEpi.hpp"
 
 
 template<unsigned DIM>
@@ -68,9 +70,51 @@ void MorphogenTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,D
          cell_iter != rCellPopulation.End();
          ++cell_iter)
     {
-      if (cell_iter->template HasCellProperty<CellLabel>())
+      if (cell_iter->template HasCellProperty<CellEndo>())
       {
            cell_iter->GetCellData()->SetItem("morphogen",0.0);
+      }
+      if (cell_iter->template HasCellProperty<CellTip>())
+      {
+        std::vector<double> moy_x_morphogen_grad;
+        std::vector<double> moy_y_morphogen_grad;
+
+        double morphogen_grad_x = 0.0 ;
+        double morphogen_grad_y = 0.0 ;
+
+        // Get the set of neighbouring location indices
+        std::set<unsigned> neighbour_indices = rCellPopulation.GetNeighbouringLocationIndices(*cell_iter);
+
+        // If this cell has any neighbours (as defined by mesh/population/interaction distance)
+        if (!neighbour_indices.empty() )
+        {
+
+            for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
+                 neighbour_iter != neighbour_indices.end();
+                 ++neighbour_iter)
+            {
+              CellPtr p_neighbour_cell = rCellPopulation.GetCellUsingLocationIndex(*neighbour_iter);
+              bool neighbour_is_epi = p_neighbour_cell->template HasCellProperty<CellEpi>();
+
+              if ( neighbour_is_epi == 1)
+              {
+                morphogen_grad_x = p_neighbour_cell->GetCellData()->GetItem("morphogen_grad_x");
+                morphogen_grad_y = p_neighbour_cell->GetCellData()->GetItem("morphogen_grad_y");
+                moy_x_morphogen_grad.push_back(morphogen_grad_x) ;
+                moy_y_morphogen_grad.push_back(morphogen_grad_y) ;
+
+              }
+            }
+
+        }
+
+
+
+          double x = std::accumulate(moy_x_morphogen_grad.begin(), moy_x_morphogen_grad.end(), 0.0)/moy_x_morphogen_grad.size();
+          double y = std::accumulate(moy_y_morphogen_grad.begin(), moy_y_morphogen_grad.end(), 0.0)/moy_y_morphogen_grad.size();
+
+          cell_iter->GetCellData()->SetItem("morphogen_grad_x_moy",x);
+          cell_iter->GetCellData()->SetItem("morphogen_grad_y_moy",y);
       }
 
     }
