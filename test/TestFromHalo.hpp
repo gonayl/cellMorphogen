@@ -103,9 +103,10 @@
 #include "CellFixingModifier.hpp"
 #include "AdhesionCoefModifier.hpp"
 // #include "MergeNodeModifier.hpp"
+#include "ObstructionWriterModifier.hpp"
 
 #include "FixedBoundaryCondition.hpp"
-//#include "ObstructionBoundaryCondition.hpp"
+#include "ObstructionBoundaryCondition.hpp"
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "StochasticLumenCellCycleModel.hpp"
 //#include "SimplePositionBasedCellCycleModel.hpp"
@@ -149,11 +150,11 @@ static const double M_DECAY_COEFFICIENT = 9.0;
 static const double M_RADIUS = 100.0;
 static const double M_EPI = 5.0 ;
 static const double M_PEERIPHPERIPH = 5.0 ;
-static const double M_EPIBND = 5.0 ;
+static const double M_EPIBND = 10.0 ;
 static const double M_EPILUMEN = 5.0 ;
-static const double M_ENDOBND = 4.0 ;//chang
+static const double M_ENDOBND = 1.0 ;//chang
 static const double M_ENDOEPI = 5.0 ;
-static const double M_ENDOENDO = 1.7 ;
+static const double M_ENDOENDO = 1.0 ;
 static const double M_LUMENBND = 8.0 ;
 static const double M_MOTILITY = 15.0 ;
 static const double M_EPIEPI_INI = -0.008 ;
@@ -164,7 +165,7 @@ static const double M_LUMEN_SIZE_FACTOR_INI = 0.007 ;
 static const double M_DURATION2_INI = 48.0 ;
 static const double M_SIM_NB = 6 ;
 static const double M_STRETCH_INI = 0.2 ;
-static const double M_MAX_STRETCH = 2.5 ;
+static const double M_MAX_STRETCH = 2.3 ;
 static const double M_STRETCH_PERIPH_INI = 0.2 ;
 
 static const double M_PIXEL_COEF = 256 ;
@@ -198,16 +199,19 @@ private:
             {
               p_cycle_model->SetCycleDuration(32) ;
               p_cell->GetCellData()->SetItem("target area", 0.4);
+              double birth_time = rand() % 16 + 1 ;
+              p_cell->SetBirthTime(-birth_time);
             }
             else if (boundary_input[i] == 1 )
             {
               p_cycle_model->SetCycleDuration(11);
+              double birth_time = rand() % 5 + 1 ;
+              p_cell->SetBirthTime(-birth_time);
               p_cell->GetCellData()->SetItem("target area", 0.5);
             }
 
             p_cell->SetCellProliferativeType(p_transit_type);
-            double birth_time = rand() % 5 + 1 ;
-            p_cell->SetBirthTime(-birth_time);
+
             p_cell->InitialiseCellCycleModel();
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
@@ -292,7 +296,7 @@ public:
         // Create Mesh
 
         //VertexMeshReader<2,2> mesh_reader("testoutput/TestMorphogenMeshWriter/morphogen_mesh");
-        VertexMeshReader<2,2> mesh_reader("testoutput/mesh/vertex_based_mesh");
+        VertexMeshReader<2,2> mesh_reader("testoutput/mesh/final_mesh");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
         p_mesh.SetCellRearrangementThreshold(0.1);
@@ -387,6 +391,9 @@ public:
         simulator.AddSimulationModifier(p_border_modifier);
         MAKE_PTR(MassCenterTrackingModifier<2>, p_center_modifier);
         simulator.AddSimulationModifier(p_center_modifier) ;
+        MAKE_PTR(ObstructionWriterModifier<2>, p_endopos_modifier);
+        simulator.AddSimulationModifier(p_endopos_modifier);
+
         //MAKE_PTR(ForceTrackingModifier<2>, p_force_modifier);
         //simulator.AddSimulationModifier(p_force_modifier);
         //MAKE_PTR(AdhesionCoefModifier<2>, p_coef_modifier);
@@ -403,6 +410,8 @@ public:
         // Diffusion de gradient, pas encore utile à ce stade (besoin pour simuler la motilité des cellules endo)
 
         std::cout << "VeGF diffusion" << endl ;
+
+
 
         // Create a parabolic PDE object - see the header file for what the constructor arguments mean
         MAKE_PTR_ARGS(MorphogenCellwiseSourceParabolicPde<2>, p_pde, (cell_population, M_DUDT_COEFFICIENT,M_DIFFUSION_CONSTANT,M_RADIUS));
@@ -423,6 +432,8 @@ public:
         p_pde_modifier->GetOutputGradient();
 
         simulator.AddSimulationModifier(p_pde_modifier);
+
+
 
 
 
@@ -502,7 +513,7 @@ public:
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
         std::cout << "Adding active force" << endl ;
-        MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (50.0));//force initiale, croissante
+        MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_motile_force, (5.0));//force initiale, croissante
         simulator.AddForce(p_motile_force);
 
         //std::cout << "Adding repulsion force" << endl ;
@@ -515,8 +526,8 @@ public:
         //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
-        //MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_obstruc_bc, (&cell_population));
-        //simulator.AddCellPopulationBoundaryCondition(p_obstruc_bc);
+        MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_obstruc_bc, (&cell_population));
+        simulator.AddCellPopulationBoundaryCondition(p_obstruc_bc);
 
         MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
@@ -524,10 +535,11 @@ public:
 
         std::cout << "Growing Monolayer" << endl ;
 
-        simulator.SetEndTime(24);
+        simulator.SetEndTime(96);
         simulator.SetDt(0.01);
         simulator.SetSamplingTimestepMultiple(1);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestWithLumenCalibrationParam/7"); // 4 : avec mElongPeriph = 8.0, 5 : with mMotile = 5.0, 6 : with morphogen and MAX_STRETCH = 2.5 // 7 : same as 6, with morphogen gradient moy
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestFinalMesh/1");
+        //testWithCalibparam  4 : avec mElongPeriph = 8.0, 5 : with mMotile = 5.0, 6 : with morphogen and MAX_STRETCH = 2.5 // 7 : see copy on drive
 
         simulator.Solve();
 

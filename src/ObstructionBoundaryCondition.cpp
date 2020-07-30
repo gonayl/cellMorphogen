@@ -34,151 +34,10 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
 
 
     c_vector<double, SPACE_DIM> population_center = this->mpCellPopulation->GetCentroidOfCellPopulation();
-    /*
-
-    //const int n_columns = 4;
-    //double endocells[][n_columns]{} ;
-    vector<double> endo_cells_tofile;
-    int endo_count = 0 ;
-    int endo_count_local = 0 ;
-
-    int endo_count_global = CounterSingletonRepulsion::Instance()->GetCount() ;
-
-    //cout << endo_count_global << "endo stalk fixed cell(s) "  << endl ;
-
-
-    for (typename AbstractCellPopulation<ELEMENT_DIM,SPACE_DIM>::Iterator cell_iter = this->mpCellPopulation->Begin();
-         cell_iter != this->mpCellPopulation->End();
-         ++cell_iter)
-
-    {
-      if (cell_iter->template HasCellProperty<CellStalk>() && cell_iter->template HasCellProperty<CellPeriph>())
-      {
-
-        endo_count_local++ ;
-
-      }
-
-    }
 
 
 
-    if (endo_count_global != endo_count_local)
-    {
-
-
-
-      // PHASE 0, computing mass center (will not be used after)
-
-    //  vector<double> moy_x_pos;
-    //  vector<double> moy_y_pos;
-
-    ofstream myfile ("example.txt", std::ofstream::out | std::ofstream::trunc);
-
-    for (typename AbstractCellPopulation<ELEMENT_DIM,SPACE_DIM>::Iterator cell_iter = this->mpCellPopulation->Begin();
-         cell_iter != this->mpCellPopulation->End();
-         ++cell_iter)
-
-    {
-
-      if ( cell_iter->template HasCellProperty<CellStalk>() && cell_iter->template HasCellProperty<CellPeriph>())
-      {
-
-
-        vector<double> boundary_nodes_pos ;
-        VertexBasedCellPopulation<SPACE_DIM>* p_population = static_cast<VertexBasedCellPopulation<SPACE_DIM>*>(this->mpCellPopulation);
-        VertexElement<SPACE_DIM,SPACE_DIM>* p_element ;
-
-        if (dynamic_cast<VertexBasedCellPopulation<SPACE_DIM>*>(this->mpCellPopulation) == nullptr)
-        {
-          EXCEPTION("A VertexBasedCellPopulation must be used with this boundary condition object.");
-        }
-        else
-        {
-
-          p_element = p_population->GetElementCorrespondingToCell(*cell_iter);
-        }
-
-        unsigned num_nodes_in_element = p_element->GetNumNodes();
-        for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
-        {
-            unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
-            unsigned n_elements = this->mpCellPopulation->GetNode(node_index)->GetNumContainingElements() ;
-
-            if (this->mpCellPopulation->GetNode(node_index)->IsBoundaryNode() && n_elements > 1  )
-            {
-              boundary_nodes_pos.push_back(this->mpCellPopulation->GetNode(node_index)->rGetLocation()[0]);
-              boundary_nodes_pos.push_back(this->mpCellPopulation->GetNode(node_index)->rGetLocation()[1]);
-            }
-        }
-
-
-
-
-
-        double a; double b; double l; double r;
-        c_vector<double, 2> direct_vector ;
-
-        c_vector<double, 2> centre_of_cell = this->mpCellPopulation->GetLocationOfCellCentre(*cell_iter);
-
-        direct_vector[0] = centre_of_cell[0] - population_center[0] ;
-        direct_vector[1] = centre_of_cell[1] - population_center[1] ;
-
-        a =  direct_vector[1] ; // a
-        b =  - direct_vector[0] ; // b
-        l = - direct_vector[1]*(population_center[0] - 0.3) + direct_vector[0]*(population_center[0] - 0.3) ; // l
-        r = - direct_vector[1]*(population_center[0] + 0.3) + direct_vector[0]*(population_center[1] + 0.3) ; // r
-
-        endo_cells_tofile.push_back(a) ;
-        endo_cells_tofile.push_back(b) ;
-        endo_cells_tofile.push_back(l) ;
-        endo_cells_tofile.push_back(r) ;
-
-        endo_cells_tofile.push_back(centre_of_cell[0]) ;
-        endo_cells_tofile.push_back(centre_of_cell[1]) ;
-
-        cout << "pushing data for cell " << this->mpCellPopulation->GetLocationIndexUsingCell(*cell_iter) << endl ;
-
-        endo_count++ ;
-        CounterSingletonRepulsion::Instance()->IncrementCounter();
-
-        if (myfile.is_open())
-        {
-          myfile << a << " " << b << " " << l << " " << r << " " << centre_of_cell[0] << " " << centre_of_cell[1] << " " ;
-        }
-
-      }
-
-    }
-
-    //double endo_count_previous = CounterSingletonRepulsion::Instance()->GetCount();
-
-    //cout << endo_count << endl ;
-    //cout << endo_count_previous << endl ;
-    //cout << endo_count_current << "endo cells" << endl ;
-
-    //<< endocells[0][0] << ", b = " << endocells[0][1]
-    //<< " and l and r = " << endocells[0][2] << " ; " <<  endocells[0][3] << endl ;
-
-
-    }
-
-*/
-
-    //else
-    //{
-      //cout << "No new endo cell" << endl ;
-  //  }
-
-
-
-
-
-    //cout << endo_count << "endo stalk fixed cell(s), a = " << endocells[0][0] << ", b = " << endocells[0][1]
-    //<< " and l and r = " << endocells[0][2] << " ; " <<  endocells[0][3] << endl ;
-
-
-    assert((dynamic_cast<AbstractCentreBasedCellPopulation<ELEMENT_DIM,SPACE_DIM>*>(this->mpCellPopulation))
+            assert((dynamic_cast<AbstractCentreBasedCellPopulation<ELEMENT_DIM,SPACE_DIM>*>(this->mpCellPopulation))
             || (SPACE_DIM==ELEMENT_DIM && (dynamic_cast<VertexBasedCellPopulation<SPACE_DIM>*>(this->mpCellPopulation))) );
 
 
@@ -199,7 +58,7 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
             inFile.close() ;
 
             //vector<double> endoLoc;
-            if (SPACE_DIM != 1)
+            if (SPACE_DIM != 1 && endo_cells_fromfile.size() > 0)
             {
 
 
@@ -251,8 +110,6 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
                 {
 
                 int pos_in_vec = endo_index  * 6 ;
-
-
 
                 double a = endo_cells_fromfile[0 + pos_in_vec];
                 double b = endo_cells_fromfile[1 + pos_in_vec];
@@ -318,6 +175,18 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
                   p_node->rGetModifiableLocation()[1] = y_proj_r ;
                   //p_node->rGetModifiableLocation() = old_node_location;
                 }
+                else if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) < -l && (b*y_coordinate + a*x_coordinate) > -r && dist1 < dist2 && innerproduct > 0 )
+                {
+                  p_node->rGetModifiableLocation()[0] = x_proj_l;
+                  p_node->rGetModifiableLocation()[1] = y_proj_l ;
+                  //p_node->rGetModifiableLocation() = old_node_location;
+                }
+                else if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) < -l && (b*y_coordinate + a*x_coordinate) > -r && dist1 > dist2 && innerproduct > 0 )
+                {
+                  p_node->rGetModifiableLocation()[0] = x_proj_r;
+                  p_node->rGetModifiableLocation()[1] = y_proj_r ;
+                  //p_node->rGetModifiableLocation() = old_node_location;
+                }
                 }
 
               }
@@ -326,6 +195,7 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
     else
     {
         // SPACE_DIM == 1
+        std::cout << "no endo cells in periph" << std::endl ;
         NEVER_REACHED;
         //ObstructionBoundaryCondition::ImposeBoundaryCondition is not implemented in 1D
     }

@@ -95,6 +95,7 @@
 #include "BorderTrackingModifier.hpp"
 #include "CellFixingModifier.hpp"
 #include "NewEndoGeneratorModifier.hpp"
+#include "ObstructionWriterModifier.hpp"
 
 //FOR LUMEN
 #include "SimulationParameters.hpp"
@@ -120,19 +121,35 @@
 #include <stdlib.h>
 using namespace std ;
 
-static const double M_TIME_FOR_SIMULATION = 40;
+static const double M_TIME_FOR_SIMULATION = 48;
+static const double M_TIME_STEPS = 10;
 static const double M_NUM_CELLS_ACROSS = 10;
-static const double M_UPTAKE_RATE = 10.0 ;
+static const double M_UPTAKE_RATE = 5.0 ;
 static const double M_DIFFUSION_CONSTANT = 5e-1;
 static const double M_DUDT_COEFFICIENT = 1.0;
 static const double M_DECAY_COEFFICIENT = 9.0;
 static const double M_RADIUS = 100.0;
+static const double M_EPI = 5.0 ;
+static const double M_PEERIPHPERIPH = 5.0 ;
+static const double M_EPIBND = 5.0 ;
+static const double M_EPILUMEN = 10.0 ;
+static const double M_ENDOBND = 4.0 ;//chang
+static const double M_ENDOEPI = 6.0 ;
+static const double M_ENDOENDO = 1.7 ;
+static const double M_LUMENBND = 8.0 ;
+static const double M_MOTILITY = 15.0 ;
 static const double M_EPIEPI_INI = -0.008 ;
 static const double M_ENDOEPI_INI = 0.024 ;
 static const double M_LUMENEPI_INI = -0.015 ;
 static const double M_POLARDEC_INI = 0.0075 ;
 static const double M_LUMEN_SIZE_FACTOR_INI = 0.007 ;
 static const double M_DURATION2_INI = 48.0 ;
+static const double M_SIM_NB = 6 ;
+static const double M_STRETCH_INI = 0.2 ;
+static const double M_MAX_STRETCH = 2.5 ;
+static const double M_STRETCH_PERIPH_INI = 0.2 ;
+
+static const double M_PIXEL_COEF = 256 ;
 
 class TestVertexBasedForTesting : public AbstractCellBasedWithTimingsTestSuite
 {
@@ -143,6 +160,7 @@ private:
         MAKE_PTR(TransitCellProliferativeType, p_transit_type);
         MAKE_PTR(DifferentiatedCellProliferativeType, p_diff_type);
         MAKE_PTR(WildTypeCellMutationState, p_state);
+
 
         // ICI : modifier durée du cycle cellulaire MAIS dans code source (cfr UniformG1UniformG1GenerationalBoundaryCellCycleModel.cpp)!
 
@@ -156,11 +174,12 @@ private:
             {
               CellPtr p_cell(new Cell(p_state, p_elong_model));
               p_cell->SetCellProliferativeType(p_diff_type);
+
               p_cycle_model->SetMaxTransitGenerations(10);
               double birth_time = 10 ;
               p_cell->SetBirthTime(-birth_time);
               p_cell->InitialiseCellCycleModel();
-              p_cell->GetCellData()->SetItem("target area", 0.6);
+              p_cell->GetCellData()->SetItem("target area", 0.8);
               p_elong_model->SetMaxStretch(3.5);
               p_elong_model->SetMaxStretchPeriph(6.0);
               // Initial Condition for Morphogen PDE
@@ -170,6 +189,7 @@ private:
 
             rCells.push_back(p_cell);
             }
+            /*
             else if (i == 212 || i == 109 || i == 103 || i == 81)
             {
               CellPtr p_cell(new Cell(p_state, p_cycle_model));
@@ -186,12 +206,13 @@ private:
 
               rCells.push_back(p_cell);
             }
+            */
             else
             {
               CellPtr p_cell(new Cell(p_state, p_cycle_model));
               p_cell->SetCellProliferativeType(p_transit_type);
               p_cycle_model->SetMaxTransitGenerations(10);
-              double birth_time = rand() % 5 + 1 ;
+              double birth_time = rand() % 10 + 5 ;
               p_cell->SetBirthTime(-birth_time);
               p_cell->InitialiseCellCycleModel();
               p_cell->GetCellData()->SetItem("target area", 0.5);
@@ -248,7 +269,7 @@ public:
         MAKE_PTR(CellStalk, p_stalk);
         MAKE_PTR(CellTip, p_tip);
         MAKE_PTR(CellLumen, p_lumen);
-
+        MAKE_PTR(CellPeriph, p_periph);
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
         simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestRepulsionForce/MeshReader/WithNewObstru/WithNewIC/2"); // 1 with deformationparam = 55, 2 = 99
@@ -260,7 +281,7 @@ public:
         std::cout << "Adding passive force" << endl ;
         // Create Forces and pass to simulation
         MAKE_PTR(DifferentialAdhesionForce<2>, p_force);
-        p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
+        p_force->SetNagaiHondaDeformationEnergyParameter(99.0);
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
         p_force->SetEndoEndoAdhesionEnergyParameter(M_ENDOENDO*1.0);
@@ -293,6 +314,8 @@ public:
         simulator.AddSimulationModifier(p_stretch_modifier);
         //MAKE_PTR(MassCenterTrackingModifier<2>, p_center_modifier);
         //simulator.AddSimulationModifier(p_center_modifier) ;
+        MAKE_PTR(ObstructionWriterModifier<2>, p_endopos_modifier);
+        simulator.AddSimulationModifier(p_endopos_modifier);
 
 
         std::cout << "Labelling Epi cells" << endl ;
@@ -308,10 +331,12 @@ public:
           cell_iter->GetCellData()->SetItem("vecPolaX",0);
           cell_iter->GetCellData()->SetItem("vecPolaY",0);
 
+
           if (cell_population.GetLocationIndexUsingCell(*cell_iter) == 188 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 239 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 160 || cell_population.GetLocationIndexUsingCell(*cell_iter) == 35 )
           {
               cell_iter->AddCellProperty(p_endo);
               cell_iter->AddCellProperty(p_stalk);
+              //cell_iter->AddCellProperty(p_periph); // PLANTE LA SIMU
 
               cell_iter->GetCellData()->SetItem("tagVessel",-1);
           }
@@ -378,7 +403,7 @@ public:
         MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_repuls_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_repuls_bc);
 
-        CounterSingletonEndo::Instance()->IncrementCounter();
+
 
         std::cout << "Adding lumen" << endl ;
         MAKE_PTR(SimuInfoModifier<2>, p_simuInfoModifier);
@@ -416,7 +441,7 @@ public:
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(96.0);
-        simulator.SetDt(0.05);
+        simulator.SetDt(0.01);
         simulator.SetSamplingTimestepMultiple(1.0);
 
         simulator.Solve();

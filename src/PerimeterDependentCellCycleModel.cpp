@@ -10,7 +10,7 @@ PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
     : AbstractCellCycleModel(),
       mMaxStretch(3.2),
       mMaxStretchPeriph(7.0),
-      mMinimumDivisionAge(0.2)
+      mMinimumDivisionAge(0.1)
 {
 }
 
