@@ -6,6 +6,7 @@
 #include "CellCore.hpp"
 #include "CellStalk.hpp"
 #include "CellTip.hpp"
+#include "CellVessel.hpp"
 
 template<unsigned ELEMENT_DIM, unsigned SPACE_DIM>
 CellAllTypeWriter<ELEMENT_DIM, SPACE_DIM>::CellAllTypeWriter()
@@ -42,10 +43,16 @@ double CellAllTypeWriter<ELEMENT_DIM, SPACE_DIM>::GetCellDataForVtkOutput(CellPt
         boost::shared_ptr<CellTip> p_celltype = boost::static_pointer_cast<CellTip>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
-    else if (pCell->HasCellProperty<CellEndo>())
+    else if (pCell->HasCellProperty<CellStalk>() && pCell->HasCellProperty<CellVessel>() == 0)
     {
         CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellEndo>();
         boost::shared_ptr<CellEndo> p_celltype = boost::static_pointer_cast<CellEndo>(collection.GetProperty());
+        cell_type = p_celltype->GetColour();
+    }
+    else if (pCell->HasCellProperty<CellVessel>() )
+    {
+        CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellVessel>();
+        boost::shared_ptr<CellVessel> p_celltype = boost::static_pointer_cast<CellVessel>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
 
@@ -80,10 +87,16 @@ if (pCell->HasCellProperty<CellLumen>())
         boost::shared_ptr<CellTip> p_celltype = boost::static_pointer_cast<CellTip>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
-    else if (pCell->HasCellProperty<CellEndo>())
+    else if (pCell->HasCellProperty<CellStalk>() && pCell->HasCellProperty<CellVessel>() == 0)
     {
-        CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellEndo>();
-        boost::shared_ptr<CellEndo> p_celltype = boost::static_pointer_cast<CellEndo>(collection.GetProperty());
+        CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellStalk>();
+        boost::shared_ptr<CellStalk> p_celltype = boost::static_pointer_cast<CellStalk>(collection.GetProperty());
+        cell_type = p_celltype->GetColour();
+    }
+    else if (pCell->HasCellProperty<CellVessel>() )
+    {
+        CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellVessel>();
+        boost::shared_ptr<CellVessel> p_celltype = boost::static_pointer_cast<CellVessel>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
 

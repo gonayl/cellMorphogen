@@ -4,11 +4,12 @@
 #include "CellStalk.hpp"
 #include "CellPeriph.hpp"
 #include "CellCore.hpp"
+#include "CellVessel.hpp"
 using namespace std ;
 
 PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
     : AbstractCellCycleModel(),
-      mMaxStretch(3.2),
+      mMaxStretch(2.3),
       mMaxStretchPeriph(7.0),
       mMinimumDivisionAge(0.1)
 {
@@ -41,18 +42,28 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
             {
 
                 double have_tip_neighboor = mpCell->GetCellData()->GetItem("have_tip_neighboor");
+                double have_vessel_neighboor = mpCell->GetCellData()->GetItem("have_vessel_neighboor");
                 double cell_elongation = mpCell->GetCellData()->GetItem("perimeter");
                 double cell_maxmin = mpCell->GetCellData()->GetItem("maxmin");
+                bool is_vessel = mpCell->template HasCellProperty<CellVessel>();
+
                 if (cell_elongation > mMaxStretch && have_tip_neighboor > 0)
                 //if (cell_elongation > 1.8 && cell_maxmin > mMaxStretchPeriph )
                 {
-
                     mReadyToDivide = true;
                 }
 
                 else if (cell_elongation > 1.0 && cell_maxmin > 8.0 && have_tip_neighboor > 0)
                 {
                     cout << cell_maxmin << endl ;
+                    mReadyToDivide = true;
+                }
+                else if (cell_elongation > mMaxStretch && is_vessel)
+                {
+                    mReadyToDivide = true;
+                }
+                else if (cell_elongation > mMaxStretch && have_vessel_neighboor > 0)
+                {
                     mReadyToDivide = true;
                 }
 

@@ -13,7 +13,7 @@ public:
   static constexpr double IMPACT_POLARISATION_EPI_ON_EPI = -0.008;
   static constexpr double IMPACT_POLARISATION_ENDO_ON_EPI = 0.024;
   static constexpr double IMPACT_POLARISATION_LUMEN_ON_EPI = -0.015;
-  static constexpr double IMPACT_POLARISATION_PERIPH_ON_EPI = 0;
+  static constexpr double IMPACT_POLARISATION_PERIPH_ON_EPI = 0.015;
   static constexpr double VEC_POLARISATION_DECREASE = 0.0075;
 
 

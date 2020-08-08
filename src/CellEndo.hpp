@@ -25,7 +25,7 @@ private:
 
 public:
 
-    CellEndo(unsigned colour=5);
+    CellEndo(unsigned colour=9);
 
     virtual ~CellEndo();
 

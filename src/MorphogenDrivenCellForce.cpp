@@ -1,5 +1,5 @@
 #include "MorphogenDrivenCellForce.hpp"
-#include "CellTip.hpp"
+#include "CellMotile.hpp"
 #include "CellEpi.hpp"
 #include "VertexBasedCellPopulation.hpp"
 #include <numeric>
@@ -40,13 +40,13 @@ void MorphogenDrivenCellForce<DIM>::AddForceContribution(AbstractCellPopulation<
              ++cell_iter)
 
     	{
-        if (cell_iter->template HasCellProperty<CellTip>())
+        if (cell_iter->template HasCellProperty<CellMotile>())
         {
 
-            double x =  cell_iter->GetCellData()->GetItem("morphogen_grad_x_moy");
-            double y =  cell_iter->GetCellData()->GetItem("morphogen_grad_y_moy");
+            double x =  cell_iter->GetCellData()->GetItem("morphogen_grad_x");
+            double y =  cell_iter->GetCellData()->GetItem("morphogen_grad_y");
 
-            
+
 
             //c_vector<double, 2> centre_of_cell2 = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
             //double x = cell_iter->GetCellData()->GetItem("morphogen_grad_x");

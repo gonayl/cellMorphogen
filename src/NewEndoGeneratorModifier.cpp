@@ -128,7 +128,7 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
            neighbour_iter != neighbours_of_cell.end();
            ++neighbour_iter)
       {
-          // Determine whether this neighbour is also endo 
+          // Determine whether this neighbour is also endo
           CellPtr p_neighbour_cell = rCellPopulation.GetCellUsingLocationIndex(*neighbour_iter);
           bool neighbour_is_endo = p_neighbour_cell->template HasCellProperty<CellEndo>();
 
@@ -151,6 +151,59 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
         cell_iter->SetCellProliferativeType(CellPropertyRegistry::Instance()->Get<DifferentiatedCellProliferativeType>());
 
         CounterSingletonEndo::Instance()->IncrementCounter();
+
+        // Adding the stalk cell to the obstruction file
+
+        vector<double> boundary_nodes_pos ;
+        VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
+        VertexElement<DIM,DIM>* p_element ;
+
+        p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
+
+        unsigned num_nodes_in_element = p_element->GetNumNodes();
+        for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
+        {
+            unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
+            unsigned n_elements = rCellPopulation.GetNode(node_index)->GetNumContainingElements() ;
+
+            if (rCellPopulation.GetNode(node_index)->IsBoundaryNode() && n_elements > 1  )
+            {
+              boundary_nodes_pos.push_back(rCellPopulation.GetNode(node_index)->rGetLocation()[0]);
+              boundary_nodes_pos.push_back(rCellPopulation.GetNode(node_index)->rGetLocation()[1]);
+            }
+        }
+
+        assert(boundary_nodes_pos.size() == 4) ;
+        std::cout << "(" << boundary_nodes_pos[0] << " ; " << boundary_nodes_pos[1] << ")(" << boundary_nodes_pos[2] << " ; " << boundary_nodes_pos[3] << ")" << endl ;
+
+        double a; double b; double l; double r;
+        c_vector<double, 2> direct_vector ;
+
+        c_vector<double, 2> centre_of_cell = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
+
+        direct_vector[0] = cell_iter->GetCellData()->GetItem("morphogen_grad_x") ;
+        direct_vector[1] = cell_iter->GetCellData()->GetItem("morphogen_grad_y") ;
+
+        a =  direct_vector[1] ; // a
+        b =  - direct_vector[0] ; // b
+        l = - direct_vector[1]*boundary_nodes_pos[0] + direct_vector[0]*boundary_nodes_pos[1] ; // l
+        r = - direct_vector[1]*boundary_nodes_pos[2] + direct_vector[0]*boundary_nodes_pos[3] ; // r
+        // WARNING : the order is important !!
+
+        cout << "pushing data for cell " << rCellPopulation.GetLocationIndexUsingCell(*cell_iter) << endl ;
+        cell_iter->GetCellData()->SetItem("xpos_l", boundary_nodes_pos[0]) ;
+        cell_iter->GetCellData()->SetItem("ypos_l", boundary_nodes_pos[1]) ;
+        cell_iter->GetCellData()->SetItem("xpos_r", boundary_nodes_pos[2]) ;
+        cell_iter->GetCellData()->SetItem("ypos_r", boundary_nodes_pos[3]) ;
+
+        ofstream myfile ("example.txt", std::ios::app);
+
+        if (myfile.is_open())
+        {
+          myfile << a << " " << b << " " << l << " " << r << " " << centre_of_cell[0] << " " << centre_of_cell[1] << " " ;
+        }
+
+        myfile.close();
 
 
         /*

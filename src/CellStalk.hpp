@@ -25,7 +25,7 @@ private:
 
 public:
 
-    CellStalk(unsigned colour=8);
+    CellStalk(unsigned colour=9);
 
     virtual ~CellStalk();
 

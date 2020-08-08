@@ -159,6 +159,10 @@ void ObstructionWriterModifier<SPACE_DIM>::UpdateCellData(AbstractCellPopulation
         endo_cells_tofile.push_back(centre_of_cell[1]) ;
 
         cout << "pushing data for cell " << rCellPopulation.GetLocationIndexUsingCell(*cell_iter) << endl ;
+        cell_iter->GetCellData()->SetItem("xpos_l", boundary_nodes_pos[0]) ;
+        cell_iter->GetCellData()->SetItem("ypos_l", boundary_nodes_pos[1]) ;
+        cell_iter->GetCellData()->SetItem("xpos_r", boundary_nodes_pos[2]) ;
+        cell_iter->GetCellData()->SetItem("ypos_r", boundary_nodes_pos[3]) ;
 
         endo_count++ ;
         CounterSingletonRepulsion::Instance()->IncrementCounter();

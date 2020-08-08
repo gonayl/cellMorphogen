@@ -25,7 +25,7 @@ private:
 
 public:
 
-    CellCore(unsigned colour=9);
+    CellCore(unsigned colour=2);
 
     virtual ~CellCore();
 

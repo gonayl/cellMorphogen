@@ -1,12 +1,12 @@
-#ifndef CELLLUMEN_HPP_
-#define CELLLUMEN_HPP_
+#ifndef CELLMOTILE_HPP_
+#define CELLMOTILE_HPP_
 
 #include <boost/shared_ptr.hpp>
 #include "AbstractCellProperty.hpp"
 #include "ChasteSerialization.hpp"
 #include <boost/serialization/base_object.hpp>
 
-class CellLumen : public AbstractCellProperty
+class CellMotile : public AbstractCellProperty
 {
 protected:
 
@@ -25,15 +25,14 @@ private:
 
 public:
 
-    CellLumen(unsigned colour=5);
+    CellMotile(unsigned colour=10);
 
-    virtual ~CellLumen();
-
+    virtual ~CellMotile();
 
     unsigned GetColour() const;
 };
 
 #include "SerializationExportWrapper.hpp"
-CHASTE_CLASS_EXPORT(CellLumen)
+CHASTE_CLASS_EXPORT(CellMotile)
 
-#endif /* CELLLUMEN_HPP_ */
+#endif /* CELLMOTILE_HPP_ */

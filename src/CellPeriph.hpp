@@ -25,7 +25,7 @@ private:
 
 public:
 
-    CellPeriph(unsigned colour=8);
+    CellPeriph(unsigned colour=1);
 
     virtual ~CellPeriph();
 

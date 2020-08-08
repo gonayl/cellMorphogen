@@ -49,7 +49,7 @@ public:
      *
      * @param colour  what colour cells with this label should be in the visualizer (defaults to 5)
      */
-    CellBoundary(unsigned colour=6);
+    CellBoundary(unsigned colour=1);
 
     /**
      * Destructor.

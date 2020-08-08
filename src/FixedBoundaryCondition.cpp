@@ -82,8 +82,31 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                      ++element_index)
                 {
                   CellPtr p_cell = this->mpCellPopulation->GetCellUsingLocationIndex(*element_index);
+
                   if (p_cell->HasCellProperty<CellStalk>() && p_node->IsBoundaryNode() && motile == 0)
                   {
+
+/*
+                    double xpos_l = p_cell->GetCellData()->GetItem("xpos_l") ;
+                    double ypos_l = p_cell->GetCellData()->GetItem("ypos_l") ;
+                    double xpos_r = p_cell->GetCellData()->GetItem("xpos_r") ;
+                    double ypos_r = p_cell->GetCellData()->GetItem("ypos_r") ;
+
+                    double dist1 = sqrt(pow((xpos_l - node_location[0]),2) + pow((ypos_l - node_location[1]),2)) ;
+                    double dist2 = sqrt(pow((xpos_r - node_location[0]),2) + pow((ypos_r - node_location[1]),2)) ;
+
+                    if (dist1 < dist2)
+                    {
+                      p_node->rGetModifiableLocation()[0] = xpos_l ;
+                      p_node->rGetModifiableLocation()[1] = ypos_l ;
+                    }
+                    else if (dist1 > dist2)
+                    {
+                      p_node->rGetModifiableLocation()[0] = xpos_r ;
+                      p_node->rGetModifiableLocation()[1] = ypos_r ;
+                    }
+
+*/
                     c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second;
 
                     //cout << "node location : " << node_location[0] << " , " << node_location[1] << endl ;
@@ -92,25 +115,29 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                      p_node->rGetModifiableLocation() = old_node_location; // fix the node at the current location
 
                     //c_vector<double, SPACE_DIM> force = p_node->rGetAppliedForce(); // get the force currently applied to the node to be fixed
-                    //c_vector<double, SPACE_DIM> new_force = - 10 * force ; // apply a force 90% lighter
+                    //c_vector<double, SPACE_DIM> new_force = -10 *  force ; // apply a force 90% lighter
 
-                    // Add the force contribution to each node
-                  //  p_node->AddAppliedForceContribution(new_force);
+                     //Add the force contribution to each node
+                     //p_node->AddAppliedForceContribution(new_force);
+
+                     //p_node->ClearAppliedForce() ;
                   }
+                  /*
                   else if (p_cell->HasCellProperty<CellVessel>())
                   {
                     c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second;
 
                     //cout << "node location : " << node_location[0] << " , " << node_location[1] << endl ;
                     //std::cout << node_index << " should be fixed at (" << old_node_location(0) << "," << old_node_location(1) << ")." << std::endl ;
-                    p_node->rGetModifiableLocation() = old_node_location;
+                  p_node->rGetModifiableLocation() = old_node_location;
 
                     //c_vector<double, SPACE_DIM> force = p_node->rGetAppliedForce(); // get the force currently applied to the node to be fixed
-                    //c_vector<double, SPACE_DIM> new_force = - 10 * force ;
+                  //  c_vector<double, SPACE_DIM> new_force = - force ;
 
                     // Add the force contribution to each node
                     //p_node->AddAppliedForceContribution(new_force); // add a opposite force contribution to dynamically fix the node
                   }
+                  */
 
 
                 }

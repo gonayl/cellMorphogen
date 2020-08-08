@@ -6,7 +6,8 @@
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
 #include "TransitCellProliferativeType.hpp"
-
+#include "Debug.hpp"
+#include "CellVessel.hpp"
 
 #include <stdlib.h>
 #include "CellTip.hpp"
@@ -96,6 +97,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
 
     // Iterate over cells and calculate the distance between each cell and the mass center
 
+
     for (typename AbstractCellPopulation<DIM, DIM>::Iterator cell_iter = rCellPopulation.Begin();
          cell_iter != rCellPopulation.End();
          ++cell_iter)
@@ -103,6 +105,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
       cell_iter->GetCellData()->SetItem("mass_center_x", xmoy);
       cell_iter->GetCellData()->SetItem("mass_center_y", ymoy);
     }
+
 
     //Regarde le nomobre de tip voisin
 
@@ -117,10 +120,10 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
       {
 
         pCell->GetCellData()->SetItem("have_tip_neighboor", 0);
+        pCell->GetCellData()->SetItem("have_vessel_neighboor", 0);
 
         VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
         std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
-
 
 
         for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
@@ -130,12 +133,19 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
           CellPtr p_neighbour_cell = p_cell_population->GetCellUsingLocationIndex(*neighbour_iter);
 
           bool neighbour_is_Tip = p_neighbour_cell->template HasCellProperty<CellTip>();
+          bool neighbour_is_Vessel = p_neighbour_cell->template HasCellProperty<CellVessel>();
 
           if ( neighbour_is_Tip == 1)
           {
             //cout << "voisine tip cell" << endl ;
-            double nbrVoisin = pCell->GetCellData()->GetItem("have_tip_neighboor");
-            pCell->GetCellData()->SetItem("have_tip_neighboor", nbrVoisin+1);
+            double nbrVoisin_tip = pCell->GetCellData()->GetItem("have_tip_neighboor");
+            pCell->GetCellData()->SetItem("have_tip_neighboor", nbrVoisin_tip+1);
+          }
+          if ( neighbour_is_Vessel == 1)
+          {
+            //cout << "voisine vessel cell" << endl ;
+            double nbrVoisin_vessel = pCell->GetCellData()->GetItem("have_vessel_neighboor");
+            pCell->GetCellData()->SetItem("have_vessel_neighboor", nbrVoisin_vessel+1);
           }
         }
       }
@@ -175,14 +185,13 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
             }
         }
       }
+
       //rtransforme une tip en non tip si elle rencontre un vaisseau autre que le siens
       if (pCell->HasCellProperty<CellTip>())
       {
         bool removeTip = false;
         VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
         std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
-
-
 
         for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
              neighbour_iter != neighbour_indices.end();
@@ -195,6 +204,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
             if(p_neighbour_cell->GetCellData()->GetItem("tagVessel")>-1 && p_neighbour_cell->GetCellData()->GetItem("tagVessel") !=pCell->GetCellData()->GetItem("tagVessel"))
             {
               removeTip = true;
+              MARK ;
             }
 
           }
@@ -204,14 +214,27 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
         if(removeTip)
         {
           pCell->RemoveCellProperty<CellTip>();
-
           boost::shared_ptr<AbstractCellProperty> p_stalk(CellPropertyRegistry::Instance()->Get<CellStalk>());
+          boost::shared_ptr<AbstractCellProperty> p_vessel(CellPropertyRegistry::Instance()->Get<CellVessel>());
 
           pCell->AddCellProperty(p_stalk);
+          pCell->AddCellProperty(p_vessel);
 
           boost::shared_ptr<AbstractCellProperty> p_transit_type =
               pCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
           pCell->SetCellProliferativeType(p_transit_type);
+
+          for (typename AbstractCellPopulation<DIM, DIM>::Iterator endo_iter = rCellPopulation.Begin();
+               endo_iter != rCellPopulation.End();
+               ++endo_iter)
+          {
+            CellPtr pEndoCell = *endo_iter ;
+            if (pEndoCell->HasCellProperty<CellStalk>() && pEndoCell->GetCellData()->GetItem("tagVessel") == pCell->GetCellData()->GetItem("tagVessel"))
+            {
+              pEndoCell->AddCellProperty(p_vessel);
+            }
+          }
+
         }
       }
 
@@ -222,8 +245,6 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
     }
     //Supprime les tip cote a cote
     else{
-
-
 
         //change les Tip qui se touchent en stalk (les voisines seulement)
         if (pCell->HasCellProperty<CellTip>())
@@ -245,10 +266,23 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
             {
               p_neighbour_cell->RemoveCellProperty<CellTip>();
               boost::shared_ptr<AbstractCellProperty> p_stalk(CellPropertyRegistry::Instance()->Get<CellStalk>());
+              boost::shared_ptr<AbstractCellProperty> p_vessel(CellPropertyRegistry::Instance()->Get<CellVessel>());
               p_neighbour_cell->AddCellProperty(p_stalk);
+              p_neighbour_cell->AddCellProperty(p_vessel);
               boost::shared_ptr<AbstractCellProperty> p_transit_type =
                   pCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
               pCell->SetCellProliferativeType(p_transit_type);
+
+              for (typename AbstractCellPopulation<DIM, DIM>::Iterator endo_iter = rCellPopulation.Begin();
+                   endo_iter != rCellPopulation.End();
+                   ++endo_iter)
+              {
+                CellPtr pEndoCell = *endo_iter ;
+                if (pEndoCell->HasCellProperty<CellStalk>() && pEndoCell->GetCellData()->GetItem("tagVessel") == p_neighbour_cell->GetCellData()->GetItem("tagVessel"))
+                {
+                  pEndoCell->AddCellProperty(p_vessel);
+                }
+              }
             }
           }
         }

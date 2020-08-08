@@ -80,7 +80,7 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
                 std::set<unsigned> elements_containing_node = p_node->rGetContainingElementIndices();
 
 
-                /*
+
                 int is_endo = 0 ;
 
                 for (std::set<unsigned>::iterator element_index = elements_containing_node.begin();
@@ -94,7 +94,7 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
                   }
                 }
 
-                */
+
 
                 double y_coordinate = p_node->rGetLocation()[1];
                 double x_coordinate = p_node->rGetLocation()[0];
@@ -163,28 +163,32 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
                 //double dist4 = sqrt(pow((x_coordinate - xmoy),2) + pow((y_coordinate - ymoy),2)) ;
                 // c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second; // node previous location
 
-                if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 < dist2 && innerproduct > 0)
+                if ( p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 < dist2 && innerproduct > 0)
                 {
                   p_node->rGetModifiableLocation()[0] = x_proj_l;
                   p_node->rGetModifiableLocation()[1] = y_proj_l;
+                //if (node_index == 324)  {std::cout << node_index << "1" << std::endl ; }
                   //p_node->rGetModifiableLocation() = old_node_location;
                 }
-                else if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 > dist2 && innerproduct > 0 )
+                else if ( p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 > dist2 && innerproduct > 0 )
                 {
                   p_node->rGetModifiableLocation()[0] = x_proj_r;
                   p_node->rGetModifiableLocation()[1] = y_proj_r ;
+                //  if (node_index == 324)  {std::cout << node_index << "2"<< std::endl ;}
                   //p_node->rGetModifiableLocation() = old_node_location;
                 }
                 else if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) < -l && (b*y_coordinate + a*x_coordinate) > -r && dist1 < dist2 && innerproduct > 0 )
                 {
                   p_node->rGetModifiableLocation()[0] = x_proj_l;
                   p_node->rGetModifiableLocation()[1] = y_proj_l ;
+                //  if (node_index == 324)  {std::cout << node_index<<"3" << std::endl ;}
                   //p_node->rGetModifiableLocation() = old_node_location;
                 }
                 else if (p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) < -l && (b*y_coordinate + a*x_coordinate) > -r && dist1 > dist2 && innerproduct > 0 )
                 {
                   p_node->rGetModifiableLocation()[0] = x_proj_r;
                   p_node->rGetModifiableLocation()[1] = y_proj_r ;
+                //  if (node_index == 324)  {std::cout << node_index<<"4" << std::endl ;}
                   //p_node->rGetModifiableLocation() = old_node_location;
                 }
                 }
