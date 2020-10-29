@@ -86,7 +86,7 @@ void LumenGenerationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM
         //pCell->GetCellData()->SetItem("timeFromLastLumenGeneration", 0);
       if(norme >SimulationParameters::THRESHOLD_POLARISATION_EPI)
       {
-        pCell->GetCellData()->SetItem("timeFromLastLumenGeneration", timeFromLastGen + SimulationParameters::TIMESTEP);
+        pCell->GetCellData()->SetItem("timeFromLastLumenGeneration", timeFromLastGen + SimulationTime::Instance()->GetTimeStep());
       }
       else
       {

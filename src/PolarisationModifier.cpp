@@ -87,8 +87,8 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
         double vecPolaY = pCell->GetCellData()->GetItem("vecPolaY");
 
 
-        vecPolaX = vecPolaX - vecPolaX * this->GetVecPolarisationDecrease() * SimulationParameters::TIMESTEP;
-        vecPolaY = vecPolaY - vecPolaY * this->GetVecPolarisationDecrease() * SimulationParameters::TIMESTEP;
+        vecPolaX = vecPolaX - vecPolaX * this->GetVecPolarisationDecrease() * SimulationTime::Instance()->GetTimeStep() * 2;
+        vecPolaY = vecPolaY - vecPolaY * this->GetVecPolarisationDecrease() * SimulationTime::Instance()->GetTimeStep() * 2;
 
 
 
@@ -149,17 +149,17 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
                   cosAngle = sqrt(cosAngle*cosAngle);//valeur absolue
                   //std::cout << cosAngle << "  " << normalisationInterCell << " " << prodScalaire << "  " << normeVecPolaNeighbour << '\n';
                   if(vecPolaXNeighbour > 0){
-                    vecPolaX = vecPolaX + this->GetEpiEpiPolarisationParameter() * SimulationParameters::TIMESTEP*cosAngle;
+                    vecPolaX = vecPolaX + this->GetEpiEpiPolarisationParameter() * SimulationTime::Instance()->GetTimeStep() * 2*cosAngle;
                   }
                   else if(vecPolaXNeighbour < 0){
-                    vecPolaX = vecPolaX - this->GetEpiEpiPolarisationParameter() * SimulationParameters::TIMESTEP*cosAngle;
+                    vecPolaX = vecPolaX - this->GetEpiEpiPolarisationParameter() * SimulationTime::Instance()->GetTimeStep() * 2*cosAngle;
                   }
 
                   if(vecPolaYNeighbour > 0){
-                    vecPolaY = vecPolaY + this->GetEpiEpiPolarisationParameter() * SimulationParameters::TIMESTEP*cosAngle;
+                    vecPolaY = vecPolaY + this->GetEpiEpiPolarisationParameter() * SimulationTime::Instance()->GetTimeStep() * 2*cosAngle;
                   }
                   else if(vecPolaYNeighbour < 0){
-                    vecPolaY = vecPolaY - this->GetEpiEpiPolarisationParameter() * SimulationParameters::TIMESTEP*cosAngle;
+                    vecPolaY = vecPolaY - this->GetEpiEpiPolarisationParameter() * SimulationTime::Instance()->GetTimeStep() * 2*cosAngle;
                   }
                 }
 
@@ -167,8 +167,8 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
 
 
 
-                  vecPolaX = vecPolaX + dx / normalisationInterCell * this->GetEndoEpiPolarisationParameter() * SimulationParameters::TIMESTEP;
-                  vecPolaY = vecPolaY + dy / normalisationInterCell * this->GetEndoEpiPolarisationParameter() * SimulationParameters::TIMESTEP;
+                  vecPolaX = vecPolaX + dx / normalisationInterCell * this->GetEndoEpiPolarisationParameter() * SimulationTime::Instance()->GetTimeStep() * 2;
+                  vecPolaY = vecPolaY + dy / normalisationInterCell * this->GetEndoEpiPolarisationParameter() * SimulationTime::Instance()->GetTimeStep() * 2;
 
                   //std::cout << vecPolaX << std::endl;
 
@@ -177,8 +177,8 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
 
                 if(neighbour_is_lumen == 1 && p_neighbour_cell->GetCellData()->GetItem("mustDie")==0){
 
-                  vecPolaX = vecPolaX + dx / normalisationInterCell * this->GetLumenEpiPolarisationParameter() * SimulationParameters::TIMESTEP;
-                  vecPolaY = vecPolaY + dy / normalisationInterCell * this->GetLumenEpiPolarisationParameter() * SimulationParameters::TIMESTEP;
+                  vecPolaX = vecPolaX + dx / normalisationInterCell * this->GetLumenEpiPolarisationParameter() * SimulationTime::Instance()->GetTimeStep() * 2;
+                  vecPolaY = vecPolaY + dy / normalisationInterCell * this->GetLumenEpiPolarisationParameter() * SimulationTime::Instance()->GetTimeStep() * 2;
 
                   //std::cout << vecPolaX << std::endl;
 
@@ -211,8 +211,8 @@ void PolarisationModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& 
         {
           double normalisation = sqrt(dx*dx + dy*dy);
 
-          vecPolaX = vecPolaX + dx / normalisation * SimulationParameters::IMPACT_POLARISATION_PERIPH_ON_EPI * SimulationParameters::TIMESTEP;
-          vecPolaY = vecPolaY + dy / normalisation * SimulationParameters::IMPACT_POLARISATION_PERIPH_ON_EPI * SimulationParameters::TIMESTEP;
+          vecPolaX = vecPolaX + dx / normalisation * SimulationParameters::IMPACT_POLARISATION_PERIPH_ON_EPI * SimulationTime::Instance()->GetTimeStep() * 2;
+          vecPolaY = vecPolaY + dy / normalisation * SimulationParameters::IMPACT_POLARISATION_PERIPH_ON_EPI * SimulationTime::Instance()->GetTimeStep() * 2;
 
         }
 

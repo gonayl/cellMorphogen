@@ -452,7 +452,7 @@ void SetupAndRunSimulation(unsigned mEpiEpi, unsigned mEndoEpi, unsigned mLumenE
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(SimulationParameters::TIME_OF_SIMULATION);
-        simulator.SetDt(SimulationParameters::TIMESTEP);
+        simulator.SetDt(SimulationTime::Instance()->GetTimeStep());
         simulator.SetSamplingTimestepMultiple(1);
 
 

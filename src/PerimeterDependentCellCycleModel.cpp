@@ -47,22 +47,22 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
                 double cell_maxmin = mpCell->GetCellData()->GetItem("maxmin");
                 bool is_vessel = mpCell->template HasCellProperty<CellVessel>();
 
-                if (cell_elongation > mMaxStretch && have_tip_neighboor > 0)
+                if (cell_elongation > mMaxStretch && have_tip_neighboor > 0) // following stalk
                 //if (cell_elongation > 1.8 && cell_maxmin > mMaxStretchPeriph )
                 {
                     mReadyToDivide = true;
                 }
 
-                else if (cell_elongation > 1.0 && cell_maxmin > 8.0 && have_tip_neighboor > 0)
+                else if (cell_elongation > 1.0 && cell_maxmin > 8.0 && have_tip_neighboor > 0) // following stalk but with minmax
                 {
                     cout << cell_maxmin << endl ;
                     mReadyToDivide = true;
                 }
-                else if (cell_elongation > mMaxStretch && is_vessel)
+                else if (cell_elongation > 3.0 && is_vessel) // vessel 
                 {
                     mReadyToDivide = true;
                 }
-                else if (cell_elongation > mMaxStretch && have_vessel_neighboor > 0)
+                else if (cell_elongation > mMaxStretch && have_vessel_neighboor > 0) // if vessel nieghbour should be also vessel
                 {
                     mReadyToDivide = true;
                 }

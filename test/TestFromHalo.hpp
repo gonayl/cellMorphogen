@@ -149,13 +149,13 @@ static const double M_NUM_CELLS_ACROSS = 10;
 static const double M_UPTAKE_RATE = 5.0 ;
 static const double M_DIFFUSION_CONSTANT = 5e-1;
 static const double M_DUDT_COEFFICIENT = 1.0;
-static const double M_DECAY_COEFFICIENT = 5.0;
+static const double M_DECAY_COEFFICIENT = 9.0;
 static const double M_RADIUS = 100.0;
 static const double M_EPI = 5.0 ;
 static const double M_PEERIPHPERIPH = 5.0 ;
 static const double M_EPIBND = 10.0 ;
 static const double M_EPILUMEN = 5.0 ;
-static const double M_ENDOBND = 1.0 ;//chang
+static const double M_ENDOBND = 1.5 ;//chang
 static const double M_ENDOEPI = 5.0 ;
 static const double M_ENDOENDO = 1.0 ;
 static const double M_LUMENBND = 8.0 ;
@@ -376,7 +376,7 @@ public:
         p_force->SetEndoLumenAdhesionEnergyParameter(35.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(M_ENDOBND);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(7.0);
         p_force->SetEpiBoundaryAdhesionEnergyParameter(M_EPIBND);
 
@@ -394,8 +394,7 @@ public:
         simulator.AddSimulationModifier(p_border_modifier);
         MAKE_PTR(MassCenterTrackingModifier<2>, p_center_modifier);
         simulator.AddSimulationModifier(p_center_modifier) ;
-        MAKE_PTR(ObstructionWriterModifier<2>, p_endopos_modifier);
-        simulator.AddSimulationModifier(p_endopos_modifier);
+
 
         //MAKE_PTR(ForceTrackingModifier<2>, p_force_modifier);
         //simulator.AddSimulationModifier(p_force_modifier);
@@ -509,10 +508,10 @@ public:
         p_lumen_modifier->SetLumenSizeFactor(M_LUMEN_SIZE_FACTOR_INI) ;
         p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI) ;
 
-
+/*
         MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
         simulator.AddSimulationModifier(morphogen_modifier);
-
+*/
 
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
@@ -530,13 +529,18 @@ public:
         //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
 
-
+/*
+        MAKE_PTR(ObstructionWriterModifier<2>, p_endopos_modifier);
+        simulator.AddSimulationModifier(p_endopos_modifier);
 
         MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_obstruc_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_obstruc_bc);
+*/
 
+/*
         MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
+*/
 
         time_t now = time(0);
 
@@ -544,10 +548,10 @@ public:
 
         std::cout << "Growing Monolayer at : " << dt << endl ;
 
-        simulator.SetEndTime(96);
+        simulator.SetEndTime(48);
         simulator.SetDt(0.001);
-        simulator.SetSamplingTimestepMultiple(1);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/TestFinalMesh/10");
+        simulator.SetSamplingTimestepMultiple(1000);
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/Manuscrit/48h/test24");
         // 1 : with mean of neighbouring gradient, 2: with tip cell gradient
         //3: fixed with -force, 0.001 3: same as 1-2 with mass center force
         //5: same as 4 with obstuction for every node (doesn't change) 6: with endobnd = 1
@@ -556,6 +560,11 @@ public:
         //testWithCalibparam  4 : avec mElongPeriph = 8.0, 5 : with mMotile = 5.0, 6 : with morphogen and MAX_STRETCH = 2.5 // 7 : see copy on drive
 
         simulator.Solve();
+
+        // Record mesh
+        VertexMeshWriter<2,2> vertex_mesh_writer("TestMorphogenMeshWriter", "morphogen_mesh_48h_noobstru_nofixed");
+        vertex_mesh_writer.WriteFilesUsingMesh(p_mesh);
+
 
     }
 };

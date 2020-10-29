@@ -75,13 +75,13 @@ if (pCell->HasCellProperty<CellLumen>())
         boost::shared_ptr<CellCore> p_celltype = boost::static_pointer_cast<CellCore>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
-    else if (pCell->HasCellProperty<CellPeriph>())
+    else if (pCell->HasCellProperty<CellPeriph>() && pCell->HasCellProperty<CellVessel>() == 0)
     {
         CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellPeriph>();
         boost::shared_ptr<CellPeriph> p_celltype = boost::static_pointer_cast<CellPeriph>(collection.GetProperty());
         cell_type = p_celltype->GetColour();
     }
-    if (pCell->HasCellProperty<CellTip>())
+    if (pCell->HasCellProperty<CellTip>() && pCell->HasCellProperty<CellVessel>() == 0)
     {
         CellPropertyCollection collection = pCell->rGetCellPropertyCollection().GetProperties<CellTip>();
         boost::shared_ptr<CellTip> p_celltype = boost::static_pointer_cast<CellTip>(collection.GetProperty());
@@ -101,16 +101,16 @@ if (pCell->HasCellProperty<CellLumen>())
     }
 
 
-    *this->mpOutStream << " " << cell_type;
-
     unsigned location_index = pCellPopulation->GetLocationIndexUsingCell(pCell);
     *this->mpOutStream << " " << location_index;
 
-    c_vector<double, SPACE_DIM> coords = pCellPopulation->GetLocationOfCellCentre(pCell);
+    *this->mpOutStream << " " << cell_type;
+
+  /*  c_vector<double, SPACE_DIM> coords = pCellPopulation->GetLocationOfCellCentre(pCell);
     for (unsigned i=0; i<SPACE_DIM; i++)
     {
         *this->mpOutStream << " " << coords[i];
-    }
+    }*/
 }
 
 // Explicit instantiation

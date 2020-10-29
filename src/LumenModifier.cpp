@@ -163,7 +163,7 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
                       }*/
                     }
                   }
-                  double derivate = (sumVector - SimulationParameters::SURFACE_IMPACT_ON_LUMEN_DERIVATE * pCell->GetCellData()->GetItem("target area"))*SimulationParameters::TIMESTEP;
+                  double derivate = (sumVector - SimulationParameters::SURFACE_IMPACT_ON_LUMEN_DERIVATE * pCell->GetCellData()->GetItem("target area"))*SimulationTime::Instance()->GetTimeStep() * 2;
                   if(derivate>0){
                     pCell->GetCellData()->SetItem("target area",pCell->GetCellData()->GetItem("target area") + derivate);
                   }

@@ -458,7 +458,7 @@ void SetupAndRunSimulation(unsigned mScaling, out_stream overall_results_file)
         std::cout << "Growing Monolayer" << endl ;
 
         simulator.SetEndTime(SimulationParameters::TIME_OF_SIMULATION);
-        simulator.SetDt(SimulationParameters::TIMESTEP);
+        simulator.SetDt(SimulationTime::Instance()->GetTimeStep());
         simulator.SetSamplingTimestepMultiple(1);
 
 
