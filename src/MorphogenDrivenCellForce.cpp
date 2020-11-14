@@ -1,5 +1,6 @@
 #include "MorphogenDrivenCellForce.hpp"
 #include "CellMotile.hpp"
+#include "CellTip.hpp"
 #include "CellEpi.hpp"
 #include "VertexBasedCellPopulation.hpp"
 #include <numeric>
@@ -52,17 +53,17 @@ void MorphogenDrivenCellForce<DIM>::AddForceContribution(AbstractCellPopulation<
             //double x = cell_iter->GetCellData()->GetItem("morphogen_grad_x");
             //double y = cell_iter->GetCellData()->GetItem("morphogen_grad_y");
 
-	          c_vector<double,DIM> force;
+	          //c_vector<double,DIM> force;
 
-            force(0) =    mStrength * (x - xmoy) / (mTreshold + std::abs(x - xmoy)) ;
-            force(1) =    mStrength * (y - ymoy) / (mTreshold + std::abs(y - ymoy)) ;
+            //force(0) =    mStrength * (x - xmoy) / (mTreshold + std::abs(x - xmoy)) ;
+            //force(1) =    mStrength * (y - ymoy) / (mTreshold + std::abs(y - ymoy)) ;
 
-            /*
-            double norme = sqrt((y - ymoy) * (y - ymoy) + (x - xmoy) * (x - xmoy));
+
+            double norme = sqrt(((y - ymoy) * (y - ymoy)) + ((x - xmoy) * (x - xmoy)));
             c_vector<double,DIM> force;
-            force(1) =    mStrength  * (y - ymoy) / norme;
-            force(0) =    mStrength  * (x - xmoy) / norme;
-            */
+            force(1) =    mStrength  * (y - ymoy) / (0.001 + norme);
+            force(0) =    mStrength  * (x - xmoy) / (0.001 + norme);
+
 
 	          VertexElement<DIM, DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
 

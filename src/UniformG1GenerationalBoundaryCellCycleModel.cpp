@@ -4,10 +4,15 @@
 #include "DifferentiatedCellProliferativeType.hpp"
 #include "CellCore.hpp"
 #include "CellPeriph.hpp"
+#include "CellEndo.hpp"
+#include "CellStalk.hpp"
 #include "SimulationParameters.hpp"
 #include "CellLumen.hpp"
 #include "CellEpi.hpp"
+#include "CellTip.hpp"
+#include "CellVessel.hpp"
 #include <math.h>
+using namespace std ;
 
 UniformG1GenerationalBoundaryCellCycleModel::UniformG1GenerationalBoundaryCellCycleModel()
 : mCycleDuration(11)
@@ -58,7 +63,7 @@ bool UniformG1GenerationalBoundaryCellCycleModel::ReadyToDivide()
    //si Normal
    if (!mReadyToDivide)
    {
-     if (!mpCell->HasCellProperty<CellLumen>())
+     if (!mpCell->HasCellProperty<CellLumen>() && !mpCell->HasCellProperty<CellEndo>())
      {
        UpdateCellCyclePhase();
        if ( (GetCurrentCellCyclePhase() != G_ZERO_PHASE) &&
@@ -100,6 +105,7 @@ bool UniformG1GenerationalBoundaryCellCycleModel::ReadyToDivide()
          }
        }
      }
+
    }
 
 

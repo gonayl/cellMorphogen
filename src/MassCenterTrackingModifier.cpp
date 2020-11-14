@@ -3,6 +3,7 @@
 #include "VertexBasedCellPopulation.hpp"
 #include "CellEndo.hpp"
 #include "CellEpi.hpp"
+#include "CellMotile.hpp"
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
 #include "TransitCellProliferativeType.hpp"
@@ -214,11 +215,13 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
         if(removeTip)
         {
           pCell->RemoveCellProperty<CellTip>();
+          pCell->RemoveCellProperty<CellMotile>();
           boost::shared_ptr<AbstractCellProperty> p_stalk(CellPropertyRegistry::Instance()->Get<CellStalk>());
           boost::shared_ptr<AbstractCellProperty> p_vessel(CellPropertyRegistry::Instance()->Get<CellVessel>());
 
           pCell->AddCellProperty(p_stalk);
           pCell->AddCellProperty(p_vessel);
+          pCell->GetCellData()->SetItem("target area", 0.3);
 
           boost::shared_ptr<AbstractCellProperty> p_transit_type =
               pCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
@@ -232,6 +235,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
             if (pEndoCell->HasCellProperty<CellStalk>() && pEndoCell->GetCellData()->GetItem("tagVessel") == pCell->GetCellData()->GetItem("tagVessel"))
             {
               pEndoCell->AddCellProperty(p_vessel);
+              pEndoCell->GetCellData()->SetItem("target area", 0.3);
             }
           }
 
@@ -265,10 +269,12 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
             if ( neighbour_is_Tip == 1)
             {
               p_neighbour_cell->RemoveCellProperty<CellTip>();
+              p_neighbour_cell->RemoveCellProperty<CellMotile>();
               boost::shared_ptr<AbstractCellProperty> p_stalk(CellPropertyRegistry::Instance()->Get<CellStalk>());
               boost::shared_ptr<AbstractCellProperty> p_vessel(CellPropertyRegistry::Instance()->Get<CellVessel>());
               p_neighbour_cell->AddCellProperty(p_stalk);
               p_neighbour_cell->AddCellProperty(p_vessel);
+              p_neighbour_cell->GetCellData()->SetItem("target area", 0.3);
               boost::shared_ptr<AbstractCellProperty> p_transit_type =
                   pCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
               pCell->SetCellProliferativeType(p_transit_type);
@@ -281,6 +287,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
                 if (pEndoCell->HasCellProperty<CellStalk>() && pEndoCell->GetCellData()->GetItem("tagVessel") == p_neighbour_cell->GetCellData()->GetItem("tagVessel"))
                 {
                   pEndoCell->AddCellProperty(p_vessel);
+                  pEndoCell->GetCellData()->SetItem("target area", 0.3);
                 }
               }
             }

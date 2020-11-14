@@ -11,7 +11,7 @@ PerimeterDependentCellCycleModel::PerimeterDependentCellCycleModel()
     : AbstractCellCycleModel(),
       mMaxStretch(2.3),
       mMaxStretchPeriph(7.0),
-      mMinimumDivisionAge(0.1)
+      mMinimumDivisionAge(0.001)
 {
 }
 
@@ -42,7 +42,7 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
             {
 
                 double have_tip_neighboor = mpCell->GetCellData()->GetItem("have_tip_neighboor");
-                double have_vessel_neighboor = mpCell->GetCellData()->GetItem("have_vessel_neighboor");
+                // double have_vessel_neighboor = mpCell->GetCellData()->GetItem("have_vessel_neighboor");
                 double cell_elongation = mpCell->GetCellData()->GetItem("perimeter");
                 double cell_maxmin = mpCell->GetCellData()->GetItem("maxmin");
                 bool is_vessel = mpCell->template HasCellProperty<CellVessel>();
@@ -58,14 +58,22 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
                     cout << cell_maxmin << endl ;
                     mReadyToDivide = true;
                 }
-                else if (cell_elongation > 3.0 && is_vessel) // vessel 
+
+                else if (cell_elongation > 2.8 && is_vessel) // vessel
                 {
                     mReadyToDivide = true;
                 }
+
+                else if (cell_elongation > 2.0 && cell_maxmin > 7.0 && is_vessel) // vessel
+                {
+                    mReadyToDivide = true;
+                }
+                /*
                 else if (cell_elongation > mMaxStretch && have_vessel_neighboor > 0) // if vessel nieghbour should be also vessel
                 {
                     mReadyToDivide = true;
                 }
+                */
 
 
             }

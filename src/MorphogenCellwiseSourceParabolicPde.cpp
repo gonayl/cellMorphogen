@@ -71,20 +71,18 @@ double MorphogenCellwiseSourceParabolicPde<DIM>::ComputeSourceTerm(const ChasteP
 template<unsigned DIM>
 double MorphogenCellwiseSourceParabolicPde<DIM>::ComputeSourceTermAtNode(const Node<DIM>& rNode, double u)
 {
-  double coefficient = 0.0;
 
-double x = rNode.rGetLocation()[0];
-double y = rNode.rGetLocation()[1];
+  double source_coefficient = 1.0;
+  double decay_coeficient = 0.001;
 
-if (x*x+y*y <mSourceCoefficient)
-//if (x>-0.5*mSourceWidth && x<0.5*mSourceWidth)
-{
-  coefficient = 1.0;
-}
+  if (rNode.IsPeriphNode())
+  {
+      source_coefficient = 0.0 ;
+      decay_coeficient = 50.0 ;
+  }
 
-double decay_coeficient = 0.01;
 
-return coefficient - u*decay_coeficient;
+return source_coefficient - u*decay_coeficient;
 }
 
 template<unsigned DIM>

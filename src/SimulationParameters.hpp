@@ -29,7 +29,7 @@ public:
   static constexpr double AGE_TO_LUMEN_MATURITY = 48;
   static constexpr double SIZE_MIN_LUMEN = 0.2;
 
-  static constexpr bool SIZE_INCREMENTALE = false;
+  static constexpr bool SIZE_INCREMENTALE = true;
   static constexpr double SURFACE_IMPACT_ON_LUMEN_DERIVATE = 0.002;
   static constexpr double VECTOR_IMPACT_ON_LUMEN_DERIVATE = 0.0002;
 

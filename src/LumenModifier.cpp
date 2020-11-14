@@ -156,11 +156,11 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
                         }
 
 
-                    /*  bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
+                      bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
                       if(neighbour_is_lumen){
                         std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
                         pnCell->Kill();
-                      }*/
+                      }
                     }
                   }
                   double derivate = (sumVector - SimulationParameters::SURFACE_IMPACT_ON_LUMEN_DERIVATE * pCell->GetCellData()->GetItem("target area"))*SimulationTime::Instance()->GetTimeStep() * 2;
@@ -251,7 +251,7 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
                   bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
                   if(neighbour_is_lumen){
                     std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
-                    //pnCell->Kill();
+                    pnCell->GetCellData()->SetItem("target area",0.01);
                   }
                 }
               }

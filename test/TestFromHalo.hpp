@@ -17,6 +17,8 @@
 #include "CellMutationStatesWriter.hpp"
 #include "NeighbourWriter.hpp"
 
+#include "NewEndoGeneratorModifier.hpp"
+
 #include "ParabolicGrowingDomainPdeModifier.hpp"
 #include "MorphogenCellwiseSourceParabolicPde.hpp"
 #include "VolumeTrackingModifier.hpp"
@@ -146,16 +148,16 @@ using namespace std ;
 static const double M_TIME_FOR_SIMULATION = 48;
 static const double M_TIME_STEPS = 10;
 static const double M_NUM_CELLS_ACROSS = 10;
-static const double M_UPTAKE_RATE = 5.0 ;
-static const double M_DIFFUSION_CONSTANT = 5e-1;
-static const double M_DUDT_COEFFICIENT = 1.0;
-static const double M_DECAY_COEFFICIENT = 9.0;
+static const double M_UPTAKE_RATE = 50.0 ;
+static const double M_DIFFUSION_CONSTANT = 50.0;
+static const double M_DUDT_COEFFICIENT = 0.0001;
+static const double M_DECAY_COEFFICIENT = 1.0;
 static const double M_RADIUS = 100.0;
 static const double M_EPI = 5.0 ;
 static const double M_PEERIPHPERIPH = 5.0 ;
 static const double M_EPIBND = 10.0 ;
 static const double M_EPILUMEN = 5.0 ;
-static const double M_ENDOBND = 1.5 ;//chang
+static const double M_ENDOBND = 1.0 ;//chang
 static const double M_ENDOEPI = 5.0 ;
 static const double M_ENDOENDO = 1.0 ;
 static const double M_LUMENBND = 8.0 ;
@@ -210,7 +212,7 @@ private:
               p_cycle_model->SetCycleDuration(11);
               double birth_time = rand() % 11 + 1 ;
               p_cell->SetBirthTime(-birth_time);
-              p_cell->GetCellData()->SetItem("target area", 0.4);
+              p_cell->GetCellData()->SetItem("target area", 0.45);
             }
 
             p_cell->SetCellProliferativeType(p_transit_type);
@@ -231,7 +233,7 @@ private:
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.4);
+            p_cell->GetCellData()->SetItem("target area", 0.3);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -246,7 +248,7 @@ private:
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.4);
+            p_cell->GetCellData()->SetItem("target area", 0.3);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -360,14 +362,14 @@ public:
         std::cout << "Adding passive force" << endl ;
         // Create Forces and pass to simulation
         MAKE_PTR(DifferentialAdhesionForce<2>, p_force);
-        p_force->SetNagaiHondaDeformationEnergyParameter(99.0);
+        p_force->SetNagaiHondaDeformationEnergyParameter(55.0);
         p_force->SetNagaiHondaMembraneSurfaceEnergyParameter(1.0);
 
         p_force->SetEndoEndoAdhesionEnergyParameter(M_ENDOENDO*1.0);
         p_force->SetStalkStalkAdhesionEnergyParameter(M_ENDOENDO*1.0);
         p_force->SetStalkTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
         p_force->SetTipTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
-        p_force->SetLumenLumenAdhesionEnergyParameter(5.0);
+        p_force->SetLumenLumenAdhesionEnergyParameter(35.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetPeriphPeriphAdhesionEnergyParameter(M_PEERIPHPERIPH);
@@ -376,7 +378,7 @@ public:
         p_force->SetEndoLumenAdhesionEnergyParameter(35.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(M_ENDOBND);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(5.0);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(7.0);
         p_force->SetEpiBoundaryAdhesionEnergyParameter(M_EPIBND);
 
@@ -407,7 +409,7 @@ public:
         //simulator.AddSimulationModifier(p_polar_modifier) ;
         //MAKE_PTR(LabelTrackingModifier<2>, p_lumen_modifier) ;
         //simulator.AddSimulationModifier(p_lumen_modifier) ;
-/*
+
 
         // Diffusion de gradient, pas encore utile à ce stade (besoin pour simuler la motilité des cellules endo)
 
@@ -436,7 +438,7 @@ public:
         simulator.AddSimulationModifier(p_pde_modifier);
 
 
-*/
+
 
 
 
@@ -490,6 +492,7 @@ public:
         MAKE_PTR(SimuInfoModifier<2>, p_simuInfoModifier);
         simulator.AddSimulationModifier(p_simuInfoModifier);
 
+
         MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
         simulator.AddSimulationModifier(p_polarisation_modifier);
         p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*5.0);
@@ -508,6 +511,7 @@ public:
         p_lumen_modifier->SetLumenSizeFactor(M_LUMEN_SIZE_FACTOR_INI) ;
         p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI) ;
 
+
 /*
         MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
         simulator.AddSimulationModifier(morphogen_modifier);
@@ -516,8 +520,12 @@ public:
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
         std::cout << "Adding active force" << endl ;
-        MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (10.0));//force initiale, croissante
-        simulator.AddForce(p_motile_force);
+        MAKE_PTR_ARGS(MorphogenDrivenCellForce<2>, p_morphogen_motile_force, (10.0));//force initiale, croissante
+        simulator.AddForce(p_morphogen_motile_force);
+
+
+       MAKE_PTR_ARGS(MorphogenCellForce<2>, p_motile_force, (10.0));//force initiale, croissante
+       simulator.AddForce(p_motile_force);
 
         //std::cout << "Adding repulsion force" << endl ;
 
@@ -532,15 +540,19 @@ public:
 /*
         MAKE_PTR(ObstructionWriterModifier<2>, p_endopos_modifier);
         simulator.AddSimulationModifier(p_endopos_modifier);
+*/
+
 
         MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_obstruc_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_obstruc_bc);
-*/
 
-/*
         MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
-*/
+
+
+        MAKE_PTR(NewEndoGeneratorModifier<2>, p_newendo_modifier);
+        simulator.AddSimulationModifier(p_newendo_modifier);
+
 
         time_t now = time(0);
 
@@ -550,8 +562,8 @@ public:
 
         simulator.SetEndTime(48);
         simulator.SetDt(0.001);
-        simulator.SetSamplingTimestepMultiple(1000);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/Manuscrit/48h/test24");
+        simulator.SetSamplingTimestepMultiple(100);
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/Manuscript/48h/NolumenObstruNodynadhesionNewendo/2");
         // 1 : with mean of neighbouring gradient, 2: with tip cell gradient
         //3: fixed with -force, 0.001 3: same as 1-2 with mass center force
         //5: same as 4 with obstuction for every node (doesn't change) 6: with endobnd = 1

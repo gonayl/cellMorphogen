@@ -195,7 +195,7 @@ void LumenModifierWithParamFromHalo<DIM>::UpdateCellData(AbstractCellPopulation<
               bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
               if(neighbour_is_lumen){
                 std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
-                pnCell->Kill();
+                pnCell->GetCellData()->SetItem("target area",0.01);
               }
             }
           }

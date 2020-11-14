@@ -133,7 +133,8 @@ void ObstructionWriterModifier<SPACE_DIM>::UpdateCellData(AbstractCellPopulation
             }
         }
 
-        assert(boundary_nodes_pos.size() == 4) ;
+        //assert(boundary_nodes_pos.size() == 4) ;
+        std::cout<< boundary_nodes_pos.size() << std::endl ;
         std::cout << "(" << boundary_nodes_pos[0] << " ; " << boundary_nodes_pos[1] << ")(" << boundary_nodes_pos[2] << " ; " << boundary_nodes_pos[3] << ")" << endl ;
 
         double a; double b; double l; double r;

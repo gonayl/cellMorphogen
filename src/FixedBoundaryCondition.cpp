@@ -4,6 +4,7 @@
 #include "CellStalk.hpp"
 #include "CellTip.hpp"
 #include "CellVessel.hpp"
+#include "CellVessel.hpp"
 #include <stdlib.h>
 using namespace std ;
 
@@ -49,6 +50,8 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                 int stalk = 0 ;
                 int tip = 0 ;
                 int motile = 0 ;
+                int vessel = 0 ;
+
 
                 std::set<unsigned> elements_containing_node = this->mpCellPopulation->GetNode(node_index)->rGetContainingElementIndices();
 
@@ -65,9 +68,13 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                   {
                     tip++ ;
                   }
+                  if (p_cell->HasCellProperty<CellVessel>())
+                  {
+                    vessel++ ;
+                  }
                 }
 
-                if (stalk > 0 && tip > 0 )
+                if (stalk > 0 && tip > 0 && vessel < 2)
                 {
                   motile = 1 ;
                 }
@@ -83,7 +90,7 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                 {
                   CellPtr p_cell = this->mpCellPopulation->GetCellUsingLocationIndex(*element_index);
 
-                  if (p_cell->HasCellProperty<CellStalk>() && p_node->IsBoundaryNode() && motile == 0)
+                  if (p_cell->HasCellProperty<CellStalk>() && p_node->IsBoundaryNode() && motile == 0 && vessel < 2)
                   {
 
 /*

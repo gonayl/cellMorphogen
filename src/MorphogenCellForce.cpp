@@ -4,6 +4,7 @@
 
 #include "MorphogenCellForce.hpp"
 #include "CellTip.hpp"
+#include "CellMotile.hpp"
 #include "VertexBasedCellPopulation.hpp"
 #include <numeric>
 #include <iostream>
@@ -30,7 +31,7 @@ void MorphogenCellForce<DIM>::AddForceContribution(AbstractCellPopulation<DIM>& 
     {
         EXCEPTION("MorphogenCellForce is to be used with a VertexBasedCellPopulation only");
     }
-    double simulation_time = 48.0 ;
+    //double simulation_time = 48.0 ;
     // Helper variable that is a static cast of the cell population
     VertexBasedCellPopulation<DIM>* p_cell_population = static_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation);
 
@@ -39,7 +40,7 @@ void MorphogenCellForce<DIM>::AddForceContribution(AbstractCellPopulation<DIM>& 
              ++cell_iter)
 
     	{
-        if (cell_iter->template HasCellProperty<CellTip>())
+        if (cell_iter->template HasCellProperty<CellTip>() && !cell_iter->template HasCellProperty<CellMotile>())
         {
             double xmoy = cell_iter->GetCellData()->GetItem("mass_center_x");
             double ymoy = cell_iter->GetCellData()->GetItem("mass_center_y");
@@ -48,8 +49,11 @@ void MorphogenCellForce<DIM>::AddForceContribution(AbstractCellPopulation<DIM>& 
             double y = centre_of_cell2[1];
             double norme = sqrt((y - ymoy) * (y - ymoy) + (x - xmoy) * (x - xmoy));
             c_vector<double,DIM> force;
-            force(1) =   - mStrength * (1 + (SimulationTime::Instance()->GetTime()/simulation_time)) * (y - ymoy) / norme; // force that increse over time (simulate the increse in morphogen concentration)
-            force(0) =   - mStrength * (1 + (SimulationTime::Instance()->GetTime()/simulation_time)) * (x - xmoy) / norme;
+            //force(1) =   - mStrength * (1 + (SimulationTime::Instance()->GetTime()/simulation_time)) * (y - ymoy) / norme; // force that increse over time (simulate the increse in morphogen concentration)
+            //force(0) =   - mStrength * (1 + (SimulationTime::Instance()->GetTime()/simulation_time)) * (x - xmoy) / norme;
+            force(1) =   - mStrength * (y - ymoy) / norme; // force that increse over time (simulate the increse in morphogen concentration)
+            force(0) =   - mStrength * (x - xmoy) / norme;
+
 
 	    VertexElement<DIM, DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
 
