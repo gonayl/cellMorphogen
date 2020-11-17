@@ -132,6 +132,7 @@ void PerimeterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,D
 
         cell_iter->GetCellData()->SetItem("perimeter", cell_perimeter);
         cell_iter->GetCellData()->SetItem("maxmin", maxmin);
+        cell_iter->GetCellData()->SetItem("min", min);
 
 
     }

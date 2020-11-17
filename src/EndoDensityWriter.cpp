@@ -53,6 +53,11 @@ void EndoDensityWriter<ELEMENT_DIM, SPACE_DIM>::Visit(VertexBasedCellPopulation<
   double lumen_area = 0.0;
   double epi_area = 0.0;
 
+  int total_count = 0;
+  int endo_count = 0;
+  int lumen_count= 0;
+  int epi_count = 0;
+
   for (typename AbstractCellPopulation<SPACE_DIM>::Iterator cell_iter = pCellPopulation->Begin();
        cell_iter != pCellPopulation->End();
        ++cell_iter)
@@ -68,18 +73,22 @@ void EndoDensityWriter<ELEMENT_DIM, SPACE_DIM>::Visit(VertexBasedCellPopulation<
     if (pCell->HasCellProperty<CellEndo>())
     {
       endo_area = endo_area + cell_size;
+      endo_count++;
     }
     else if (pCell->HasCellProperty<CellLumen>())
     {
       lumen_area = lumen_area + cell_size;
+      lumen_count++;
     }
     else if (pCell->HasCellProperty<CellEpi>())
     {
       epi_area = epi_area + cell_size;
+      epi_count++;
     }
     total_area = total_area + cell_size;
+    total_count = endo_count + lumen_count + epi_count ;
   }
-  *this->mpOutStream << total_area << " " << endo_area << " " << lumen_area << " " << epi_area;
+  *this->mpOutStream << total_count << " " << total_area << " " << endo_count << " " << endo_area << " " << lumen_count << " " << lumen_area << " " << epi_count << " " << epi_area;
 }
 
 // Explicit instantiation

@@ -2,10 +2,12 @@
 #include "MeshBasedCellPopulation.hpp"
 #include "VertexBasedCellPopulation.hpp"
 #include "CellEndo.hpp"
+#include "CellStalk.hpp"
 #include "CellEpi.hpp"
 #include "CellLumen.hpp"
 #include "CellPolar.hpp"
 #include "CellPeriph.hpp"
+#include "CellBase.hpp"
 #include "CellCore.hpp"
 #include <stdlib.h>
 
@@ -73,6 +75,7 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
       double n_boundary_nodes = 0 ;
       double n_periph_nodes = 0 ;
       double n_endo_neighbours = 0;
+      bool is_stalk = cell_iter->template HasCellProperty<CellStalk>();
       VertexElement<DIM,DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
       unsigned num_nodes_in_element = p_element->GetNumNodes();
       for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
@@ -118,10 +121,39 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
 
         }
       }
-      else if (n_boundary_nodes > 0)
+      else if (n_boundary_nodes == 0 && is_stalk)
+      {
+        cell_iter->template RemoveCellProperty<CellPeriph>();
+        cell_iter->template RemoveCellProperty<CellBase>();
+        cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellCore>());
+        for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
+        {
+            unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
+            rCellPopulation.GetNode(node_index)->SetAsPeriphNode(false);
+
+        }
+      }
+      else if (n_boundary_nodes > 0 && !is_stalk )
       {
         cell_iter->template RemoveCellProperty<CellCore>();
         cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellPeriph>());
+        cell_iter->GetCellData()->SetItem("target area", 0.4);
+
+        for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
+        {
+            unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
+            rCellPopulation.GetNode(node_index)->SetAsPeriphNode(true);
+
+        }
+
+      }
+
+      else if (n_boundary_nodes > 0 && is_stalk)
+      {
+        cell_iter->template RemoveCellProperty<CellCore>();
+        cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellPeriph>());
+        cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellBase>());
+        cell_iter->GetCellData()->SetItem("target area", 0.5);
 
         for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
         {

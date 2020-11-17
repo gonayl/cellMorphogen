@@ -158,7 +158,8 @@ static const double M_PEERIPHPERIPH = 5.0 ;
 static const double M_EPIBND = 10.0 ;
 static const double M_EPILUMEN = 5.0 ;
 static const double M_ENDOBND = 1.0 ;//chang
-static const double M_ENDOEPI = 5.0 ;
+static const double M_ENDOCORE = 5.0 ;
+static const double M_ENDOPERIPH = 7.0 ;
 static const double M_ENDOENDO = 1.0 ;
 static const double M_LUMENBND = 8.0 ;
 static const double M_MOTILITY = 15.0 ;
@@ -233,7 +234,7 @@ private:
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.3);
+            p_cell->GetCellData()->SetItem("target area", 0.35);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -248,7 +249,7 @@ private:
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.3);
+            p_cell->GetCellData()->SetItem("target area", 0.35);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -328,7 +329,7 @@ public:
         cell_population.AddCellWriter<CellPosWriter>();
         cell_population.AddCellWriter<CellAllTypeWriter>();
         cell_population.AddCellWriter<CellVolumesWriter>();                   // COMMENTE PAR MOI
-        //cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
+        cell_population.AddPopulationWriter<CellAdjacencyMatrixWriter>();
         //cell_population.AddPopulationWriter<CalibrationErrorWriter>();        COMMENTE PAR MOI
 
 
@@ -369,16 +370,16 @@ public:
         p_force->SetStalkStalkAdhesionEnergyParameter(M_ENDOENDO*1.0);
         p_force->SetStalkTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
         p_force->SetTipTipAdhesionEnergyParameter(M_ENDOENDO*1.0);
-        p_force->SetLumenLumenAdhesionEnergyParameter(35.0);
+        p_force->SetLumenLumenAdhesionEnergyParameter(10.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetPeriphPeriphAdhesionEnergyParameter(M_PEERIPHPERIPH);
-        p_force->SetEndoEpiAdhesionEnergyParameter(M_ENDOEPI);
+        p_force->SetEndoEpiAdhesionEnergyParameter(M_ENDOCORE);
         p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(35.0);
 
         p_force->SetNagaiHondaCellBoundaryAdhesionEnergyParameter(10.0);
-        p_force->SetEndoBoundaryAdhesionEnergyParameter(5.0);
+        p_force->SetEndoBoundaryAdhesionEnergyParameter(M_ENDOBND);
         p_force->SetLumenBoundaryAdhesionEnergyParameter(7.0);
         p_force->SetEpiBoundaryAdhesionEnergyParameter(M_EPIBND);
 
@@ -496,7 +497,7 @@ public:
         MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
         simulator.AddSimulationModifier(p_polarisation_modifier);
         p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*5.0);
-        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*5.0);
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*6.0);
         p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI);
         p_polarisation_modifier->SetVecPolarisationDecrease(M_POLARDEC_INI);
 
@@ -512,10 +513,10 @@ public:
         p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI) ;
 
 
-/*
+
         MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
         simulator.AddSimulationModifier(morphogen_modifier);
-*/
+
 
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
@@ -536,12 +537,10 @@ public:
 
         //MAKE_PTR(DifferentialTargetAreaModifier<2>, p_growth_modifier);
         //simulator.AddSimulationModifier(p_growth_modifier);
-
 /*
         MAKE_PTR(ObstructionWriterModifier<2>, p_endopos_modifier);
         simulator.AddSimulationModifier(p_endopos_modifier);
 */
-
 
         MAKE_PTR_ARGS(ObstructionBoundaryCondition<2>, p_obstruc_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_obstruc_bc);
@@ -560,10 +559,10 @@ public:
 
         std::cout << "Growing Monolayer at : " << dt << endl ;
 
-        simulator.SetEndTime(48);
+        simulator.SetEndTime(96);
         simulator.SetDt(0.001);
         simulator.SetSamplingTimestepMultiple(100);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/Manuscript/48h/NolumenObstruNodynadhesionNewendo/2");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/Manuscrit/96h/LumenObstruNodynadhesionNewendoBISLumendiff/3/");
         // 1 : with mean of neighbouring gradient, 2: with tip cell gradient
         //3: fixed with -force, 0.001 3: same as 1-2 with mass center force
         //5: same as 4 with obstuction for every node (doesn't change) 6: with endobnd = 1
@@ -574,7 +573,7 @@ public:
         simulator.Solve();
 
         // Record mesh
-        VertexMeshWriter<2,2> vertex_mesh_writer("TestMorphogenMeshWriter", "morphogen_mesh_48h_noobstru_nofixed");
+        VertexMeshWriter<2,2> vertex_mesh_writer("TestMorphogenMeshWriter", "final_mesh_96h_obstru_fixed");
         vertex_mesh_writer.WriteFilesUsingMesh(p_mesh);
 
 

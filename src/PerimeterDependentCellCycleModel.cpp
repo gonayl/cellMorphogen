@@ -45,6 +45,7 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
                 // double have_vessel_neighboor = mpCell->GetCellData()->GetItem("have_vessel_neighboor");
                 double cell_elongation = mpCell->GetCellData()->GetItem("perimeter");
                 double cell_maxmin = mpCell->GetCellData()->GetItem("maxmin");
+                double cell_min = mpCell->GetCellData()->GetItem("min");
                 bool is_vessel = mpCell->template HasCellProperty<CellVessel>();
 
                 if (cell_elongation > mMaxStretch && have_tip_neighboor > 0) // following stalk
@@ -64,16 +65,21 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
                     mReadyToDivide = true;
                 }
 
-                else if (cell_elongation > 2.0 && cell_maxmin > 7.0 && is_vessel) // vessel
+                else if (cell_elongation > 2.0 && cell_maxmin > 8.0 && is_vessel) // vessel
                 {
                     mReadyToDivide = true;
                 }
-                /*
-                else if (cell_elongation > mMaxStretch && have_vessel_neighboor > 0) // if vessel nieghbour should be also vessel
+
+                else if (cell_elongation > 2.1 && cell_min < 0.11 && is_vessel) // if vessel nieghbour should be also vessel
                 {
                     mReadyToDivide = true;
                 }
-                */
+                else if (cell_elongation > 2.3 && cell_min < 0.15 && is_vessel) // if vessel nieghbour should be also vessel
+                {
+                    mReadyToDivide = true;
+                }
+
+
 
 
             }

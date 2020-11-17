@@ -9,6 +9,8 @@
 #include "TransitCellProliferativeType.hpp"
 #include "Debug.hpp"
 #include "CellVessel.hpp"
+#include "CellPeriph.hpp"
+
 
 #include <stdlib.h>
 #include "CellTip.hpp"
@@ -187,12 +189,27 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
         }
       }
 
-      //rtransforme une tip en non tip si elle rencontre un vaisseau autre que le siens
+      //rtransforme une tip en non tip si elle rencontre un vaisseau autre que le siens ou la périphérie
       if (pCell->HasCellProperty<CellTip>())
       {
         bool removeTip = false;
         VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
         std::set<unsigned> neighbour_indices = p_cell_population->GetNeighbouringLocationIndices(*cell_iter);
+
+        double n_boundary_nodes = 0 ;
+        VertexElement<DIM,DIM>* p_element = p_cell_population->GetElementCorrespondingToCell(pCell);
+        unsigned num_nodes_in_element = p_element->GetNumNodes();
+        for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
+        {
+            unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
+
+            if (rCellPopulation.GetNode(node_index)->IsBoundaryNode() )
+            {
+
+                n_boundary_nodes++ ;
+
+            }
+        }
 
         for (std::set<unsigned>::iterator neighbour_iter = neighbour_indices.begin();
              neighbour_iter != neighbour_indices.end();
@@ -209,8 +226,15 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
             }
 
           }
-
         }
+        
+        if (n_boundary_nodes > 0)
+        {
+            removeTip = true;
+            MARK ;
+        }
+
+
         //on la met stalk si en contact avec un autre vaisseau
         if(removeTip)
         {

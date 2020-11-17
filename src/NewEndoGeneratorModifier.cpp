@@ -10,7 +10,9 @@
 #include "CellPeriph.hpp"
 #include "CellCore.hpp"
 #include "CellMotile.hpp"
+#include "CellBase.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
+#include "SimulationParameters.hpp"
 
 #include "PerimeterDependentCellCycleModel.hpp"
 
@@ -76,31 +78,7 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
 
     //cout << endo_count_global << "endo stalk fixed cell(s) "  << endl ;
 
-    vector<double> endo_stalk_vector ;
-    endo_stalk_vector.push_back(162);
-    endo_stalk_vector.push_back(148);
-    endo_stalk_vector.push_back(471);
-    endo_stalk_vector.push_back(59);
-    endo_stalk_vector.push_back(13);
-    endo_stalk_vector.push_back(1200);
 
-/*
-    for (typename AbstractCellPopulation<DIM,DIM>::Iterator cell_iter = rCellPopulation.Begin();
-         cell_iter != rCellPopulation.End();
-         ++cell_iter)
-
-    {
-      if ( cell_iter->template HasCellProperty<CellPeriph>() && cell_iter->template HasCellProperty<CellEpi>())
-      {
-
-        int cell_endo_location = rCellPopulation.GetLocationIndexUsingCell(*cell_iter) ;
-        endo_stalk_vector.push_back(cell_endo_location) ;
-
-
-      }
-
-    }
-*/
     // MAKE_PTR(CellBoundary, p_border);
 
     //double time_max = 40.0 ;
@@ -113,20 +91,71 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
     double count = CounterSingletonEndo::Instance()->GetCount() ;
     double tip_index ;
     double stalk_index ;
+    vector<double> endo_stalk_vector ;
+    vector<double> endo_base_vector ;
+    double base_min_dist = 9999 ;
+    int randoEndo ;
 
-    double modulo = fmod(time_elapsed / 12.0 , 1.0) ;
+    double modulo = fmod(time_elapsed / 8.0 , 1.0) ;
     //std::cout << modulo << " / " << count << std::endl ;
 
     if (modulo == 0 && time_elapsed > 0 && count == 0)
     {
       CounterSingletonEndo::Instance()->IncrementCounter();
       std::cout << "now!" << std::endl ;
+
     }
+
+
+      // iterate over cell population to create vector with potential to be transofrmed into stalk cell as well as the base cells vector
+
+      for (typename AbstractCellPopulation<DIM,DIM>::Iterator cell_iter = rCellPopulation.Begin();
+           cell_iter != rCellPopulation.End();
+           ++cell_iter)
+      {
+        if (cell_iter->template HasCellProperty<CellPeriph>() && cell_iter->template HasCellProperty<CellEpi>())
+        {
+          int cell_endo_location = rCellPopulation.GetLocationIndexUsingCell(*cell_iter) ;
+          endo_stalk_vector.push_back(cell_endo_location) ;
+        }
+        if (cell_iter->template HasCellProperty<CellBase>())
+        {
+          int cell_base_location = rCellPopulation.GetLocationIndexUsingCell(*cell_iter) ;
+          endo_base_vector.push_back(cell_base_location) ;
+        }
+
+      }
+
+      // iterate over base cells to compute min distance
+
+      for (vector<double>::iterator base_iter = endo_base_vector.begin();
+           base_iter != endo_base_vector.end();
+           ++base_iter)
+      {
+          CellPtr p_current_base_cell = rCellPopulation.GetCellUsingLocationIndex(*base_iter);
+          c_vector<double, DIM> current_base_cell_location = rCellPopulation.GetLocationOfCellCentre(p_current_base_cell) ;
+
+          for (vector<double>::iterator base_iter2 = endo_base_vector.begin();
+               base_iter2 != endo_base_vector.end();
+               ++base_iter2)
+          {
+              CellPtr p_next_base_cell = rCellPopulation.GetCellUsingLocationIndex(*base_iter2);
+              c_vector<double, DIM> next_base_cell_location = rCellPopulation.GetLocationOfCellCentre(p_next_base_cell) ;
+              double current_dist = sqrt((current_base_cell_location[0] - next_base_cell_location[0])*(current_base_cell_location[0] - next_base_cell_location[0]) + (current_base_cell_location[1] - next_base_cell_location[1])*(current_base_cell_location[1] - next_base_cell_location[1])) ;
+
+              if ( current_dist < base_min_dist && current_dist > 0)
+              {
+                  base_min_dist = current_dist ;
+              }
+          }
+      }
+      base_min_dist = base_min_dist ;
+      randoEndo = rand() % endo_stalk_vector.size() ;
+
 
     //std::cout << time_elapsed << std::endl ;
     //std::cout << modulo << std::endl ;
 
-    int randoEndo = rand() % endo_stalk_vector.size() ;
     //chance_2_endo = time_elapsed/(time_max*count) ;
 
     //if (chance_2_endo >= 1)
@@ -148,6 +177,7 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
 
       //cout << chance_2_endo << endl ;
       int n_neighbour_endo = 0;
+      double min_edg = cell_iter->GetCellData()->GetItem("min") ;
       // bool need_tip = 0 ;
 
       int cell_location = rCellPopulation.GetLocationIndexUsingCell(*cell_iter) ;
@@ -165,18 +195,35 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
           {
               n_neighbour_endo++;
           }
+
       }
 
+      c_vector<double, DIM> current_epi_cell_location = rCellPopulation.GetLocationOfCellCentre(*cell_iter) ;
+      double min_dist = 0;
+      double previous_dist = 9999 ;
+      for (vector<double>::iterator base_iter3 = endo_base_vector.begin();
+           base_iter3 != endo_base_vector.end();
+           ++base_iter3)
+      {
+          CellPtr p_base_cell = rCellPopulation.GetCellUsingLocationIndex(*base_iter3);
+          c_vector<double, DIM> base_cell_location = rCellPopulation.GetLocationOfCellCentre(p_base_cell) ;
+          double current_dist = sqrt((current_epi_cell_location[0] - base_cell_location[0])*(current_epi_cell_location[0] - base_cell_location[0]) + (current_epi_cell_location[1] - base_cell_location[1])*(current_epi_cell_location[1] - base_cell_location[1])) ;
 
+          if (current_dist < previous_dist)
+          {
+              previous_dist = current_dist ;
+          }
+      }
 
+      min_dist = previous_dist ;
 
-      if (cell_iter->template HasCellProperty<CellPeriph>() && cell_iter->template HasCellProperty<CellEpi>() && count == 1 && time_elapsed > 0 && n_neighbour_endo == 0 && cell_location == endo_stalk_vector[randoEndo])
+      if (cell_iter->template HasCellProperty<CellPeriph>() && cell_iter->template HasCellProperty<CellEpi>() && count == 1 && time_elapsed > 0 && n_neighbour_endo == 0 && cell_location == endo_stalk_vector[randoEndo] && min_dist > base_min_dist && min_edg > 0.25)
       {
 
         cout << "cell " << rCellPopulation.GetLocationIndexUsingCell(*cell_iter) << " needs to be changed into a stalk cell" << endl ;
-
         stalk_index =  rCellPopulation.GetLocationIndexUsingCell(*cell_iter) ;
         need_stalk = 1 ;
+        cout << min_dist << endl ;
 
         // labelling tip cell
           int is_tip = 0 ;
@@ -243,6 +290,14 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
       cell_stalk->SetCellCycleModel(p_elong_model) ;
       cell_stalk->InitialiseCellCycleModel() ;
 
+      //FOR LUMEN
+      cell_stalk->GetCellData()->SetItem("cellIndex",SimulationParameters::getNextIndex());
+      cell_stalk->GetCellData()->SetItem("timeFromLastLumenGeneration",0);
+      cell_stalk->GetCellData()->SetItem("hadALumenDivision",0);
+      cell_stalk->GetCellData()->SetItem("lumenNearby",1);
+      cell_stalk->GetCellData()->SetItem("vecPolaX",0);
+      cell_stalk->GetCellData()->SetItem("vecPolaY",0);
+
       cell_stalk->GetCellData()->SetItem("tagVessel",-1);
 
 
@@ -251,60 +306,6 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
 
 
       //CounterSingletonEndo::Instance()->IncrementCounter();
-/*
-      // Adding the stalk cell to the obstruction file
-
-      vector<double> boundary_nodes_pos ;
-      VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
-      VertexElement<DIM,DIM>* p_element ;
-
-      p_element = p_cell_population->GetElementCorrespondingToCell(*cell_iter);
-
-      unsigned num_nodes_in_element = p_element->GetNumNodes();
-      for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
-      {
-          unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
-          unsigned n_elements = rCellPopulation.GetNode(node_index)->GetNumContainingElements() ;
-
-          if (rCellPopulation.GetNode(node_index)->IsBoundaryNode() && n_elements > 1  )
-          {
-            boundary_nodes_pos.push_back(rCellPopulation.GetNode(node_index)->rGetLocation()[0]);
-            boundary_nodes_pos.push_back(rCellPopulation.GetNode(node_index)->rGetLocation()[1]);
-          }
-      }
-
-      assert(boundary_nodes_pos.size() == 4) ;
-      std::cout << "(" << boundary_nodes_pos[0] << " ; " << boundary_nodes_pos[1] << ")(" << boundary_nodes_pos[2] << " ; " << boundary_nodes_pos[3] << ")" << endl ;
-
-      double a; double b; double l; double r;
-      c_vector<double, 2> direct_vector ;
-
-      c_vector<double, 2> centre_of_cell = rCellPopulation.GetLocationOfCellCentre(*cell_iter);
-
-      direct_vector[0] = cell_iter->GetCellData()->GetItem("morphogen_grad_x") ;
-      direct_vector[1] = cell_iter->GetCellData()->GetItem("morphogen_grad_y") ;
-
-      a =  direct_vector[1] ; // a
-      b =  - direct_vector[0] ; // b
-      l = - direct_vector[1]*boundary_nodes_pos[0] + direct_vector[0]*boundary_nodes_pos[1] ; // l
-      r = - direct_vector[1]*boundary_nodes_pos[2] + direct_vector[0]*boundary_nodes_pos[3] ; // r
-      // WARNING : the order is important !!
-
-      cout << "pushing data for cell " << rCellPopulation.GetLocationIndexUsingCell(*cell_iter) << endl ;
-      cell_iter->GetCellData()->SetItem("xpos_l", boundary_nodes_pos[0]) ;
-      cell_iter->GetCellData()->SetItem("ypos_l", boundary_nodes_pos[1]) ;
-      cell_iter->GetCellData()->SetItem("xpos_r", boundary_nodes_pos[2]) ;
-      cell_iter->GetCellData()->SetItem("ypos_r", boundary_nodes_pos[3]) ;
-
-      ofstream myfile ("example.txt", std::ios::app);
-
-      if (myfile.is_open())
-      {
-        myfile << a << " " << b << " " << l << " " << r << " " << centre_of_cell[0] << " " << centre_of_cell[1] << " " ;
-      }
-
-      myfile.close();
-      */
 
       cout << "cell " << tip_index << " needs to be changed into a tip cell" << endl ;
       CellPtr cell_tip = rCellPopulation.GetCellUsingLocationIndex(tip_index);
@@ -313,6 +314,67 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
       cell_tip->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellTip>());
       cell_tip->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellMotile>());
       cell_tip->GetCellData()->SetItem("tagVessel",cell_tip->GetCellData()->GetItem("cellIndex"));
+      cell_tip->GetCellData()->SetItem("cellIndex",SimulationParameters::getNextIndex());
+      cell_tip->GetCellData()->SetItem("timeFromLastLumenGeneration",0);
+      cell_tip->GetCellData()->SetItem("hadALumenDivision",0);
+      cell_tip->GetCellData()->SetItem("lumenNearby",1);
+      cell_tip->GetCellData()->SetItem("vecPolaX",0);
+      cell_tip->GetCellData()->SetItem("vecPolaY",0);
+
+
+            // Adding the stalk cell to the obstruction file
+
+            vector<double> boundary_nodes_pos ;
+            VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
+            VertexElement<DIM,DIM>* p_element ;
+
+            p_element = p_cell_population->GetElementCorrespondingToCell(cell_stalk);
+
+            unsigned num_nodes_in_element = p_element->GetNumNodes();
+            for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
+            {
+                unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
+                unsigned n_elements = rCellPopulation.GetNode(node_index)->GetNumContainingElements() ;
+
+                if (rCellPopulation.GetNode(node_index)->IsBoundaryNode() && n_elements > 1  )
+                {
+                  boundary_nodes_pos.push_back(rCellPopulation.GetNode(node_index)->rGetLocation()[0]);
+                  boundary_nodes_pos.push_back(rCellPopulation.GetNode(node_index)->rGetLocation()[1]);
+                }
+            }
+
+            assert(boundary_nodes_pos.size() == 4) ;
+            std::cout << "(" << boundary_nodes_pos[0] << " ; " << boundary_nodes_pos[1] << ")(" << boundary_nodes_pos[2] << " ; " << boundary_nodes_pos[3] << ")" << endl ;
+
+            double a; double b; double l; double r;
+            c_vector<double, 2> direct_vector ;
+
+            c_vector<double, 2> centre_of_cell = rCellPopulation.GetLocationOfCellCentre(cell_stalk);
+
+            direct_vector[0] = cell_stalk->GetCellData()->GetItem("morphogen_grad_x") ;
+            direct_vector[1] = cell_stalk->GetCellData()->GetItem("morphogen_grad_y") ;
+
+            a =  direct_vector[1] ; // a
+            b =  - direct_vector[0] ; // b
+            l = - direct_vector[1]*boundary_nodes_pos[0] + direct_vector[0]*boundary_nodes_pos[1] ; // l
+            r = - direct_vector[1]*boundary_nodes_pos[2] + direct_vector[0]*boundary_nodes_pos[3] ; // r
+            // WARNING : the order is important !!
+
+            cout << "pushing data for cell " << rCellPopulation.GetLocationIndexUsingCell(cell_stalk) << endl ;
+            cell_stalk->GetCellData()->SetItem("xpos_l", boundary_nodes_pos[0]) ;
+            cell_stalk->GetCellData()->SetItem("ypos_l", boundary_nodes_pos[1]) ;
+            cell_stalk->GetCellData()->SetItem("xpos_r", boundary_nodes_pos[2]) ;
+            cell_stalk->GetCellData()->SetItem("ypos_r", boundary_nodes_pos[3]) ;
+
+            ofstream myfile ("example.txt", std::ios::app);
+
+            if (myfile.is_open())
+            {
+              myfile << a << " " << b << " " << l << " " << r << " " << centre_of_cell[0] << " " << centre_of_cell[1] << " " ;
+            }
+
+            myfile.close();
+
 
       need_tip = 0 ;
       CounterSingletonEndo::Instance()->ResetCountToZero();
