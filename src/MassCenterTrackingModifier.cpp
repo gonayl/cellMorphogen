@@ -10,8 +10,7 @@
 #include "Debug.hpp"
 #include "CellVessel.hpp"
 #include "CellPeriph.hpp"
-
-
+#include "SimulationParameters.hpp"
 #include <stdlib.h>
 #include "CellTip.hpp"
 #include "CellStalk.hpp"
@@ -227,8 +226,8 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
 
           }
         }
-        
-        if (n_boundary_nodes > 0)
+
+        if ((SimulationParameters::VEGF_KO == false) && n_boundary_nodes > 0)
         {
             removeTip = true;
             MARK ;
@@ -236,7 +235,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
 
 
         //on la met stalk si en contact avec un autre vaisseau
-        if(removeTip)
+        if(removeTip && (SimulationParameters::VEGF_KO == false))
         {
           pCell->RemoveCellProperty<CellTip>();
           pCell->RemoveCellProperty<CellMotile>();
@@ -245,7 +244,14 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
 
           pCell->AddCellProperty(p_stalk);
           pCell->AddCellProperty(p_vessel);
-          pCell->GetCellData()->SetItem("target area", 0.3);
+          if (SimulationParameters::SMALL_SIMU)
+          {
+            pCell->GetCellData()->SetItem("target area", 0.8);
+          }
+          else if(SimulationParameters::SMALL_SIMU == false)
+          {
+            pCell->GetCellData()->SetItem("target area", 0.3);
+          }
 
           boost::shared_ptr<AbstractCellProperty> p_transit_type =
               pCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
@@ -259,7 +265,14 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
             if (pEndoCell->HasCellProperty<CellStalk>() && pEndoCell->GetCellData()->GetItem("tagVessel") == pCell->GetCellData()->GetItem("tagVessel"))
             {
               pEndoCell->AddCellProperty(p_vessel);
-              pEndoCell->GetCellData()->SetItem("target area", 0.3);
+              if (SimulationParameters::SMALL_SIMU)
+              {
+                pEndoCell->GetCellData()->SetItem("target area", 0.8);
+              }
+              else if(SimulationParameters::SMALL_SIMU == false)
+              {
+                pEndoCell->GetCellData()->SetItem("target area", 0.3);
+              }
             }
           }
 
@@ -275,7 +288,7 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
     else{
 
         //change les Tip qui se touchent en stalk (les voisines seulement)
-        if (pCell->HasCellProperty<CellTip>())
+        if (pCell->HasCellProperty<CellTip>() && (SimulationParameters::VEGF_KO == false))
         {
 
           VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
@@ -298,7 +311,14 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
               boost::shared_ptr<AbstractCellProperty> p_vessel(CellPropertyRegistry::Instance()->Get<CellVessel>());
               p_neighbour_cell->AddCellProperty(p_stalk);
               p_neighbour_cell->AddCellProperty(p_vessel);
-              p_neighbour_cell->GetCellData()->SetItem("target area", 0.3);
+              if (SimulationParameters::SMALL_SIMU)
+              {
+                p_neighbour_cell->GetCellData()->SetItem("target area", 0.8);
+              }
+              else if(SimulationParameters::SMALL_SIMU == false)
+              {
+                p_neighbour_cell->GetCellData()->SetItem("target area", 0.3);
+              }
               boost::shared_ptr<AbstractCellProperty> p_transit_type =
                   pCell->rGetCellPropertyCollection().GetCellPropertyRegistry()->Get<TransitCellProliferativeType>();
               pCell->SetCellProliferativeType(p_transit_type);
@@ -311,7 +331,14 @@ void MassCenterTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,
                 if (pEndoCell->HasCellProperty<CellStalk>() && pEndoCell->GetCellData()->GetItem("tagVessel") == p_neighbour_cell->GetCellData()->GetItem("tagVessel"))
                 {
                   pEndoCell->AddCellProperty(p_vessel);
-                  pEndoCell->GetCellData()->SetItem("target area", 0.3);
+                  if (SimulationParameters::SMALL_SIMU)
+                  {
+                    pEndoCell->GetCellData()->SetItem("target area", 0.8);
+                  }
+                  else if(SimulationParameters::SMALL_SIMU == false)
+                  {
+                    pEndoCell->GetCellData()->SetItem("target area", 0.3);
+                  }
                 }
               }
             }

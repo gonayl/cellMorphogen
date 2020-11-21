@@ -250,8 +250,8 @@ void LumenModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>& rCellPo
 
                   bool neighbour_is_lumen = pnCell->template HasCellProperty<CellLumen>();
                   if(neighbour_is_lumen){
-                  //  std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
-                    //pnCell->Kill();
+                    std::cout << "Kill a lumen because neighbours of a lumen" << '\n';
+                    pCell->GetCellData()->SetItem("target area",0.0);
                   }
                 }
               }

@@ -88,10 +88,11 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
                      ++element_index)
                 {
                   CellPtr p_cell = this->mpCellPopulation->GetCellUsingLocationIndex(*element_index);
-                  if (p_cell->HasCellProperty<CellEndo>())
+                  if (p_cell->HasCellProperty<CellEndo>() && p_cell->HasCellProperty<CellTip>())
                   {
                     is_endo++ ;
                   }
+
                 }
 
 
@@ -163,7 +164,7 @@ void ObstructionBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryConditio
                 //double dist4 = sqrt(pow((x_coordinate - xmoy),2) + pow((y_coordinate - ymoy),2)) ;
                 // c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second; // node previous location
 
-                if ( p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 < dist2 && innerproduct > 0)
+                if ( p_node->IsBoundaryNode() && (b*y_coordinate + a*x_coordinate) > -l && (b*y_coordinate + a*x_coordinate) < -r && dist1 < dist2 && innerproduct > 0 )
                 {
                   p_node->rGetModifiableLocation()[0] = x_proj_l;
                   p_node->rGetModifiableLocation()[1] = y_proj_l;

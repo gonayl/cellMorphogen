@@ -1,6 +1,7 @@
 #include "PerimeterDependentCellCycleModel.hpp"
 #include "RandomNumberGenerator.hpp"
 #include "DifferentiatedCellProliferativeType.hpp"
+#include "SimulationParameters.hpp"
 #include "CellStalk.hpp"
 #include "CellPeriph.hpp"
 #include "CellCore.hpp"
@@ -33,9 +34,9 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
 {
     assert(mpCell != nullptr);
 
-    if (!mReadyToDivide)
+    if (!mReadyToDivide )
     {
-        if (GetAge() > mMinimumDivisionAge)
+        if (GetAge() > mMinimumDivisionAge && SimulationParameters::DIF_ADHESION == false)
         {
             // double dt = SimulationTime::Instance()->GetTimeStep();
             if (!(mpCell->GetCellProliferativeType()->IsType<DifferentiatedCellProliferativeType>()))
@@ -60,7 +61,7 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
                     mReadyToDivide = true;
                 }
 
-                else if (cell_elongation > 2.8 && is_vessel) // vessel
+                else if (cell_elongation > 2.8 && is_vessel && GetAge() > 0.1) // vessel
                 {
                     mReadyToDivide = true;
                 }
@@ -70,17 +71,14 @@ bool PerimeterDependentCellCycleModel::ReadyToDivide()
                     mReadyToDivide = true;
                 }
 
-                else if (cell_elongation > 2.1 && cell_min < 0.11 && is_vessel) // if vessel nieghbour should be also vessel
+                else if (cell_elongation > 2.1 && cell_min < 0.11 && is_vessel && GetAge() > 0.1) // if vessel nieghbour should be also vessel
                 {
                     mReadyToDivide = true;
                 }
-                else if (cell_elongation > 2.3 && cell_min < 0.15 && is_vessel) // if vessel nieghbour should be also vessel
+                else if (cell_elongation > 2.3 && cell_min < 0.15 && is_vessel && GetAge() > 0.1) // if vessel nieghbour should be also vessel
                 {
                     mReadyToDivide = true;
                 }
-
-
-
 
             }
         }

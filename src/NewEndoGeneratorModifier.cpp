@@ -99,7 +99,7 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
     double modulo = fmod(time_elapsed / 8.0 , 1.0) ;
     //std::cout << modulo << " / " << count << std::endl ;
 
-    if (modulo == 0 && time_elapsed > 0 && count == 0)
+    if (modulo == 0 && time_elapsed > 24 && count == 0)
     {
       CounterSingletonEndo::Instance()->IncrementCounter();
       std::cout << "now!" << std::endl ;
@@ -323,7 +323,7 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
 
 
             // Adding the stalk cell to the obstruction file
-
+/*
             vector<double> boundary_nodes_pos ;
             VertexBasedCellPopulation<DIM>* p_cell_population = dynamic_cast<VertexBasedCellPopulation<DIM>*>(&rCellPopulation) ;
             VertexElement<DIM,DIM>* p_element ;
@@ -351,8 +351,17 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
 
             c_vector<double, 2> centre_of_cell = rCellPopulation.GetLocationOfCellCentre(cell_stalk);
 
-            direct_vector[0] = cell_stalk->GetCellData()->GetItem("morphogen_grad_x") ;
-            direct_vector[1] = cell_stalk->GetCellData()->GetItem("morphogen_grad_y") ;
+            if (SimulationParameters::VEGF_KO == false)
+            {
+              direct_vector[0] = cell_stalk->GetCellData()->GetItem("morphogen_grad_x") ;
+              direct_vector[1] = cell_stalk->GetCellData()->GetItem("morphogen_grad_y") ;
+            }
+            else if (SimulationParameters::VEGF_KO == true)
+            {
+              c_vector<double, DIM> population_center = rCellPopulation.GetCentroidOfCellPopulation();
+              direct_vector[0] = centre_of_cell[0] - population_center[0] ;
+              direct_vector[1] = centre_of_cell[1] - population_center[1] ;
+            }
 
             a =  direct_vector[1] ; // a
             b =  - direct_vector[0] ; // b
@@ -374,7 +383,7 @@ void NewEndoGeneratorModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DI
             }
 
             myfile.close();
-
+*/
 
       need_tip = 0 ;
       CounterSingletonEndo::Instance()->ResetCountToZero();

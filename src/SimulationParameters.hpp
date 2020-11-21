@@ -5,7 +5,7 @@ class SimulationParameters{
 public:
 
   //Simulation
-  static constexpr double TIMESTEP = 0.002;
+  static constexpr double TIMESTEP = 0.01; // WARNING : should be 0.001, "timestep" is now multiply by * to be coherent with our previous calibration
   static constexpr double TIME_OF_SIMULATION = 96;
 
   //influence the size of the polarization vector
@@ -18,14 +18,14 @@ public:
 
 
   //Rules for lumen generation
-  static constexpr double THRESHOLD_POLARISATION_EPI = 5;
+  static constexpr double THRESHOLD_POLARISATION_EPI = 1.0;
   static constexpr double AGE_DIV_MIN = 0.05;
   static constexpr double AGE_DIV_LUMEN_MIN = 1;
   static constexpr double TIME_BEETWEN_TWO_LUMEN_GENERATION = 0.5;
   static constexpr double NBR_CELL_BETWEEN_TWO_LUMEN = 2;
 
   //size of the lumen
-  static constexpr double LUMEN_SIZE_FACTOR = 0.022;
+  static constexpr double LUMEN_SIZE_FACTOR = 0.02;
   static constexpr double AGE_TO_LUMEN_MATURITY = 48;
   static constexpr double SIZE_MIN_LUMEN = 0.2;
 
@@ -37,12 +37,16 @@ public:
   static constexpr bool GENERATE_VESSEL = true;
 
 
-  //Function generating a new index at each call
+  //Function generating a new index at each calltrue
   //!!! this is a static function
 
   static int index_cell;
 
   static int getNextIndex();
+
+  static constexpr bool DIF_ADHESION = true;
+  static constexpr bool VEGF_KO = false ;
+  static constexpr bool SMALL_SIMU = true ;
 
 
 };

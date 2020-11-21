@@ -79,6 +79,7 @@
 #include "CellBoundary.hpp"
 #include "CellCore.hpp"
 #include "CellPeriph.hpp"
+#include "CellBase.hpp"
 #include "CellLabelWriter.hpp"
 #include "CellTypeWriter.hpp"
 #include "CellAllTypeWriter.hpp"
@@ -156,15 +157,16 @@ static const double M_RADIUS = 100.0;
 static const double M_EPI = 5.0 ;
 static const double M_PEERIPHPERIPH = 5.0 ;
 static const double M_EPIBND = 10.0 ;
-static const double M_EPILUMEN = 5.0 ;
+static const double M_EPILUMEN = 10.0 ;
 static const double M_ENDOBND = 1.0 ;//chang
 static const double M_ENDOCORE = 5.0 ;
-static const double M_ENDOPERIPH = 7.0 ;
+static const double M_ENDOPERIPH = 10.0 ;
 static const double M_ENDOENDO = 1.0 ;
 static const double M_LUMENBND = 8.0 ;
 static const double M_MOTILITY = 15.0 ;
 static const double M_EPIEPI_INI = -0.008 ;
 static const double M_ENDOEPI_INI = 0.024 ;
+static const double M_PERIPHEPI_INI = 0.024 ;
 static const double M_LUMENEPI_INI = -0.015 ;
 static const double M_POLARDEC_INI = 0.0075 ;
 static const double M_LUMEN_SIZE_FACTOR_INI = 0.007 ;
@@ -203,17 +205,17 @@ private:
             CellPtr p_cell(new Cell(p_state, p_cycle_model));
             if (boundary_input[i] == 0)
             {
-              p_cycle_model->SetCycleDuration(32) ;
-              p_cell->GetCellData()->SetItem("target area", 0.4);
+              p_cycle_model->SetCycleDuration(999) ;
+              p_cell->GetCellData()->SetItem("target area", 1.0);
               double birth_time = rand() % 32 + 1 ;
               p_cell->SetBirthTime(-birth_time);
             }
             else if (boundary_input[i] == 1 )
             {
-              p_cycle_model->SetCycleDuration(11);
+              p_cycle_model->SetCycleDuration(999);
               double birth_time = rand() % 11 + 1 ;
               p_cell->SetBirthTime(-birth_time);
-              p_cell->GetCellData()->SetItem("target area", 0.45);
+              p_cell->GetCellData()->SetItem("target area", 1.2);
             }
 
             p_cell->SetCellProliferativeType(p_transit_type);
@@ -234,7 +236,7 @@ private:
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.35);
+            p_cell->GetCellData()->SetItem("target area", 1.2);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -249,7 +251,7 @@ private:
             double birth_time = rand() % 10 + 1 ;
             p_cell->SetBirthTime(-birth_time);
             p_cell->InitialiseCellCycleModel();
-            p_cell->GetCellData()->SetItem("target area", 0.35);
+            p_cell->GetCellData()->SetItem("target area", 0.45);
             // Initial Condition for Morphogen PDE
             p_cell->GetCellData()->SetItem("morphogen",0.0);
             p_cell->GetCellData()->SetItem("morphogen_grad_x",0.0);
@@ -272,7 +274,7 @@ public:
         ifstream inFile ;
         int x ;
         //inFile.open("testoutput/SimpleConditionInit/test_label_simple.txt") ;
-        inFile.open("testoutput/test_label_simple.txt") ;
+        inFile.open("testoutput/test_label_simple_discussion.txt") ;
         std::vector<double> label_input;
         if(!inFile)
         {
@@ -287,7 +289,7 @@ public:
         ifstream inFileBnd ;
         int x_bnd ;
         //inFileBnd.open("testoutput/SimpleConditionInit/boundary_input.txt") ;
-        inFileBnd.open("testoutput/boundary_input.txt") ;
+        inFileBnd.open("testoutput/boundary_input_discussion.txt") ;
         std::vector<double> boundary_input;
         if(!inFileBnd)
         {
@@ -301,26 +303,27 @@ public:
         cout << boundary_input.size() << endl ;
 
         // Create Mesh
-
+/*
         //VertexMeshReader<2,2> mesh_reader("testoutput/TestMorphogenMeshWriter/morphogen_mesh");
         VertexMeshReader<2,2> mesh_reader("testoutput/mesh/final_mesh");
         MutableVertexMesh<2,2> p_mesh;
         p_mesh.ConstructFromMeshReader(mesh_reader);
         p_mesh.SetCellRearrangementThreshold(0.1);
+*/
 
-        /*std::cout << "Creating mesh" << endl ;
+        std::cout << "Creating mesh" << endl ;
 
         HoneycombVertexMeshGenerator generator(4, 4);
         MutableVertexMesh<2,2>* p_mesh = generator.GetMesh();
-        p_mesh->SetCellRearrangementThreshold(0.1);*/
+        p_mesh->SetCellRearrangementThreshold(0.1);
 
         std::cout << "mesh generated" << endl ;
 
         // Create Cells
         std::vector<CellPtr> cells;
-        GenerateCells(p_mesh.GetNumElements(),cells,label_input,boundary_input);
+        GenerateCells(p_mesh->GetNumElements(),cells,label_input,boundary_input);
 
-        VertexBasedCellPopulation<2> cell_population(p_mesh, cells);
+        VertexBasedCellPopulation<2> cell_population(*p_mesh, cells);
 
         std::cout << "cells generated" << endl ;
 
@@ -350,6 +353,7 @@ public:
         MAKE_PTR(CellLabel, p_label);
         MAKE_PTR(CellStalk, p_stalk);
         MAKE_PTR(CellMotile, p_motile);
+        MAKE_PTR(CellBase, p_base);
 
         // Create Simulation
         OffLatticeSimulation<2> simulator(cell_population);
@@ -373,8 +377,9 @@ public:
         p_force->SetLumenLumenAdhesionEnergyParameter(10.0);
         p_force->SetCoreCoreAdhesionEnergyParameter(M_EPI);
         p_force->SetCorePeriphAdhesionEnergyParameter(M_EPI);
-        p_force->SetPeriphPeriphAdhesionEnergyParameter(M_PEERIPHPERIPH);
+        p_force->SetPeriphPeriphAdhesionEnergyParameter(M_EPI);
         p_force->SetEndoEpiAdhesionEnergyParameter(M_ENDOCORE);
+        p_force->SetEndoPeriphAdhesionEnergyParameter(M_ENDOCORE);
         p_force->SetEpiLumenAdhesionEnergyParameter(6.0);
         p_force->SetEndoLumenAdhesionEnergyParameter(35.0);
 
@@ -497,7 +502,8 @@ public:
         MAKE_PTR(PolarisationModifier<2>, p_polarisation_modifier);
         simulator.AddSimulationModifier(p_polarisation_modifier);
         p_polarisation_modifier->SetEpiEpiPolarisationParameter(M_EPIEPI_INI*5.0);
-        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*6.0);
+        p_polarisation_modifier->SetEndoEpiPolarisationParameter(M_ENDOEPI_INI*5.0);
+        //p_polarisation_modifier->SetPeriphEpiPolarisationParameter(M_PERIPHEPI_INI*5.0);
         p_polarisation_modifier->SetLumenEpiPolarisationParameter(M_LUMENEPI_INI);
         p_polarisation_modifier->SetVecPolarisationDecrease(M_POLARDEC_INI);
 
@@ -513,10 +519,10 @@ public:
         p_lumen_modifier->SetlumenDuration2TargetArea(M_DURATION2_INI) ;
 
 
-
+/*
         MAKE_PTR(MorphogenTrackingModifier<2>, morphogen_modifier);
         simulator.AddSimulationModifier(morphogen_modifier);
-
+*/
 
         // NE PAS DECOMMENTER LA SECTION SUIVANTE (bugs à régler)
 
@@ -548,10 +554,10 @@ public:
         MAKE_PTR_ARGS(FixedBoundaryCondition<2>, p_fixed_bc, (&cell_population));
         simulator.AddCellPopulationBoundaryCondition(p_fixed_bc);
 
-
+/*
         MAKE_PTR(NewEndoGeneratorModifier<2>, p_newendo_modifier);
         simulator.AddSimulationModifier(p_newendo_modifier);
-
+*/
 
         time_t now = time(0);
 
@@ -560,9 +566,9 @@ public:
         std::cout << "Growing Monolayer at : " << dt << endl ;
 
         simulator.SetEndTime(96);
-        simulator.SetDt(0.001);
+        simulator.SetDt(0.01);
         simulator.SetSamplingTimestepMultiple(100);
-        simulator.SetOutputDirectory("CellMorphogen/VertexModel/Manuscrit/96h/LumenObstruNodynadhesionNewendoBISLumendiff/3/");
+        simulator.SetOutputDirectory("CellMorphogen/VertexModel/Manuscrit/Discussion/Itga/DiffAdhesion/withPeriph");
         // 1 : with mean of neighbouring gradient, 2: with tip cell gradient
         //3: fixed with -force, 0.001 3: same as 1-2 with mass center force
         //5: same as 4 with obstuction for every node (doesn't change) 6: with endobnd = 1
@@ -573,8 +579,8 @@ public:
         simulator.Solve();
 
         // Record mesh
-        VertexMeshWriter<2,2> vertex_mesh_writer("TestMorphogenMeshWriter", "final_mesh_96h_obstru_fixed");
-        vertex_mesh_writer.WriteFilesUsingMesh(p_mesh);
+        VertexMeshWriter<2,2> vertex_mesh_writer("TestMorphogenMeshWriter", "discu_mesh_96h");
+        vertex_mesh_writer.WriteFilesUsingMesh(*p_mesh);
 
 
     }

@@ -78,7 +78,7 @@ bool UniformG1GenerationalBoundaryCellCycleModel::ReadyToDivide()
    //Si pour lumen
    if (!mReadyToDivide)
    {
-     if (mpCell->HasCellProperty<CellEpi>() && mpCell->HasCellProperty<CellCore>())
+     if (mpCell->HasCellProperty<CellEpi>() && mpCell->HasCellProperty<CellCore>() )
      {
        double timeFromLastGen = mpCell->GetCellData()->GetItem("timeFromLastLumenGeneration");
 

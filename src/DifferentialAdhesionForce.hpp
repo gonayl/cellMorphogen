@@ -75,6 +75,13 @@ private:
     double mEndoEpiAdhesionEnergyParameter;
 
     /**
+     * Cell-cell adhesion energy parameter for endothelial and epithelial cells.
+     * Has has units of kg (cell size at equilibrium rest length)^2 s^-2.
+     * Takes the default value 1.0.
+     */
+    double mEndoPeriphAdhesionEnergyParameter;
+
+    /**
      * Cell-cell adhesion energy parameter for lumen and epithelial cells.
      * Has has units of kg (cell size at equilibrium rest length)^2 s^-2.
      * Takes the default value 1.0.
@@ -149,6 +156,7 @@ private:
         archive & mCorePeriphAdhesionEnergyParameter;
         archive & mPeriphPeriphAdhesionEnergyParameter;
         archive & mEndoEpiAdhesionEnergyParameter;
+        archive & mEndoPeriphAdhesionEnergyParameter;
         archive & mEpiLumenAdhesionEnergyParameter;
         archive & mEndoLumenAdhesionEnergyParameter;
         archive & mStalkStalkAdhesionEnergyParameter;
@@ -201,6 +209,8 @@ public:
 
     double GetEndoEpiAdhesionEnergyParameter();
 
+    double GetEndoPeriphAdhesionEnergyParameter();
+
     double GetEpiLumenAdhesionEnergyParameter();
 
     double GetEndoLumenAdhesionEnergyParameter();
@@ -231,6 +241,8 @@ public:
     void SetPeriphPeriphAdhesionEnergyParameter(double periphPeriphAdhesionEnergyParameter);
 
     void SetEndoEpiAdhesionEnergyParameter(double endoEpiAdhesionEnergyParameter);
+
+    void SetEndoPeriphAdhesionEnergyParameter(double endoPeriphAdhesionEnergyParameter);
 
     void SetEpiLumenAdhesionEnergyParameter(double epiLumenAdhesionEnergyParameter);
 

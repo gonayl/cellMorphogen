@@ -7,6 +7,7 @@
 #include "CellCore.hpp"
 #include "CellPeriph.hpp"
 #include "Debug.hpp"
+#include "SimulationParameters.hpp"
 
 template<unsigned DIM>
 DifferentialAdhesionForce<DIM>::DifferentialAdhesionForce()
@@ -18,6 +19,7 @@ DifferentialAdhesionForce<DIM>::DifferentialAdhesionForce()
       mCorePeriphAdhesionEnergyParameter(1.0),
       mPeriphPeriphAdhesionEnergyParameter(1.0),
       mEndoEpiAdhesionEnergyParameter(1.0),
+      mEndoPeriphAdhesionEnergyParameter(1.0),
       mEpiLumenAdhesionEnergyParameter(1.0),
       mEndoLumenAdhesionEnergyParameter(1.0),
       mStalkStalkAdhesionEnergyParameter(1.0),
@@ -40,11 +42,8 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
                                                                       VertexBasedCellPopulation<DIM>& rVertexCellPopulation)
 {
 
-  /*  double a_cdh = -0.3 ;
-    double b_cdh = 1.05 ;
-    double a_itg = -0.4 ;
-    double b_itg = 1.03 ;*/
-      double simulation_time = 48.0 ;
+
+    double simulation_time = 48.0 ;
     // Find the indices of the elements owned by each node
     std::set<unsigned> elements_containing_nodeA = pNodeA->rGetContainingElementIndices();
     std::set<unsigned> elements_containing_nodeB = pNodeB->rGetContainingElementIndices();
@@ -83,8 +82,20 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
         else if (p_cell->template HasCellProperty<CellEpi>())
         {
             // This cell is labelled "epi"
-            //return this->GetEpiBoundaryAdhesionEnergyParameter()/ ((SimulationTime::Instance()->GetTime()/simulation_time)*a_itg + b_itg)  ;
+            if(SimulationParameters::SMALL_SIMU && SimulationParameters::DIF_ADHESION && SimulationTime::Instance()->GetTime() > 0)
+            {
+            //double a_itg = -0.4643 ;
+            //double b_itg = 0.9871 ;
+            double a_itg = -0.4 ;
+            double b_itg = 1.03 ;
+            return this->GetEpiBoundaryAdhesionEnergyParameter()/ ((SimulationTime::Instance()->GetTime()/simulation_time)*a_itg + b_itg)  ;
+            }
+            else
+            {
             return this->GetEpiBoundaryAdhesionEnergyParameter();
+            }
+            //return this->GetEpiBoundaryAdhesionEnergyParameter()/ ((SimulationTime::Instance()->GetTime()/simulation_time)*a_itg + b_itg)  ;
+
         }
         else
         {
@@ -185,20 +196,25 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             if (num_epi_core_cells == 2)
             {
                 // Both cells are labelled "epi + core"
-              //  return this->GetCoreCoreAdhesionEnergyParameter()/ ((SimulationTime::Instance()->GetTime()/simulation_time)*a_cdh + b_cdh) ;
+
                 return this->GetCoreCoreAdhesionEnergyParameter() ;
+
+
+
             }
             else if (num_epi_periph_cells == 2)
             {
                 // Both cells are labelled "epi + periph"
-              //  return this->GetPeriphPeriphAdhesionEnergyParameter()/ ((SimulationTime::Instance()->GetTime()/simulation_time)*a_cdh + b_cdh) ;
-                return this->GetPeriphPeriphAdhesionEnergyParameter() ;
+
+                  return this->GetPeriphPeriphAdhesionEnergyParameter() ;
+
             }
             else if (num_epi_periph_cells == 1 && num_epi_core_cells == 1)
             {
                 // one cell is labelled "epi + periph" and the other "epi + core"
-            //    return this->GetCorePeriphAdhesionEnergyParameter()/ ((SimulationTime::Instance()->GetTime()/simulation_time)*a_cdh + b_cdh) ;
+
                 return this->GetCorePeriphAdhesionEnergyParameter() ;
+
             }
             else
             {
@@ -213,15 +229,52 @@ double DifferentialAdhesionForce<DIM>::GetAdhesionParameter(Node<DIM>* pNodeA,
             // One cell is labelled "endo" and the other "lumen"
             return this->GetEndoLumenAdhesionEnergyParameter();
         }
-        else if (num_endo_cells == 1 && num_epi_cells == 1)
+        else if (num_endo_cells == 1 && num_epi_core_cells == 1)
         {
             // One cell is labelled "endo" and the other "epi""
+            if(SimulationParameters::SMALL_SIMU && SimulationParameters::DIF_ADHESION && SimulationTime::Instance()->GetTime() > 0)
+            {
+            //double a_itg = -0.4643 ;
+            //double b_itg = 0.9871 ;
+            double a_itg = -0.4 ;
+            double b_itg = 1.03 ;
+            return this->GetEndoEpiAdhesionEnergyParameter()/ ((SimulationTime::Instance()->GetTime()/simulation_time)*a_itg + b_itg)  ;
+            }
+            else
+            {
             return this->GetEndoEpiAdhesionEnergyParameter();
+            }
+        }
+        else if (num_endo_cells == 1 && num_epi_periph_cells == 1)
+        {
+            // One cell is labelled "endo" and the other "epi""
+            if(SimulationParameters::SMALL_SIMU && SimulationParameters::DIF_ADHESION && SimulationTime::Instance()->GetTime() > 0)
+            {
+            //double a_itg = -0.4643 ;
+            //double b_itg = 0.9871 ;
+            double a_itg = -0.4 ;
+            double b_itg = 1.03 ;
+            return this->GetEndoPeriphAdhesionEnergyParameter()/ ((SimulationTime::Instance()->GetTime()/simulation_time)*a_itg + b_itg)  ;
+            }
+            else
+            {
+            return this->GetEndoPeriphAdhesionEnergyParameter();
+            }
         }
         else if (num_lumen_cells == 1 && num_epi_cells == 1)
         {
-            // One cell is labelled "endo" and the other "epi""
-            return this->GetEpiLumenAdhesionEnergyParameter();
+          if(SimulationParameters::SMALL_SIMU && SimulationParameters::DIF_ADHESION && SimulationTime::Instance()->GetTime() > 0)
+          {
+          //double a_itg = -0.4643 ;
+          //double b_itg = 0.9871 ;
+          double a_itg = -0.4 ;
+          double b_itg = 1.03 ;
+          return this->GetEpiLumenAdhesionEnergyParameter() * ((SimulationTime::Instance()->GetTime()/simulation_time)*a_itg + b_itg)  ;
+          }
+          else
+          {
+          return this->GetEpiLumenAdhesionEnergyParameter();
+          }
         }
         else
         {
@@ -273,6 +326,12 @@ template<unsigned DIM>
 double DifferentialAdhesionForce<DIM>::GetEndoEpiAdhesionEnergyParameter()
 {
     return mEndoEpiAdhesionEnergyParameter;
+}
+
+template<unsigned DIM>
+double DifferentialAdhesionForce<DIM>::GetEndoPeriphAdhesionEnergyParameter()
+{
+    return mEndoPeriphAdhesionEnergyParameter;
 }
 
 template<unsigned DIM>
@@ -368,6 +427,13 @@ void DifferentialAdhesionForce<DIM>::SetEndoEpiAdhesionEnergyParameter(double en
 }
 
 template<unsigned DIM>
+void DifferentialAdhesionForce<DIM>::SetEndoPeriphAdhesionEnergyParameter(double endoPeriphAdhesionEnergyParameter)
+{
+    mEndoPeriphAdhesionEnergyParameter = endoPeriphAdhesionEnergyParameter;
+}
+
+
+template<unsigned DIM>
 void DifferentialAdhesionForce<DIM>::SetEpiLumenAdhesionEnergyParameter(double epiLumenAdhesionEnergyParameter)
 {
     mEpiLumenAdhesionEnergyParameter = epiLumenAdhesionEnergyParameter;
@@ -433,6 +499,8 @@ void DifferentialAdhesionForce<DIM>::OutputForceParameters(out_stream& rParamsFi
     *rParamsFile << "\t\t\t<PeriphPeriphAdhesionEnergyParameter>" << mPeriphPeriphAdhesionEnergyParameter << "</PeriphPeriphAdhesionEnergyParameter> \n";
 
     *rParamsFile << "\t\t\t<EndoEpiAdhesionEnergyParameter>" << mEndoEpiAdhesionEnergyParameter << "</EndoEpiAdhesionEnergyParameter> \n";
+
+    *rParamsFile << "\t\t\t<EndoPeriphAdhesionEnergyParameter>" << mEndoPeriphAdhesionEnergyParameter << "</EndoPeriphAdhesionEnergyParameter> \n";
 
     *rParamsFile << "\t\t\t<EpiLumenAdhesionEnergyParameter>" << mEpiLumenAdhesionEnergyParameter << "</EpiLumenAdhesionEnergyParameter> \n";
 

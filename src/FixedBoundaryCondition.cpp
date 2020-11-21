@@ -5,6 +5,7 @@
 #include "CellTip.hpp"
 #include "CellVessel.hpp"
 #include "CellVessel.hpp"
+#include "SimulationParameters.hpp"
 #include <stdlib.h>
 using namespace std ;
 
@@ -90,7 +91,7 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                 {
                   CellPtr p_cell = this->mpCellPopulation->GetCellUsingLocationIndex(*element_index);
 
-                  if (p_cell->HasCellProperty<CellStalk>() && p_node->IsBoundaryNode() && motile == 0 && vessel < 2)
+                  if (p_cell->HasCellProperty<CellStalk>() && p_node->IsBoundaryNode() && motile == 0 && vessel < 2 && SimulationParameters::VEGF_KO == false)
                   {
 
 /*
@@ -128,6 +129,18 @@ void FixedBoundaryCondition<ELEMENT_DIM,SPACE_DIM>::ImposeBoundaryCondition(cons
                      //p_node->AddAppliedForceContribution(new_force);
 
                      //p_node->ClearAppliedForce() ;
+                  }
+                  else if (p_cell->HasCellProperty<CellStalk>() && SimulationParameters::VEGF_KO == true)
+                  {
+
+                     c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second;
+                     p_node->rGetModifiableLocation() = old_node_location; // fix the node at the current location
+                  }
+                  else if (p_cell->HasCellProperty<CellTip>() && SimulationParameters::VEGF_KO == true)
+                  {
+
+                     c_vector<double, SPACE_DIM> old_node_location = rOldLocations.find(p_node)->second;
+                     p_node->rGetModifiableLocation() = old_node_location; // fix the node at the current location
                   }
                   /*
                   else if (p_cell->HasCellProperty<CellVessel>())

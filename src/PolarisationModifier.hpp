@@ -17,6 +17,7 @@ private:
     double mVecPolarisationDecrease ;
     double mEpiEpiPolarisationParameter ;
     double mEndoEpiPolarisationParameter ;
+    double mPeriphEpiPolarisationParameter ;
     double mLumenEpiPolarisationParameter ;
 
     /** Needed for serialization. */
@@ -35,6 +36,7 @@ private:
         archive & mVecPolarisationDecrease;
         archive & mEpiEpiPolarisationParameter;
         archive & mEndoEpiPolarisationParameter;
+        archive & mPeriphEpiPolarisationParameter;
         archive & mLumenEpiPolarisationParameter;
     }
 
@@ -82,6 +84,8 @@ public:
 
     double GetEndoEpiPolarisationParameter();
 
+    double GetPeriphEpiPolarisationParameter();
+
     double GetLumenEpiPolarisationParameter();
 
     void SetVecPolarisationDecrease(double vecPolarisationDecrease);
@@ -89,6 +93,8 @@ public:
     void SetEpiEpiPolarisationParameter(double epiEpiPolarisationParameter);
 
     void SetEndoEpiPolarisationParameter(double endoEpiPolarisationParameter);
+
+    void SetPeriphEpiPolarisationParameter(double endoEpiPolarisationParameter);
 
     void SetLumenEpiPolarisationParameter(double lumenEpiPolarisationParameter);
 

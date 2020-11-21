@@ -1,6 +1,7 @@
 #include "BorderTrackingModifier.hpp"
 #include "MeshBasedCellPopulation.hpp"
 #include "VertexBasedCellPopulation.hpp"
+#include "SimulationParameters.hpp"
 #include "CellEndo.hpp"
 #include "CellStalk.hpp"
 #include "CellEpi.hpp"
@@ -137,7 +138,14 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
       {
         cell_iter->template RemoveCellProperty<CellCore>();
         cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellPeriph>());
-        cell_iter->GetCellData()->SetItem("target area", 0.4);
+        if (SimulationParameters::SMALL_SIMU)
+        {
+          cell_iter->GetCellData()->SetItem("target area", 1.2);
+        }
+        else if(SimulationParameters::SMALL_SIMU == false)
+        {
+          cell_iter->GetCellData()->SetItem("target area", 0.45);
+        }
 
         for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
         {
@@ -153,7 +161,14 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
         cell_iter->template RemoveCellProperty<CellCore>();
         cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellPeriph>());
         cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellBase>());
-        cell_iter->GetCellData()->SetItem("target area", 0.5);
+        if (SimulationParameters::SMALL_SIMU)
+        {
+          cell_iter->GetCellData()->SetItem("target area", 1.0);
+        }
+        else if(SimulationParameters::SMALL_SIMU == false)
+        {
+          cell_iter->GetCellData()->SetItem("target area", 1.3);
+        }
 
         for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
         {
@@ -164,10 +179,10 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
 
       }
 
-      else if (n_endo_neighbours > 0)
+      else if (n_endo_neighbours > 0 && n_boundary_nodes == 0)
       {
-        cell_iter->template RemoveCellProperty<CellCore>();
-        cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellPeriph>());
+        cell_iter->template RemoveCellProperty<CellPeriph>();
+        cell_iter->AddCellProperty(CellPropertyRegistry::Instance()->Get<CellCore>());
         for (unsigned local_index=0; local_index<num_nodes_in_element; local_index++)
         {
             unsigned node_index = p_element->GetNodeGlobalIndex(local_index);
@@ -175,6 +190,8 @@ void BorderTrackingModifier<DIM>::UpdateCellData(AbstractCellPopulation<DIM,DIM>
 
         }
       }
+
+
 
       else
 
